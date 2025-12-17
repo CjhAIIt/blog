@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>所有文章 - 简单博客系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .post-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            background-color: #343a40;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">简单博客</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/posts">所有文章</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">关于</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" href="/posts/new">写文章</a>
+                    </li>
+                </ul>
+                <form class="d-flex" action="/posts/search" method="get">
+                    <input class="form-control me-2" type="search" name="keyword" placeholder="搜索文章..." th:value="${keyword}">
+                    <button class="btn btn-outline-light" type="submit">搜索</button>
+                </form>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link" href="/login">登录</a>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <span sec:authentication="name"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/logout">退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1>所有文章</h1>
+                <p th:if="${keyword}" class="text-muted">搜索结果: "<span th:text="${keyword}"></span>"</p>
+            </div>
+            <div class="col-md-4 text-end" sec:authorize="isAuthenticated()">
+                <a href="/posts/new" class="btn btn-primary">写新文章</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card" th:each="post : ${posts}">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}" class="text-decoration-none text-dark"></a>
+                        </h5>
+                        <p class="card-text" th:text="${#strings.abbreviate(post.content, 200)}"></p>
+                        <div class="post-meta">
+                            <span th:text="'作者: ' + ${post.author.username}"></span> | 
+                            <span th:text="'发布时间: ' + ${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}"></span> |
+                            <span th:if="${post.updatedAt != post.createdAt}" th:text="'更新时间: ' + ${#temporals.format(post.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="mt-2">
+                            <a th:href="@{/posts/{id}(id=${post.id})}" class="btn btn-sm btn-outline-primary">阅读全文</a>
+                            <a th:href="@{/posts/edit/{id}(id=${post.id})}" class="btn btn-sm btn-outline-secondary" sec:authorize="isAuthenticated()">编辑</a>
+                            <form th:action="@{/posts/delete/{id}(id=${post.id})}" method="post" style="display: inline;" sec:authorize="isAuthenticated()">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这篇文章吗？')">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div th:if="${#lists.isEmpty(posts)}" class="alert alert-info">
+                    <span th:if="${keyword}">没有找到包含 "<span th:text="${keyword}"></span>" 的文章</span>
+                    <span th:unless="${keyword}">暂无文章，<a href="/posts/new" sec:authorize="isAuthenticated()">发布第一篇文章</a><span sec:authorize="isAnonymous()">，请先<a href="/login">登录</a>后发布文章</span></span>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card" sec:authorize="isAuthenticated()">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="/posts/new" class="btn btn-primary btn-sm mb-2 d-block">写新文章</a>
+                        <form action="/posts/search" method="get">
+                            <div class="input-group">
+                                <input type="text" name="keyword" class="form-control" placeholder="搜索文章..." th:value="${keyword}">
+                                <button class="btn btn-outline-secondary" type="submit">搜索</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card" sec:authorize="isAnonymous()">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">登录提示</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>您需要登录后才能发布文章</p>
+                        <a href="/login" class="btn btn-primary btn-sm mb-2 d-block">登录</a>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">快速链接</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><a href="/" class="text-decoration-none">首页</a></li>
+                            <li><a href="/posts" class="text-decoration-none">所有文章</a></li>
+                            <li><a href="/posts/new" class="text-decoration-none" sec:authorize="isAuthenticated()">写文章</a></li>
+                            <li><a href="/about" class="text-decoration-none">关于我们</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3">
+        <div class="container">
+            <p>&copy; 2023 简单博客系统. 使用 Spring Boot 构建.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
