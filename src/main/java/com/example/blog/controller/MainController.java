@@ -1,125 +1,150 @@
 package com.example.blog.controller;
 
 import com.example.blog.model.Post;
+import com.example.blog.model.PostCategory;
 import com.example.blog.model.User;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class MainController {
-    
-    @Autowired
-    private PostService postService;
-    
-    @Autowired
-    private UserService userService;
-    
+    private final PostService postService;
+    private final UserService userService;
+
+    public MainController(PostService postService, UserService userService) {
+        this.postService = postService;
+        this.userService = userService;
+    }
+
     @GetMapping("/")
-    public String home(@RequestParam(defaultValue = "0") int page, Model model) {
-        Pageable pageable = PageRequest.of(page, 5); // 每页显示5篇文章
-        Page<Post> postsPage = postService.findAll(pageable);
+    public String home(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "latest") String category,
+                       Model model) {
+        Pageable pageable = PageRequest.of(page, 6);
+        Optional<PostCategory> selectedCategory = PostCategory.fromSlug(category);
+        Page<Post> postsPage = selectedCategory
+                .map(postCategory -> postService.findByCategory(postCategory, pageable))
+                .orElseGet(() -> postService.findAll(pageable));
+
         model.addAttribute("posts", postsPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("totalItems", postsPage.getTotalElements());
+        model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
         return "index";
     }
-    
+
     @GetMapping("/about")
-    public String about() {
+    public String about(Model model) {
+        model.addAttribute("selectedCategory", "latest");
         return "about";
     }
-    
+
     @GetMapping("/login")
     public String login() {
         return "login";
     }
-    
+
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("user", new User());
         return "register";
     }
-    
+
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute("user") User user, 
-                              BindingResult result, 
-                              @RequestParam("confirmPassword") String confirmPassword,
-                              RedirectAttributes redirectAttributes) {
-        // 手动验证用户名长度
-        if (user.getUsername() == null || user.getUsername().trim().length() < 3 || user.getUsername().trim().length() > 20) {
-            result.rejectValue("username", "error.user", "用户名长度应在3-20个字符之间");
-        }
-        
-        // 手动验证密码长度
-        if (user.getPassword() == null || user.getPassword().length() < 6) {
-            result.rejectValue("password", "error.user", "密码长度至少6个字符");
-        }
-        
-        // 手动验证邮箱格式
-        if (user.getEmail() == null || !user.getEmail().contains("@") || !user.getEmail().contains(".")) {
-            result.rejectValue("email", "error.user", "请输入有效的电子邮箱地址");
-        }
-        
-        // 验证密码确认
-        if (!user.getPassword().equals(confirmPassword)) {
-            result.rejectValue("password", "error.user", "密码不匹配");
-        }
-        
-        // 检查用户名是否已存在
-        if (userService.existsByUsername(user.getUsername())) {
-            result.rejectValue("username", "error.user", "用户名已存在");
-        }
-        
-        // 检查邮箱是否已存在
-        if (userService.existsByEmail(user.getEmail())) {
-            result.rejectValue("email", "error.user", "邮箱已被使用");
-        }
-        
-        if (result.hasErrors()) {
+    public String registerUser(@ModelAttribute("user") User user,
+                               @RequestParam("confirmPassword") String confirmPassword,
+                               RedirectAttributes redirectAttributes,
+                               Model model) {
+        validateRegistration(user, confirmPassword, model);
+        if (model.containsAttribute("error")) {
             return "register";
         }
-        
-        // 保存用户
+
         try {
             User registeredUser = userService.registerUser(user.getUsername(), user.getEmail(), user.getPassword());
-            // 注册成功，可以在这里对返回的用户对象进行额外处理
+            redirectAttributes.addFlashAttribute("successMessage", "验证码已发送，请完成邮箱验证后再登录。");
+            return "redirect:/verify-email?email=" + registeredUser.getEmail();
         } catch (RuntimeException e) {
-            result.rejectValue("username", "error.user", e.getMessage());
+            model.addAttribute("error", e.getMessage());
             return "register";
         }
-        
-        // 添加成功消息
-        redirectAttributes.addFlashAttribute("successMessage", "注册成功！请登录。");
-        
-        return "redirect:/login";
     }
-    
+
+    @GetMapping("/verify-email")
+    public String showVerifyEmail(@RequestParam(required = false) String email, Model model) {
+        model.addAttribute("email", email);
+        return "verify-email";
+    }
+
+    @PostMapping("/verify-email")
+    public String verifyEmail(@RequestParam String email,
+                              @RequestParam String code,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            userService.verifyEmail(email, code);
+            redirectAttributes.addFlashAttribute("successMessage", "邮箱验证成功，现在可以登录了。");
+            return "redirect:/login";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/verify-email?email=" + email;
+        }
+    }
+
+    @PostMapping("/verify-email/resend")
+    public String resendVerificationCode(@RequestParam String email, RedirectAttributes redirectAttributes) {
+        try {
+            userService.resendVerificationCode(email);
+            redirectAttributes.addFlashAttribute("successMessage", "验证码已重新发送，请检查邮箱。");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/verify-email?email=" + email;
+    }
+
     @GetMapping("/search")
-    public String search(@RequestParam String keyword, 
-                        @RequestParam(defaultValue = "0") int page, 
-                        Model model) {
-        Pageable pageable = PageRequest.of(page, 5); // 每页显示5篇文章
+    public String search(@RequestParam String keyword,
+                         @RequestParam(defaultValue = "0") int page,
+                         Model model) {
+        Pageable pageable = PageRequest.of(page, 6);
         Page<Post> postsPage = postService.findByKeyword(keyword, pageable);
         model.addAttribute("posts", postsPage.getContent());
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("totalItems", postsPage.getTotalElements());
+        model.addAttribute("selectedCategory", "latest");
         return "search";
+    }
+
+    private void validateRegistration(User user, String confirmPassword, Model model) {
+        if (!StringUtils.hasText(user.getUsername()) || user.getUsername().trim().length() < 3 || user.getUsername().trim().length() > 20) {
+            model.addAttribute("error", "用户名长度应在 3 到 20 个字符之间");
+            return;
+        }
+        if (!StringUtils.hasText(user.getPassword()) || user.getPassword().length() < 8) {
+            model.addAttribute("error", "密码长度至少 8 位");
+            return;
+        }
+        if (!StringUtils.hasText(user.getEmail()) || !user.getEmail().contains("@") || !user.getEmail().contains(".")) {
+            model.addAttribute("error", "请输入有效的邮箱地址");
+            return;
+        }
+        if (!user.getPassword().equals(confirmPassword)) {
+            model.addAttribute("error", "两次输入的密码不一致");
+        }
     }
 }

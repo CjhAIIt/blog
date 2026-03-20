@@ -1,183 +1,97 @@
 <!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" 
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>搜索结果 - 简单博客系统</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .post-meta {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        footer {
-            margin-top: 50px;
-            padding: 20px 0;
-            background-color: #343a40;
-            color: white;
-        }
-        .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-        .search-result-info {
-            margin-bottom: 20px;
-            color: #6c757d;
-        }
-    </style>
+    <title>搜索结果 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">简单博客</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">首页</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/posts">所有文章</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">关于</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" href="/posts/new">写文章</a>
-                    </li>
-                </ul>
-                <form class="d-flex" action="/search" method="get">
-                    <input class="form-control me-2" type="search" name="keyword" placeholder="搜索文章..." th:value="${keyword}">
-                    <button class="btn btn-outline-light" type="submit">搜索</button>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/about">关于</a>
+            </nav>
+            <div class="ll-header-actions">
+                <form class="ll-header-form" action="/search" method="get">
+                    <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章" th:value="${keyword}">
+                    <button class="ll-search-submit" type="submit">搜索</button>
                 </form>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item" sec:authorize="isAnonymous()">
-                        <a class="nav-link" href="/login">登录</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAnonymous()">
-                        <a class="nav-link" href="/register">注册</a>
-                    </li>
-                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="name"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/logout">退出登录</a></li>
-                        </ul>
-                    </li>
-                </ul>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+                <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
             </div>
-        </div>
-    </nav>
+        </header>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-lg-8">
-                <h2 class="mb-4">搜索结果</h2>
-                
-                <div class="search-result-info">
-                    <span th:if="${totalItems > 0}" th:text="'找到 ' + ${totalItems} + ' 篇关于「' + ${keyword} + '」的文章'"></span>
-                    <span th:if="${totalItems == 0}" th:text="'没有找到关于「' + ${keyword} + '」的文章'"></span>
-                </div>
-                
-                <div class="card" th:each="post : ${posts}">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}" class="text-decoration-none text-dark"></a>
-                        </h5>
-                        <p class="card-text" th:text="${#strings.abbreviate(post.content, 150)}"></p>
-                        <div class="post-meta">
-                            <span th:text="'作者: ' + ${post.author.username}"></span> | 
-                            <span th:text="'发布时间: ' + ${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
-                        </div>
-                        <a th:href="@{/posts/{id}(id=${post.id})}" class="btn btn-sm btn-outline-primary mt-2">阅读全文</a>
-                    </div>
-                </div>
-                
-                <div th:if="${#lists.isEmpty(posts)}" class="alert alert-info">
-                    没有找到匹配的文章，请尝试其他关键词。
-                </div>
-                
-                <!-- 分页导航 -->
-                <nav aria-label="搜索结果分页" th:if="${totalPages > 1}">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/search(keyword=${keyword}, page=${currentPage - 1})}" tabindex="-1">上一页</a>
-                        </li>
-                        
-                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
-                            class="page-item" 
-                            th:classappend="${i == currentPage} ? 'active'">
-                            <a class="page-link" th:href="@{/search(keyword=${keyword}, page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
-                        
-                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                            <a class="page-link" th:href="@{/search(keyword=${keyword}, page=${currentPage + 1})}">下一页</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">搜索提示</h5>
-                    </div>
-                    <div class="card-body">
-                        <p>您可以尝试以下搜索技巧：</p>
-                        <ul>
-                            <li>使用更具体的关键词</li>
-                            <li>尝试不同的关键词组合</li>
-                            <li>检查拼写是否正确</li>
-                        </ul>
-                        <a href="/" class="btn btn-sm btn-outline-primary">返回首页</a>
-                    </div>
-                </div>
-                
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">快速链接</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li><a href="/posts" class="text-decoration-none">所有文章</a></li>
-                            <li><a href="/posts/new" class="text-decoration-none" sec:authorize="isAuthenticated()">写文章</a></li>
-                            <li><a href="/about" class="text-decoration-none">关于我们</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        <div class="ll-category-row">
+            <nav class="ll-category-links">
+                <a class="ll-category-link is-active" th:href="@{/search(keyword=${keyword})}">搜索结果</a>
+                <a class="ll-category-link" href="/">最新</a>
+                <a class="ll-category-link" href="/?category=frontend-backend">前后端</a>
+                <a class="ll-category-link" href="/?category=embedded">嵌入式</a>
+                <a class="ll-category-link" href="/?category=big-data">大数据</a>
+                <a class="ll-category-link" href="/?category=project">项目</a>
+            </nav>
         </div>
     </div>
+</div>
 
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        <div class="container">
-            <p>&copy; 2023 简单博客系统. 使用 Spring Boot 构建.</p>
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-page-head ll-fade">
+            <div>
+                <h1 class="ll-page-title">搜索结果</h1>
+                <p class="ll-page-desc" th:text="${'关键词 “' + keyword + '” 共找到 ' + totalItems + ' 篇文章。'}">搜索结果</p>
+            </div>
+        </section>
+
+        <section class="ll-grid" th:if="${!#lists.isEmpty(posts)}">
+            <article class="ll-card ll-fade" th:each="post, stat : ${posts}">
+                <div th:class="${'ll-card-media ' + (stat.index % 4 == 0 ? 'll-card-media--a' : (stat.index % 4 == 1 ? 'll-card-media--b' : (stat.index % 4 == 2 ? 'll-card-media--c' : 'll-card-media--d')))}">
+                    <span class="ll-media-badge" th:text="${post.categoryDisplayName}">分类</span>
+                    <span class="ll-media-mark" th:text="${stat.count < 10 ? '0' + stat.count : stat.count}">01</span>
+                </div>
+                <div class="ll-card-body">
+                    <h2 class="ll-card-title">
+                        <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">标题</a>
+                    </h2>
+                    <p class="ll-card-excerpt" th:text="${@markdownService.excerpt(post.content, 120)}">摘要</p>
+                    <div class="ll-card-meta">
+                        <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">2026-03-19</span>
+                        <a class="ll-side-link" th:href="@{/users/{username}(username=${post.author.username})}" th:text="${post.author.username}">作者</a>
+                        <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-fade">
+            没有找到匹配结果，换一个关键词再试试。
         </div>
-    </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <nav class="ll-pagination" th:if="${totalPages > 1}">
+            <a class="ll-page-link" th:if="${currentPage > 0}" th:href="@{/search(keyword=${keyword}, page=${currentPage - 1})}">上一页</a>
+            <span class="ll-page-link" th:if="${currentPage == 0}">上一页</span>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a class="ll-page-link" th:classappend="${i == currentPage ? ' is-active' : ''}" th:href="@{/search(keyword=${keyword}, page=${i})}" th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="ll-page-link" th:if="${currentPage + 1 < totalPages}" th:href="@{/search(keyword=${keyword}, page=${currentPage + 1})}">下一页</a>
+            <span class="ll-page-link" th:if="${currentPage + 1 >= totalPages}">下一页</span>
+        </nav>
+
+        <footer class="ll-footer">
+            <span>© 2026 烂柯的博客</span>
+            <span> · Search Results · </span>
+            <a href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">CjhAIIt</a>
+        </footer>
+    </div>
+</main>
 </body>
 </html>

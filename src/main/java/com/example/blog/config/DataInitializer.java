@@ -1,51 +1,93 @@
 package com.example.blog.config;
 
 import com.example.blog.model.Post;
+import com.example.blog.model.PostCategory;
 import com.example.blog.model.User;
+import com.example.blog.service.CommentService;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
-    
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private PostService postService;
-    
+    private final UserService userService;
+    private final PostService postService;
+    private final CommentService commentService;
+
+    public DataInitializer(UserService userService, PostService postService, CommentService commentService) {
+        this.userService = userService;
+        this.postService = postService;
+        this.commentService = commentService;
+    }
+
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
+        userService.findAll().forEach(existingUser -> {
+            if (!existingUser.isEmailVerified() && existingUser.getVerificationCodeHash() == null) {
+                existingUser.setEmailVerified(true);
+                userService.save(existingUser);
+            }
+        });
+
+        postService.findAll().forEach(existingPost -> {
+            if (existingPost.getCategory() == null) {
+                existingPost.setCategory(PostCategory.PROJECT);
+                postService.save(existingPost);
+            }
+        });
+
         if (userService.findAll().isEmpty()) {
-            User admin = new User("admin", "password", "admin@example.com");
-            userService.save(admin);
-            
-            User user = new User("user", "password", "user@example.com");
-            userService.save(user);
-            
-            Post post1 = new Post(
-                "欢迎来到我的博客",
-                "这是我的第一篇博客文章。在这里我将分享我的想法和经验。",
-                admin
-            );
-            postService.save(post1);
-            
-            Post post2 = new Post(
-                "Spring Boot 入门",
-                "Spring Boot 是一个用于创建独立的、生产级的 Spring 应用程序的框架。",
-                admin
-            );
-            postService.save(post2);
-            
-            Post post3 = new Post(
-                "Java 编程技巧",
-                "在这篇文章中，我将分享一些实用的 Java 编程技巧。",
-                user
-            );
-            postService.save(post3);
+            User admin = userService.createVerifiedUser("admin", "admin@example.com", "password");
+            admin.setBio("默认管理员账号，用于初始化博客内容。");
+            userService.updateProfile(admin, admin.getBio(), "10001", "https://github.com/CjhAIIt");
+
+            User user = userService.createVerifiedUser("user", "user@example.com", "password");
+            user.setBio("默认普通用户账号，可用于测试个人空间。");
+            userService.updateProfile(user, user.getBio(), "10002", "https://github.com/CjhAIIt");
+
+            Post welcomePost = postService.save(new Post(
+                    "欢迎来到烂柯的博客",
+                    """
+                    # 欢迎来到烂柯的博客
+
+                    这里现在支持 **Markdown** 写作，你可以像在 CSDN 编辑器里那样写标题、代码块和列表。
+
+                    ```java
+                    System.out.println("Hello Markdown");
+                    ```
+                    """,
+                    PostCategory.PROJECT,
+                    admin
+            ));
+
+            postService.save(new Post(
+                    "Spring Boot 入门记录",
+                    """
+                    ## 为什么选择 Spring Boot
+
+                    - 快速搭建项目
+                    - 配置简单
+                    - 适合个人博客系统
+                    """,
+                    PostCategory.FRONTEND_BACKEND,
+                    admin
+            ));
+
+            postService.save(new Post(
+                    "嵌入式学习清单",
+                    """
+                    ## 本周计划
+
+                    1. 继续补 STM32 外设基础
+                    2. 整理串口通信笔记
+                    3. 把实验过程写成文档
+                    """,
+                    PostCategory.EMBEDDED,
+                    user
+            ));
+
+            commentService.save(welcomePost, user, "这一版支持 Markdown 和评论区了，整体比之前完整很多。");
         }
     }
 }

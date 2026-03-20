@@ -1,0 +1,9 @@
+target/
+*.log
+*.out
+*.err
+.idea/
+.vscode/
+apache-maven-*/
+*.zip
+*.class

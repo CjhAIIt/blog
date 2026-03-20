@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑个人资料 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/posts/new">写博客</a>
+            </nav>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-section-card ll-fade">
+            <h1 class="ll-page-title">编辑个人资料</h1>
+            <p class="ll-page-desc">可以填写自我介绍、QQ 和 GitHub 主页链接。QQ 和 GitHub 链接会以加密形式保存到数据库。</p>
+
+            <form th:object="${profileForm}" action="/space/edit" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="ll-form-field">
+                    <label class="ll-form-label" for="bio">自我介绍</label>
+                    <textarea class="ll-textarea" id="bio" th:field="*{bio}" placeholder="写一点关于自己的介绍..."></textarea>
+                </div>
+                <div class="ll-form-field">
+                    <label class="ll-form-label" for="qq">QQ</label>
+                    <input class="ll-input" type="text" id="qq" th:field="*{qq}" placeholder="填写 QQ 号">
+                </div>
+                <div class="ll-form-field">
+                    <label class="ll-form-label" for="githubUrl">GitHub 主页</label>
+                    <input class="ll-input" type="text" id="githubUrl" th:field="*{githubUrl}" placeholder="例如 https://github.com/yourname">
+                </div>
+                <div class="ll-form-actions">
+                    <button class="ll-btn" type="submit">保存资料</button>
+                    <a class="ll-btn-secondary" href="/space">返回空间</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+</body>
+</html>

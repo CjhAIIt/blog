@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profileUser.username + ' 的空间 - 烂柯的博客'}">个人空间 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/about">关于</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/posts/new" th:if="${isOwner}">写博客</a>
+                <a class="ll-header-link" href="/space/edit" th:if="${isOwner}">编辑资料</a>
+                <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+        <div class="ll-category-row">
+            <nav class="ll-category-links">
+                <a class="ll-category-link" href="/">最新</a>
+                <a class="ll-category-link" href="/?category=frontend-backend">前后端</a>
+                <a class="ll-category-link" href="/?category=embedded">嵌入式</a>
+                <a class="ll-category-link" href="/?category=big-data">大数据</a>
+                <a class="ll-category-link" href="/?category=project">项目</a>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-space-cover ll-fade">
+            <div class="ll-space-head">
+                <div class="ll-space-summary">
+                    <div class="ll-avatar-xl" th:text="${#strings.toUpperCase(#strings.substring(profileUser.username, 0, 1))}">L</div>
+                    <div>
+                        <span class="ll-kicker">个人空间 / Creator Center</span>
+                        <h1 class="ll-space-title" th:text="${profileUser.username + ' 的创作主页'}">个人空间</h1>
+                        <p class="ll-space-copy"
+                           th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里会展示个人简介、常用链接和创作动态。现在已经调整成更接近 CSDN 个人主页的结构。'}">
+                            这里会展示个人简介、常用链接和创作动态。
+                        </p>
+                        <div class="ll-space-statline">
+                            <span class="ll-meta-pill" th:text="${#lists.size(posts) + ' 篇文章'}">0 篇文章</span>
+                            <span class="ll-meta-pill" th:text="${profileUser.emailVerified ? '邮箱已验证' : '邮箱未验证'}">邮箱已验证</span>
+                            <span class="ll-meta-pill" th:text="${'加入于 ' + #temporals.format(profileUser.createdAt, 'yyyy-MM-dd')}">加入于 2026-03-19</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ll-space-actions">
+                    <a class="ll-btn" href="/posts/new" th:if="${isOwner}">写新博客</a>
+                    <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner}">编辑个人资料</a>
+                    <a class="ll-btn-secondary"
+                       th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}"
+                       th:href="${profileUser.githubUrl}"
+                       target="_blank"
+                       rel="noreferrer">访问 GitHub</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="ll-space-layout ll-fade">
+            <div class="ll-feed">
+                <article class="ll-feed-card" th:each="post : ${posts}">
+                    <div class="ll-feed-top">
+                        <span class="ll-tag" th:text="${post.categoryDisplayName}">项目</span>
+                        <span class="ll-meta-pill" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2026-03-19 20:00</span>
+                    </div>
+                    <h2 class="ll-feed-title">
+                        <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a>
+                    </h2>
+                    <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(post.content, 180)}">文章摘要</p>
+                    <div class="ll-feed-meta">
+                        <span>Markdown 创作</span>
+                        <span>已发布到站点首页</span>
+                        <a class="ll-feed-action" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                    </div>
+                </article>
+
+                <div th:if="${#lists.isEmpty(posts)}" class="ll-empty">
+                    这个空间还没有发布文章。
+                    <a href="/posts/new" th:if="${isOwner}">现在写第一篇</a>
+                </div>
+            </div>
+
+            <aside class="ll-side-stack">
+                <section class="ll-side-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">博主名片</h2>
+                    <p class="ll-side-text"
+                       th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这位博主还没有填写更详细的自我介绍。'}">
+                        这位博主还没有填写更详细的自我介绍。
+                    </p>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge" th:text="${profileUser.emailVerified ? '邮箱已验证' : '邮箱未验证'}">邮箱已验证</span>
+                        <span class="ll-link-badge"
+                              th:if="${profileUser.qq != null and !#strings.isEmpty(profileUser.qq)}"
+                              th:text="${'QQ ' + profileUser.qq}">QQ 123456</span>
+                        <a class="ll-link-badge"
+                           th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}"
+                           th:href="${profileUser.githubUrl}"
+                           target="_blank"
+                           rel="noreferrer">GitHub 主页</a>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade">
+                    <h2 class="ll-side-title">创作概览</h2>
+                    <ul class="ll-side-list">
+                        <li th:text="${'原创文章：' + #lists.size(posts) + ' 篇'}">原创文章：0 篇</li>
+                        <li>写作模式：Markdown 双栏编辑</li>
+                        <li>主页风格：参考 CSDN 的个人空间信息流</li>
+                    </ul>
+                </section>
+            </aside>
+        </section>
+    </div>
+</main>
+</body>
+</html>

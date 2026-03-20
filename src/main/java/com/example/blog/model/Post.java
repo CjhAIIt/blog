@@ -1,6 +1,7 @@
 package com.example.blog.model;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -9,83 +10,104 @@ public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private String title;
-    
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private PostCategory category = PostCategory.PROJECT;
+
     @Column(columnDefinition = "TEXT")
     private String content;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
-    
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
+
     public Post() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    
-    public Post(String title, String content, User author) {
+
+    public Post(String title, String content, PostCategory category, User author) {
         this();
         this.title = title;
         this.content = content;
+        this.category = category;
         this.author = author;
     }
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getTitle() {
         return title;
     }
-    
+
     public void setTitle(String title) {
         this.title = title;
     }
-    
+
+    public PostCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(PostCategory category) {
+        this.category = category;
+    }
+
+    public String getCategoryDisplayName() {
+        return category == null ? "" : category.getDisplayName();
+    }
+
+    public String getCategorySlug() {
+        return category == null ? "" : category.getSlug();
+    }
+
     public String getContent() {
         return content;
     }
-    
+
     public void setContent(String content) {
         this.content = content;
     }
-    
+
     public User getAuthor() {
         return author;
     }
-    
+
     public void setAuthor(User author) {
         this.author = author;
     }
-    
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-    
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
-    
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
-    
+
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-    
+
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
