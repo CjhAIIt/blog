@@ -75,44 +75,13 @@ public class MainController {
         }
 
         try {
-            User registeredUser = userService.registerUser(user.getUsername(), user.getEmail(), user.getPassword());
-            redirectAttributes.addFlashAttribute("successMessage", "验证码已发送，请完成邮箱验证后再登录。");
-            return "redirect:/verify-email?email=" + registeredUser.getEmail();
+            userService.registerUser(user.getUsername(), user.getEmail(), user.getPassword());
+            redirectAttributes.addFlashAttribute("successMessage", "注册成功，现在可以直接登录。");
+            return "redirect:/login";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             return "register";
         }
-    }
-
-    @GetMapping("/verify-email")
-    public String showVerifyEmail(@RequestParam(required = false) String email, Model model) {
-        model.addAttribute("email", email);
-        return "verify-email";
-    }
-
-    @PostMapping("/verify-email")
-    public String verifyEmail(@RequestParam String email,
-                              @RequestParam String code,
-                              RedirectAttributes redirectAttributes) {
-        try {
-            userService.verifyEmail(email, code);
-            redirectAttributes.addFlashAttribute("successMessage", "邮箱验证成功，现在可以登录了。");
-            return "redirect:/login";
-        } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/verify-email?email=" + email;
-        }
-    }
-
-    @PostMapping("/verify-email/resend")
-    public String resendVerificationCode(@RequestParam String email, RedirectAttributes redirectAttributes) {
-        try {
-            userService.resendVerificationCode(email);
-            redirectAttributes.addFlashAttribute("successMessage", "验证码已重新发送，请检查邮箱。");
-        } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/verify-email?email=" + email;
     }
 
     @GetMapping("/search")

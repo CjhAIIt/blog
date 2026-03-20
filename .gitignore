@@ -7,3 +7,4 @@ target/
 apache-maven-*/
 *.zip
 *.class
+data/

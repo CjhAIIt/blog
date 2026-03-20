@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title th:text="${(post.id == null ? '写博客' : '编辑博客') + ' - 烂柯的博客'}">写博客 - 烂柯的博客</title>
+    <title th:text="${(post.id == null ? '写文章' : '编辑文章') + ' - 烂柯的博客'}">写文章 - 烂柯的博客</title>
     <link rel="stylesheet" href="/css/site.css">
 </head>
 <body class="ll-page">
@@ -34,29 +34,57 @@
         <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
 
-        <form th:object="${post}" th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}" method="post" class="ll-editor-shell">
+        <form th:object="${post}"
+              th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}"
+              method="post"
+              class="ll-editor-shell"
+              th:attr="data-draft-key=${post.id != null ? 'post-' + post.id : 'post-new'},data-is-new=${post.id == null}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <section class="ll-editor-hero ll-fade">
                 <div class="ll-editor-topline">
-                    <span class="ll-kicker" th:text="${post.id == null ? '创作中心 / New Post' : '创作中心 / Edit Post'}">创作中心</span>
+                    <span class="ll-kicker" th:text="${post.id == null ? '写作台 / Draft Studio' : '写作台 / Editing Session'}">写作台 / Draft Studio</span>
                     <div class="ll-inline-actions">
-                        <span class="ll-toolbar-chip">Markdown 实时预览</span>
-                        <span class="ll-toolbar-chip">接近 CSDN 的双栏写作</span>
+                        <span class="ll-toolbar-chip">双栏编辑</span>
+                        <span class="ll-toolbar-chip">实时预览</span>
+                        <span class="ll-toolbar-chip">本地草稿</span>
                     </div>
                 </div>
-                <h1 class="ll-space-title" th:text="${post.id == null ? '开始写一篇更像 CSDN 编辑台的博客' : '继续编辑这篇博客'}">开始写一篇更像 CSDN 编辑台的博客</h1>
-                <p class="ll-space-copy">这一页改成了更偏创作后台的布局：顶部强调当前写作状态，正文区域用“大标题 + 工具栏 + 左写右看”的结构，右侧保留发布建议和 Markdown 速记。</p>
+                <h1 class="ll-space-title" th:text="${post.id == null ? '把想法整理成一篇清晰、可发布的文章' : '继续润色这篇文章，让结构更完整'}">把想法整理成一篇清晰、可发布的文章</h1>
+                <p class="ll-space-copy">这一版写作台参考了现代 Markdown 编辑器常见的交互方式：正文采用双栏预览，右侧提供大纲与发布检查，顶部实时显示字数、阅读时间和草稿状态。</p>
+
+                <div class="ll-editor-metrics">
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">内容长度</span>
+                        <strong id="editorWordCount">0</strong>
+                        <span class="ll-metric-note">按中英文混合词元统计</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">预计阅读</span>
+                        <strong id="editorReadingMinutes">1 分钟</strong>
+                        <span class="ll-metric-note">帮助控制篇幅节奏</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">标题层级</span>
+                        <strong id="editorHeadingCount">0</strong>
+                        <span class="ll-metric-note">建议至少有 2 个小节</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">草稿状态</span>
+                        <strong id="editorDraftState">未保存</strong>
+                        <span class="ll-metric-note">保存在当前浏览器</span>
+                    </article>
+                </div>
             </section>
 
             <section class="ll-editor-stage ll-fade">
                 <div class="ll-editor-main">
                     <section class="ll-editor-card">
-                        <input class="ll-editor-title-input" type="text" id="title" th:field="*{title}" placeholder="请输入文章标题，概括这篇内容的核心主题" required>
+                        <input class="ll-editor-title-input" type="text" id="title" th:field="*{title}" placeholder="为文章起一个能概括结论或问题的标题" required>
                         <div class="ll-editor-subline">
-                            <span>当前格式：Markdown</span>
-                            <span>自动渲染：代码块 / 表格 / 引用</span>
-                            <span>推荐长度：800 字以上更接近技术博客阅读体验</span>
+                            <span>支持 Markdown 标题、引用、表格、代码块</span>
+                            <span>建议先写清背景，再展开过程与结论</span>
+                            <span>按住 Ctrl / Cmd + Enter 可以直接提交</span>
                         </div>
                     </section>
 
@@ -64,7 +92,7 @@
                         <div class="ll-editor-panel-head">
                             <div>
                                 <div class="ll-side-title">发布设置</div>
-                                <div class="ll-editor-caption">和 CSDN 一样，分类放在正式写作区之前，减少误操作。</div>
+                                <div class="ll-editor-caption">分类用于首页归档和个人主页展示，发布前确认一次即可。</div>
                             </div>
                             <div class="ll-inline-actions">
                                 <span class="ll-toolbar-chip">分类必填</span>
@@ -75,34 +103,48 @@
                         </select>
                     </section>
 
-                    <section class="ll-editor-card">
+                    <section class="ll-editor-card ll-editor-workspace">
                         <div class="ll-editor-panel-head">
                             <div>
-                                <div class="ll-side-title">正文编辑区</div>
-                                <div class="ll-editor-caption">左侧输入 Markdown，右侧查看即时预览。</div>
+                                <div class="ll-side-title">正文创作区</div>
+                                <div class="ll-editor-caption">左侧输入 Markdown，右侧查看阅读效果。可以切换为专注写作或专注预览。</div>
                             </div>
-                            <div class="ll-editor-toolbar">
-                                <button type="button" data-snippet="# 一级标题">标题</button>
-                                <button type="button" data-snippet="## 二级标题">小节</button>
-                                <button type="button" data-snippet="- 列表项">列表</button>
-                                <button type="button" data-snippet="> 引用内容">引用</button>
-                                <button type="button" data-snippet="```java&#10;System.out.println(&quot;Hello&quot;);&#10;```">代码块</button>
+                            <div class="ll-editor-mode-switch">
+                                <button type="button" class="ll-editor-mode-button is-active" data-mode="split">分栏</button>
+                                <button type="button" class="ll-editor-mode-button" data-mode="write">专注写作</button>
+                                <button type="button" class="ll-editor-mode-button" data-mode="preview">专注预览</button>
                             </div>
                         </div>
 
-                        <div class="ll-editor-panels">
-                            <div class="ll-editor-panel">
+                        <div class="ll-editor-toolbar">
+                            <button type="button" data-snippet="# 一级标题">一级标题</button>
+                            <button type="button" data-snippet="## 二级标题">二级标题</button>
+                            <button type="button" data-snippet="- 列表项">列表</button>
+                            <button type="button" data-snippet="> 记录一个关键结论">引用</button>
+                            <button type="button" data-snippet="```java||System.out.println(&quot;Hello&quot;);||```">代码块</button>
+                            <button type="button" data-snippet="| 列 1 | 列 2 ||| --- | --- ||| 内容 | 内容 |">表格</button>
+                            <button type="button" data-snippet="---">分隔线</button>
+                        </div>
+
+                        <div id="editorPanels" class="ll-editor-panels" data-mode="split">
+                            <div class="ll-editor-panel ll-editor-panel--write">
                                 <div class="ll-editor-panel-head">
-                                    <div class="ll-side-title">编辑区</div>
-                                    <div class="ll-editor-caption">Markdown Source</div>
+                                    <div>
+                                        <div class="ll-side-title">编辑区</div>
+                                        <div class="ll-editor-caption">Tab 可插入缩进，适合写代码块和层级结构。</div>
+                                    </div>
+                                    <span class="ll-meta-pill" id="editorLineCount">0 行</span>
                                 </div>
-                                <textarea class="ll-textarea" id="content" th:field="*{content}" placeholder="在这里开始你的 Markdown 正文..." required></textarea>
+                                <textarea class="ll-textarea ll-editor-textarea" id="content" th:field="*{content}" placeholder="从背景、问题、过程、结果开始组织你的正文..." required></textarea>
                             </div>
 
-                            <div class="ll-editor-panel">
+                            <div class="ll-editor-panel ll-editor-panel--preview">
                                 <div class="ll-editor-panel-head">
-                                    <div class="ll-side-title">实时预览</div>
-                                    <div class="ll-editor-caption">Rendered Preview</div>
+                                    <div>
+                                        <div class="ll-side-title">阅读预览</div>
+                                        <div class="ll-editor-caption">会按文章详情页的视觉样式渲染，方便提前检查排版。</div>
+                                    </div>
+                                    <span class="ll-meta-pill" id="previewStatus">实时更新</span>
                                 </div>
                                 <div id="markdownPreview" class="ll-article-body ll-markdown ll-preview-surface"></div>
                             </div>
@@ -119,12 +161,34 @@
 
                 <aside class="ll-editor-sidebar">
                     <section class="ll-guide-card">
-                        <div class="ll-side-title">创作助手</div>
-                        <p>把这一块做成更像 CSDN 写作台的右侧提示区，方便边写边检查结构。</p>
+                        <div class="ll-side-title">写作概览</div>
+                        <div class="ll-guide-statlist">
+                            <div class="ll-guide-stat">
+                                <span>段落数量</span>
+                                <strong id="editorParagraphCount">0</strong>
+                            </div>
+                            <div class="ll-guide-stat">
+                                <span>当前分类</span>
+                                <strong id="editorCategoryLabel">项目</strong>
+                            </div>
+                        </div>
+                        <p>保持标题明确、段落简短、结论可检索，发布后的阅读体验会稳定很多。</p>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">文章大纲</div>
+                        <div id="editorOutline" class="ll-outline-list ll-outline-list--editor">
+                            <div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>
+                        </div>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">发布检查</div>
                         <ul class="ll-guide-list">
-                            <li>标题尽量说明问题或结论，不要只写很泛的主题。</li>
-                            <li>正文建议按“背景、过程、结果、复盘”组织。</li>
-                            <li>每段控制在 3 到 5 行，可读性更稳定。</li>
+                            <li>标题是否能说明问题、方案或结论。</li>
+                            <li>正文是否交代了背景、步骤和最终结果。</li>
+                            <li>代码块、表格、引用是否已经在预览区检查过。</li>
+                            <li>分类是否和文章主题一致。</li>
                         </ul>
                     </section>
 
@@ -134,14 +198,9 @@
                             <li><code># 标题</code>：一级标题</li>
                             <li><code>## 标题</code>：二级标题</li>
                             <li><code>```lang</code>：多行代码块</li>
-                            <li><code>- 项目</code>：无序列表</li>
+                            <li><code>| 表头 | 表头 |</code>：表格</li>
                             <li><code>&gt; 引用</code>：引用内容</li>
                         </ul>
-                    </section>
-
-                    <section class="ll-guide-card">
-                        <div class="ll-side-title">发布提醒</div>
-                        <p>发布后文章会出现在你的个人空间和站点首页，对应分类也会同步更新。</p>
                     </section>
                 </aside>
             </section>
@@ -150,42 +209,239 @@
 </main>
 
 <script>
+    const form = document.querySelector('.ll-editor-shell');
     const textarea = document.getElementById('content');
+    const titleInput = document.getElementById('title');
+    const categorySelect = document.getElementById('category');
     const preview = document.getElementById('markdownPreview');
+    const previewStatus = document.getElementById('previewStatus');
+    const outline = document.getElementById('editorOutline');
+    const panels = document.getElementById('editorPanels');
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const draftKey = 'll-editor-' + form.dataset.draftKey;
     let previewTimer = null;
+    let draftTimer = null;
 
-    function insertSnippet(snippet) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const value = textarea.value;
-        textarea.value = value.slice(0, start) + snippet + "\n" + value.slice(end);
-        textarea.focus();
-        textarea.selectionStart = textarea.selectionEnd = start + snippet.length + 1;
-        requestPreview();
+    function tokenize(text) {
+        return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || [];
     }
 
-    function requestPreview() {
+    function countParagraphs(markdown) {
+        return (markdown || '')
+                .split(/\n\s*\n/)
+                .map(section => section.trim())
+                .filter(Boolean)
+                .length;
+    }
+
+    function countLines(markdown) {
+        if (!markdown) {
+            return 0;
+        }
+        return markdown.split('\n').length;
+    }
+
+    function countHeadings(markdown) {
+        return ((markdown || '').match(/^#{1,6}\s+/gm) || []).length;
+    }
+
+    function slugify(text, index) {
+        const normalized = (text || '')
+                .toLowerCase()
+                .replace(/<[^>]+>/g, '')
+                .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-');
+        return normalized || 'heading-' + index;
+    }
+
+    function updateMetrics() {
+        const markdown = textarea.value;
+        const tokens = tokenize(markdown);
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+        const selectedLabel = categorySelect.options[categorySelect.selectedIndex]?.text || '未选择';
+
+        document.getElementById('editorWordCount').textContent = tokens.length.toLocaleString('zh-CN');
+        document.getElementById('editorReadingMinutes').textContent = minutes + ' 分钟';
+        document.getElementById('editorHeadingCount').textContent = countHeadings(markdown);
+        document.getElementById('editorParagraphCount').textContent = countParagraphs(markdown);
+        document.getElementById('editorLineCount').textContent = countLines(markdown) + ' 行';
+        document.getElementById('editorCategoryLabel').textContent = selectedLabel;
+    }
+
+    function setDraftState(text) {
+        document.getElementById('editorDraftState').textContent = text;
+    }
+
+    function renderOutline() {
+        const headings = [...preview.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outline.innerHTML = '<div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>';
+            return;
+        }
+
+        outline.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) {
+                heading.id = slugify(heading.textContent, index);
+            }
+            const link = document.createElement('a');
+            link.href = '#' + heading.id;
+            link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
+            link.textContent = heading.textContent.trim();
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                heading.scrollIntoView({behavior: 'smooth', block: 'center'});
+            });
+            outline.appendChild(link);
+        });
+    }
+
+    function setPreviewContent(html) {
+        if (!html || !html.trim()) {
+            preview.innerHTML = '<div class="ll-preview-placeholder">输入 Markdown 后，这里会生成适合阅读的排版预览。</div>';
+            return;
+        }
+        preview.innerHTML = html;
+    }
+
+    async function requestPreview() {
         clearTimeout(previewTimer);
         previewTimer = setTimeout(async () => {
-            const response = await fetch('/posts/preview', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    [csrfHeader]: csrfToken
-                },
-                body: 'content=' + encodeURIComponent(textarea.value)
-            });
-            preview.innerHTML = await response.text();
+            previewStatus.textContent = '渲染中';
+            try {
+                const response = await fetch('/posts/preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: 'content=' + encodeURIComponent(textarea.value)
+                });
+                const html = await response.text();
+                setPreviewContent(html);
+                renderOutline();
+                previewStatus.textContent = '实时更新';
+            } catch (error) {
+                preview.innerHTML = '<div class="ll-preview-placeholder">预览暂时不可用，请稍后再试。</div>';
+                outline.innerHTML = '<div class="ll-outline-empty">预览失败，暂时无法生成大纲。</div>';
+                previewStatus.textContent = '预览异常';
+            }
+            updateMetrics();
         }, 180);
     }
 
+    function insertSnippet(snippet) {
+        const normalized = snippet.replaceAll('||', '\n').replaceAll('&quot;', '"');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        const insertion = normalized + '\n';
+
+        textarea.value = value.slice(0, start) + insertion + value.slice(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + insertion.length;
+        scheduleDraftSave();
+        requestPreview();
+    }
+
+    function updateMode(mode) {
+        panels.dataset.mode = mode;
+        document.querySelectorAll('.ll-editor-mode-button').forEach(button => {
+            button.classList.toggle('is-active', button.dataset.mode === mode);
+        });
+    }
+
+    function persistDraft() {
+        const payload = {
+            title: titleInput.value,
+            content: textarea.value,
+            category: categorySelect.value,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(draftKey, JSON.stringify(payload));
+        setDraftState('已暂存');
+    }
+
+    function scheduleDraftSave() {
+        setDraftState('编辑中');
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(persistDraft, 350);
+    }
+
+    function restoreDraft() {
+        const raw = localStorage.getItem(draftKey);
+        if (!raw) {
+            setDraftState('未保存');
+            return;
+        }
+        try {
+            const saved = JSON.parse(raw);
+            if (!titleInput.value.trim() && !textarea.value.trim()) {
+                titleInput.value = saved.title || '';
+                textarea.value = saved.content || '';
+                if (saved.category) {
+                    categorySelect.value = saved.category;
+                }
+                setDraftState('已恢复');
+            } else {
+                setDraftState('存在草稿');
+            }
+        } catch (error) {
+            setDraftState('未保存');
+        }
+    }
+
+    function syncPreviewScroll() {
+        const maxSource = textarea.scrollHeight - textarea.clientHeight;
+        const maxTarget = preview.scrollHeight - preview.clientHeight;
+        if (maxSource <= 0 || maxTarget <= 0) {
+            return;
+        }
+        preview.scrollTop = (textarea.scrollTop / maxSource) * maxTarget;
+    }
+
+    function handleEditorShortcuts(event) {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.value = textarea.value.slice(0, start) + '    ' + textarea.value.slice(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 4;
+            scheduleDraftSave();
+            requestPreview();
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    }
+
     document.querySelectorAll('[data-snippet]').forEach(button => {
-        button.addEventListener('click', () => insertSnippet(button.dataset.snippet.replaceAll('&#10;', '\n').replaceAll('&quot;', '"')));
+        button.addEventListener('click', () => insertSnippet(button.dataset.snippet));
     });
 
-    textarea.addEventListener('input', requestPreview);
+    document.querySelectorAll('.ll-editor-mode-button').forEach(button => {
+        button.addEventListener('click', () => updateMode(button.dataset.mode));
+    });
+
+    textarea.addEventListener('input', () => {
+        scheduleDraftSave();
+        requestPreview();
+    });
+    textarea.addEventListener('scroll', syncPreviewScroll);
+    textarea.addEventListener('keydown', handleEditorShortcuts);
+    titleInput.addEventListener('input', scheduleDraftSave);
+    categorySelect.addEventListener('change', () => {
+        scheduleDraftSave();
+        updateMetrics();
+    });
+    form.addEventListener('submit', () => localStorage.removeItem(draftKey));
+
+    restoreDraft();
+    updateMetrics();
     requestPreview();
 </script>
 </body>

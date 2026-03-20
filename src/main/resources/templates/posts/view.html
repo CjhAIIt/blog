@@ -46,7 +46,10 @@
         <section class="ll-article-hero ll-fade">
             <div class="ll-feed-top">
                 <span class="ll-tag" th:text="${post.categoryDisplayName}">项目</span>
-                <span class="ll-meta-pill" th:text="${commentCount + ' 条评论'}">0 条评论</span>
+                <div class="ll-inline-actions">
+                    <span class="ll-meta-pill" id="articleReadTime">约 1 分钟阅读</span>
+                    <span class="ll-meta-pill" th:text="${commentCount + ' 条评论'}">0 条评论</span>
+                </div>
             </div>
             <h1 class="ll-page-title" th:text="${post.title}">文章标题</h1>
             <div class="ll-author-strip">
@@ -58,15 +61,33 @@
                     <div class="ll-article-meta">
                         <span th:text="${'发布于 ' + #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">发布于 2026-03-19 21:00</span>
                         <span class="ll-dot"></span>
-                        <span>Markdown 创作</span>
+                        <span>技术文章</span>
                         <span class="ll-dot"></span>
-                        <span>评论开放</span>
+                        <span>支持评论交流</span>
                     </div>
                 </div>
                 <div class="ll-inline-actions">
                     <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">作者空间</a>
                     <a class="ll-btn" th:href="@{/posts/edit/{id}(id=${post.id})}" th:if="${canManage}">编辑文章</a>
                 </div>
+            </div>
+
+            <div class="ll-article-snapshot">
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">内容长度</span>
+                    <strong id="articleWordCount">0</strong>
+                    <span class="ll-metric-note">正文词元数</span>
+                </article>
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">标题数量</span>
+                    <strong id="articleHeadingCount">0</strong>
+                    <span class="ll-metric-note">便于快速浏览结构</span>
+                </article>
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">段落数量</span>
+                    <strong id="articleParagraphCount">0</strong>
+                    <span class="ll-metric-note">适合检查篇幅节奏</span>
+                </article>
             </div>
         </section>
 
@@ -81,7 +102,7 @@
                         <div class="ll-comment-head">
                             <div>
                                 <div class="ll-side-title">评论区</div>
-                                <div class="ll-editor-caption">鼓励围绕文章内容交流问题、补充实践经验或指出错误。</div>
+                                <div class="ll-editor-caption">欢迎补充实践经验、指出问题或继续讨论文章中的方案。</div>
                             </div>
                             <span class="ll-meta-pill" th:text="${commentCount + ' 条评论'}">0 条评论</span>
                         </div>
@@ -90,7 +111,7 @@
                               th:action="@{/posts/{id}/comments(id=${post.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <textarea class="ll-textarea" name="content" maxlength="500"
-                                      placeholder="写下你的评论，支持纯文本交流，最长 500 字。" required></textarea>
+                                      placeholder="写下你的补充、疑问或反馈，最长 500 字。" required></textarea>
                             <div class="ll-form-actions">
                                 <button class="ll-btn" type="submit">发布评论</button>
                                 <a class="ll-btn-secondary" href="/login">切换账号</a>
@@ -125,13 +146,20 @@
 
             <aside class="ll-stack">
                 <section class="ll-side-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">文章目录</h2>
+                    <div id="articleOutline" class="ll-outline-list">
+                        <div class="ll-outline-empty">如果正文包含标题，这里会自动生成目录。</div>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade">
                     <h2 class="ll-side-title">作者名片</h2>
                     <p class="ll-side-text"
                        th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这位作者还没有填写更详细的个人介绍。'}">
                         这位作者还没有填写更详细的个人介绍。
                     </p>
                     <div class="ll-link-group">
-                        <span class="ll-link-badge" th:text="${post.author.emailVerified ? '邮箱已验证' : '邮箱未验证'}">邮箱已验证</span>
+                        <span class="ll-link-badge">作者主页已开通</span>
                         <span class="ll-link-badge"
                               th:if="${post.author.qq != null and !#strings.isEmpty(post.author.qq)}"
                               th:text="${'QQ ' + post.author.qq}">QQ 123456</span>
@@ -164,5 +192,63 @@
         </div>
     </div>
 </main>
+
+<script>
+    const articleBody = document.querySelector('.ll-article-body');
+    const outlineContainer = document.getElementById('articleOutline');
+    const wordCountElement = document.getElementById('articleWordCount');
+    const headingCountElement = document.getElementById('articleHeadingCount');
+    const paragraphCountElement = document.getElementById('articleParagraphCount');
+    const readTimeElement = document.getElementById('articleReadTime');
+
+    function slugify(text, index) {
+        const normalized = (text || '')
+                .toLowerCase()
+                .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-');
+        return normalized || 'section-' + index;
+    }
+
+    function tokenize(text) {
+        return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || [];
+    }
+
+    function buildOutline() {
+        const headings = [...articleBody.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outlineContainer.innerHTML = '<div class="ll-outline-empty">这篇文章没有显式标题层级。</div>';
+            return;
+        }
+
+        outlineContainer.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) {
+                heading.id = slugify(heading.textContent, index);
+            }
+            const link = document.createElement('a');
+            link.href = '#' + heading.id;
+            link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
+            link.textContent = heading.textContent.trim();
+            outlineContainer.appendChild(link);
+        });
+    }
+
+    function updateArticleMetrics() {
+        const text = articleBody.textContent.trim();
+        const tokens = tokenize(text);
+        const paragraphs = [...articleBody.querySelectorAll('p')].filter(node => node.textContent.trim()).length;
+        const headings = articleBody.querySelectorAll('h1, h2, h3').length;
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+
+        wordCountElement.textContent = tokens.length.toLocaleString('zh-CN');
+        headingCountElement.textContent = headings;
+        paragraphCountElement.textContent = paragraphs;
+        readTimeElement.textContent = '约 ' + minutes + ' 分钟阅读';
+    }
+
+    buildOutline();
+    updateArticleMetrics();
+</script>
 </body>
 </html>

@@ -29,16 +29,16 @@
             <section class="ll-auth-side ll-fade">
                 <span class="ll-auth-kicker">Login</span>
                 <h1 class="ll-auth-title">登录后进入你的 Markdown 写作空间。</h1>
-                <p class="ll-auth-copy">账号启用前必须完成邮箱验证。登录后可以发布 Markdown 文章、管理个人空间和查看自己的创作列表。</p>
+                <p class="ll-auth-copy">登录后可以发布文章、管理个人空间，并维护自己的项目记录和创作列表。</p>
             </section>
 
             <section class="ll-auth-card ll-fade">
                 <span class="ll-auth-kicker">Sign In</span>
                 <h2 class="ll-side-title">欢迎回来</h2>
-                <p class="ll-side-text">使用已验证邮箱对应的账号登录。</p>
+                <p class="ll-side-text">使用注册后的账号直接登录。</p>
 
                 <div th:if="${successMessage}" class="ll-status ll-status--success"><span th:text="${successMessage}"></span></div>
-                <div th:if="${param.error}" class="ll-status ll-status--error">登录失败，请确认账号密码正确，并且邮箱已经完成验证。</div>
+                <div th:if="${param.error}" class="ll-status ll-status--error">登录失败，请确认账号和密码是否正确。</div>
                 <div th:if="${param.logout}" class="ll-status ll-status--success">你已退出登录。</div>
 
                 <form th:action="@{/login}" method="post">

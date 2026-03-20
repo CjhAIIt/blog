@@ -31,7 +31,7 @@
                 <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
                 <a class="ll-header-link" href="/login" sec:authorize="isAnonymous()">登录</a>
                 <a class="ll-header-link" href="/register" sec:authorize="isAnonymous()">注册</a>
-                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写博客</a>
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
                 <form class="ll-inline-form" th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button class="ll-header-link ll-button-reset" type="submit">退出</button>
@@ -62,11 +62,11 @@
 
         <section class="ll-page-head ll-fade">
             <div>
-                <h1 class="ll-page-title">欢迎来到实验室博客首页。</h1>
-                <p class="ll-page-desc">写文章时直接用 Markdown，发布后自动渲染。现在首页固定五个分类：最新、前后端、嵌入式、大数据、项目。</p>
+                <h1 class="ll-page-title">把实验、项目和思考整理成清晰的文章。</h1>
+                <p class="ll-page-desc">这里支持 Markdown 创作、分类归档和个人主页展示。写完后会自动渲染排版，并同步到首页与个人空间。</p>
             </div>
             <div class="ll-inline-actions">
-                <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">开始写博客</a>
+                <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">开始写文章</a>
                 <a class="ll-btn-secondary" href="/space" sec:authorize="isAuthenticated()">进入个人空间</a>
                 <a class="ll-btn-secondary" href="/register" sec:authorize="isAnonymous()">注册账号</a>
             </div>
@@ -94,7 +94,7 @@
 
         <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-fade">
             当前分类还没有文章。
-            <a href="/posts/new" sec:authorize="isAuthenticated()">写第一篇</a>
+            <a href="/posts/new" sec:authorize="isAuthenticated()">写第一篇文章</a>
         </div>
 
         <nav class="ll-pagination" th:if="${totalPages > 1}">

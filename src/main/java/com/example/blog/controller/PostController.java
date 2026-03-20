@@ -112,7 +112,7 @@ public class PostController {
         User author = userService.getByUsername(principal.getName());
         post.setAuthor(author);
         postService.save(post);
-        redirectAttributes.addFlashAttribute("message", "Markdown 文章发布成功");
+        redirectAttributes.addFlashAttribute("message", "文章已发布，已同步到首页和个人空间");
         return "redirect:/posts/" + post.getId();
     }
 
@@ -146,7 +146,7 @@ public class PostController {
         updatedPost.setCategory(post.getCategory());
         postService.save(updatedPost);
 
-        redirectAttributes.addFlashAttribute("message", "文章更新成功");
+        redirectAttributes.addFlashAttribute("message", "文章内容已更新");
         return "redirect:/posts/" + id;
     }
 
@@ -168,7 +168,7 @@ public class PostController {
         }
 
         postService.deleteById(id);
-        redirectAttributes.addFlashAttribute("message", "文章删除成功");
+        redirectAttributes.addFlashAttribute("message", "文章已删除");
         return "redirect:/space";
     }
 
@@ -208,7 +208,7 @@ public class PostController {
 
         User author = userService.getByUsername(principal.getName());
         commentService.save(post.get(), author, content);
-        redirectAttributes.addFlashAttribute("message", "评论发布成功");
+        redirectAttributes.addFlashAttribute("message", "评论已发布");
         return "redirect:/posts/" + id + "#comments";
     }
 }

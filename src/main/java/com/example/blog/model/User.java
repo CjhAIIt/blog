@@ -29,12 +29,6 @@ public class User implements UserDetails {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
-    @Column(name = "verification_code_hash")
-    private String verificationCodeHash;
-
-    @Column(name = "verification_expires_at")
-    private LocalDateTime verificationExpiresAt;
-
     @Column(columnDefinition = "TEXT")
     private String bio;
 
@@ -56,7 +50,7 @@ public class User implements UserDetails {
     public User() {
         this.createdAt = LocalDateTime.now();
         this.passwordUpdatedAt = LocalDateTime.now();
-        this.emailVerified = false;
+        this.emailVerified = true;
     }
 
     public User(String username, String password, String email) {
@@ -107,22 +101,6 @@ public class User implements UserDetails {
 
     public void setEmailVerified(boolean emailVerified) {
         this.emailVerified = emailVerified;
-    }
-
-    public String getVerificationCodeHash() {
-        return verificationCodeHash;
-    }
-
-    public void setVerificationCodeHash(String verificationCodeHash) {
-        this.verificationCodeHash = verificationCodeHash;
-    }
-
-    public LocalDateTime getVerificationExpiresAt() {
-        return verificationExpiresAt;
-    }
-
-    public void setVerificationExpiresAt(LocalDateTime verificationExpiresAt) {
-        this.verificationExpiresAt = verificationExpiresAt;
     }
 
     public String getBio() {
@@ -195,6 +173,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return emailVerified;
+        return true;
     }
 }

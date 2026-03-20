@@ -412,6 +412,10 @@ a {
 
 .ll-article-card {
     padding: 28px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
 }
 
 .ll-article-meta {
@@ -425,9 +429,11 @@ a {
 
 .ll-article-body {
     margin-top: 22px;
-    color: #374151;
-    font-size: 1.03rem;
-    line-height: 2;
+    color: #334155;
+    font-family: "Georgia", "Source Han Serif SC", "Songti SC", serif;
+    font-size: 1.06rem;
+    line-height: 2.02;
+    letter-spacing: 0.01em;
 }
 
 .ll-markdown > :first-child {
@@ -438,9 +444,10 @@ a {
 .ll-markdown h2,
 .ll-markdown h3,
 .ll-markdown h4 {
-    margin: 1.4em 0 0.7em;
+    margin: 1.55em 0 0.72em;
     color: #0f172a;
     line-height: 1.35;
+    font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
 }
 
 .ll-markdown p,
@@ -450,21 +457,63 @@ a {
     margin: 1em 0;
 }
 
+.ll-markdown h1 {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.ll-markdown h2 {
+    font-size: 1.55rem;
+}
+
+.ll-markdown h3 {
+    font-size: 1.24rem;
+}
+
 .ll-markdown a {
     color: #2563eb;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.15em;
+}
+
+.ll-markdown strong {
+    color: #0f172a;
+}
+
+.ll-markdown hr {
+    border: 0;
+    height: 1px;
+    margin: 2.2rem 0;
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0), rgba(148, 163, 184, 0.5), rgba(148, 163, 184, 0));
+}
+
+.ll-markdown ul,
+.ll-markdown ol {
+    padding-left: 1.4rem;
+}
+
+.ll-markdown li + li {
+    margin-top: 0.45rem;
+}
+
+.ll-markdown img {
+    max-width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
 }
 
 .ll-markdown pre {
     overflow: auto;
-    padding: 16px;
-    border-radius: 14px;
-    background: #0f172a;
+    padding: 18px 20px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
     color: #e2e8f0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .ll-markdown code {
-    padding: 0.15em 0.38em;
-    border-radius: 6px;
+    padding: 0.16em 0.42em;
+    border-radius: 8px;
     background: #eef2ff;
     font-size: 0.92em;
 }
@@ -480,7 +529,9 @@ a {
     margin: 1.2em 0;
     border-collapse: collapse;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
 }
 
 .ll-markdown th,
@@ -492,9 +543,10 @@ a {
 
 .ll-markdown blockquote {
     margin-left: 0;
-    padding: 14px 16px;
+    padding: 16px 18px;
     border-left: 4px solid #2563eb;
-    background: #eff6ff;
+    border-radius: 0 14px 14px 0;
+    background: linear-gradient(135deg, #eff6ff 0%, #f8fbff 100%);
     color: #334155;
 }
 
@@ -513,6 +565,7 @@ a {
     min-height: 320px;
     padding: 14px;
     resize: vertical;
+    line-height: 1.8;
 }
 
 .ll-select {
@@ -590,6 +643,10 @@ a {
 
 .ll-preview-surface {
     min-height: 320px;
+    max-height: 820px;
+    margin-top: 0;
+    overflow: auto;
+    padding-right: 8px;
 }
 
 .ll-profile-head {
@@ -653,6 +710,45 @@ a {
     background: radial-gradient(circle, rgba(14, 165, 233, 0.16), transparent 68%);
 }
 
+.ll-editor-metrics,
+.ll-article-snapshot {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.ll-metric-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    backdrop-filter: blur(10px);
+}
+
+.ll-metric-card strong {
+    font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
+    font-size: 1.5rem;
+    color: #0f172a;
+}
+
+.ll-metric-label {
+    color: #475467;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.ll-metric-note {
+    color: var(--ll-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
 .ll-editor-topline {
     display: flex;
     flex-wrap: wrap;
@@ -676,6 +772,7 @@ a {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;
     gap: 20px;
+    align-items: start;
 }
 
 .ll-editor-main {
@@ -695,6 +792,11 @@ a {
     border-radius: 20px;
     background: #fff;
     box-shadow: var(--ll-shadow);
+}
+
+.ll-editor-workspace {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .ll-editor-title-input {
@@ -734,10 +836,54 @@ a {
     font-size: 0.88rem;
 }
 
+.ll-editor-mode-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.ll-editor-mode-button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #475467;
+    cursor: pointer;
+    font: inherit;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ll-editor-mode-button.is-active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
 .ll-editor-panels {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
     gap: 18px;
+}
+
+.ll-editor-panels[data-mode="write"] {
+    grid-template-columns: 1fr;
+}
+
+.ll-editor-panels[data-mode="write"] .ll-editor-panel--preview {
+    display: none;
+}
+
+.ll-editor-panels[data-mode="preview"] {
+    grid-template-columns: 1fr;
+}
+
+.ll-editor-panels[data-mode="preview"] .ll-editor-panel--write {
+    display: none;
 }
 
 .ll-editor-panel {
@@ -748,6 +894,20 @@ a {
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 20px;
     background: #fff;
+}
+
+.ll-editor-textarea {
+    min-height: 620px;
+    border: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    font-size: 1rem;
+}
+
+.ll-editor-textarea:focus {
+    box-shadow: none;
 }
 
 .ll-editor-panel-head {
@@ -774,6 +934,7 @@ a {
     border-radius: 18px;
     background: #fff;
     box-shadow: var(--ll-shadow);
+    border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .ll-guide-card p {
@@ -790,6 +951,33 @@ a {
 
 .ll-guide-list li + li {
     margin-top: 10px;
+}
+
+.ll-guide-statlist {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.ll-guide-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border-radius: 16px;
+    background: #f8fafc;
+}
+
+.ll-guide-stat span {
+    color: var(--ll-muted);
+    font-size: 0.84rem;
+}
+
+.ll-guide-stat strong {
+    color: #0f172a;
+    font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
+    font-size: 1.1rem;
 }
 
 .ll-space-cover {
@@ -1048,6 +1236,45 @@ a {
     top: 128px;
 }
 
+.ll-outline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.ll-outline-link {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #334155;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.ll-outline-link:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+    transform: translateX(2px);
+}
+
+.ll-outline-link--level-2 {
+    margin-left: 10px;
+}
+
+.ll-outline-link--level-3 {
+    margin-left: 20px;
+}
+
+.ll-outline-empty,
+.ll-preview-placeholder {
+    padding: 16px;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: var(--ll-muted);
+    line-height: 1.75;
+}
+
 .ll-link-group {
     display: flex;
     flex-wrap: wrap;
@@ -1281,6 +1508,11 @@ a {
         grid-template-columns: 1fr;
     }
 
+    .ll-editor-metrics,
+    .ll-article-snapshot {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .ll-header-form {
         display: none;
     }
@@ -1323,6 +1555,11 @@ a {
         align-items: flex-start;
     }
 
+    .ll-editor-mode-switch {
+        width: 100%;
+        justify-content: space-between;
+    }
+
     .ll-author-strip .ll-inline-actions {
         margin-left: 0;
     }
@@ -1346,6 +1583,12 @@ a {
     }
 
     .ll-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ll-editor-metrics,
+    .ll-article-snapshot,
+    .ll-guide-statlist {
         grid-template-columns: 1fr;
     }
 

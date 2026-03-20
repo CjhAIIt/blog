@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         userService.findAll().forEach(existingUser -> {
-            if (!existingUser.isEmailVerified() && existingUser.getVerificationCodeHash() == null) {
+            if (!existingUser.isEmailVerified()) {
                 existingUser.setEmailVerified(true);
                 userService.save(existingUser);
             }
@@ -38,11 +38,11 @@ public class DataInitializer implements CommandLineRunner {
         });
 
         if (userService.findAll().isEmpty()) {
-            User admin = userService.createVerifiedUser("admin", "admin@example.com", "password");
+            User admin = userService.createUser("admin", "admin@example.com", "password");
             admin.setBio("默认管理员账号，用于初始化博客内容。");
             userService.updateProfile(admin, admin.getBio(), "10001", "https://github.com/CjhAIIt");
 
-            User user = userService.createVerifiedUser("user", "user@example.com", "password");
+            User user = userService.createUser("user", "user@example.com", "password");
             user.setBio("默认普通用户账号，可用于测试个人空间。");
             userService.updateProfile(user, user.getBio(), "10002", "https://github.com/CjhAIIt");
 
@@ -51,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
                     """
                     # 欢迎来到烂柯的博客
 
-                    这里现在支持 **Markdown** 写作，你可以像在 CSDN 编辑器里那样写标题、代码块和列表。
+                    这里现在支持 **Markdown** 写作、实时预览、评论互动和个人主页展示。
 
                     ```java
                     System.out.println("Hello Markdown");

@@ -20,7 +20,7 @@
                 <a class="ll-header-link" href="/about">关于</a>
             </nav>
             <div class="ll-header-actions">
-                <a class="ll-header-link" href="/posts/new" th:if="${isOwner}">写博客</a>
+                <a class="ll-header-link" href="/posts/new" th:if="${isOwner}">写文章</a>
                 <a class="ll-header-link" href="/space/edit" th:if="${isOwner}">编辑资料</a>
                 <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
             </div>
@@ -47,21 +47,21 @@
                 <div class="ll-space-summary">
                     <div class="ll-avatar-xl" th:text="${#strings.toUpperCase(#strings.substring(profileUser.username, 0, 1))}">L</div>
                     <div>
-                        <span class="ll-kicker">个人空间 / Creator Center</span>
+                        <span class="ll-kicker">个人主页 / Creator Space</span>
                         <h1 class="ll-space-title" th:text="${profileUser.username + ' 的创作主页'}">个人空间</h1>
                         <p class="ll-space-copy"
-                           th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里会展示个人简介、常用链接和创作动态。现在已经调整成更接近 CSDN 个人主页的结构。'}">
+                           th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里会展示个人简介、常用链接和最近的创作动态。'}">
                             这里会展示个人简介、常用链接和创作动态。
                         </p>
                         <div class="ll-space-statline">
                             <span class="ll-meta-pill" th:text="${#lists.size(posts) + ' 篇文章'}">0 篇文章</span>
-                            <span class="ll-meta-pill" th:text="${profileUser.emailVerified ? '邮箱已验证' : '邮箱未验证'}">邮箱已验证</span>
+                            <span class="ll-meta-pill">主页已开通</span>
                             <span class="ll-meta-pill" th:text="${'加入于 ' + #temporals.format(profileUser.createdAt, 'yyyy-MM-dd')}">加入于 2026-03-19</span>
                         </div>
                     </div>
                 </div>
                 <div class="ll-space-actions">
-                    <a class="ll-btn" href="/posts/new" th:if="${isOwner}">写新博客</a>
+                    <a class="ll-btn" href="/posts/new" th:if="${isOwner}">写新文章</a>
                     <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner}">编辑个人资料</a>
                     <a class="ll-btn-secondary"
                        th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}"
@@ -84,15 +84,15 @@
                     </h2>
                     <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(post.content, 180)}">文章摘要</p>
                     <div class="ll-feed-meta">
-                        <span>Markdown 创作</span>
-                        <span>已发布到站点首页</span>
+                        <span>Markdown 发布</span>
+                        <span>已同步到站点首页</span>
                         <a class="ll-feed-action" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
                     </div>
                 </article>
 
                 <div th:if="${#lists.isEmpty(posts)}" class="ll-empty">
                     这个空间还没有发布文章。
-                    <a href="/posts/new" th:if="${isOwner}">现在写第一篇</a>
+                    <a href="/posts/new" th:if="${isOwner}">现在写第一篇文章</a>
                 </div>
             </div>
 
@@ -104,7 +104,7 @@
                         这位博主还没有填写更详细的自我介绍。
                     </p>
                     <div class="ll-link-group">
-                        <span class="ll-link-badge" th:text="${profileUser.emailVerified ? '邮箱已验证' : '邮箱未验证'}">邮箱已验证</span>
+                        <span class="ll-link-badge">主页已开通</span>
                         <span class="ll-link-badge"
                               th:if="${profileUser.qq != null and !#strings.isEmpty(profileUser.qq)}"
                               th:text="${'QQ ' + profileUser.qq}">QQ 123456</span>
@@ -120,8 +120,8 @@
                     <h2 class="ll-side-title">创作概览</h2>
                     <ul class="ll-side-list">
                         <li th:text="${'原创文章：' + #lists.size(posts) + ' 篇'}">原创文章：0 篇</li>
-                        <li>写作模式：Markdown 双栏编辑</li>
-                        <li>主页风格：参考 CSDN 的个人空间信息流</li>
+                        <li>写作体验：双栏编辑、实时预览、本地草稿</li>
+                        <li>展示方式：时间线列表 + 分类归档</li>
                     </ul>
                 </section>
             </aside>
