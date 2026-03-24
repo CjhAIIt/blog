@@ -1,9 +1,14 @@
 package com.example.blog.service;
 
+import com.example.blog.dto.ContributionLeaderboardEntry;
 import com.example.blog.model.Post;
 import com.example.blog.model.PostCategory;
+import com.example.blog.model.RankingPeriod;
 import com.example.blog.model.User;
 import com.example.blog.repository.PostRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -61,6 +66,25 @@ public class PostService {
 
     public Post save(Post post) {
         return postRepository.save(post);
+    }
+
+    @Transactional
+    public Post likePost(Long id) {
+        if (postRepository.incrementLikeCount(id) == 0) {
+            throw new IllegalArgumentException("文章不存在");
+        }
+        return postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("文章不存在"));
+    }
+
+    public List<ContributionLeaderboardEntry> findContributionLeaderboard(RankingPeriod period, int limit) {
+        Pageable pageable = PageRequest.of(0, Math.max(1, limit));
+        return postRepository.findContributionLeaderboard(period.startAt(), pageable);
+    }
+
+    public List<Post> findLikeLeaderboard(RankingPeriod period, int limit) {
+        Pageable pageable = PageRequest.of(0, Math.max(1, limit));
+        return postRepository.findTopByLikesSince(period.startAt(), pageable);
     }
 
     public void deleteById(Long id) {

@@ -26,7 +26,7 @@
                     <button class="ll-search-submit" type="submit">搜索</button>
                 </form>
                 <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
-                <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
             </div>
         </header>
 
@@ -89,7 +89,7 @@
         <footer class="ll-footer">
             <span>© 2026 烂柯的博客</span>
             <span> · Search Results · </span>
-            <a href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">CjhAIIt</a>
+            <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
         </footer>
     </div>
 </main>

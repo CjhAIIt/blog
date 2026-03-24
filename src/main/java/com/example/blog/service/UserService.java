@@ -51,7 +51,8 @@ public class UserService implements UserDetailsService {
     }
 
     public User registerUser(String username, String email, String password) {
-        if (userRepository.existsByUsername(username)) {
+        String normalizedUsername = normalizeUsername(username);
+        if (userRepository.existsByUsername(normalizedUsername)) {
             throw new RuntimeException("用户名已存在");
         }
         if (userRepository.existsByEmail(email)) {
@@ -59,7 +60,7 @@ public class UserService implements UserDetailsService {
         }
 
         User user = new User();
-        user.setUsername(username.trim());
+        user.setUsername(normalizedUsername);
         user.setEmail(email.trim().toLowerCase());
         user.setPassword(passwordEncoder.encode(password));
         user.setEmailVerified(true);
@@ -68,18 +69,50 @@ public class UserService implements UserDetailsService {
 
     public User createUser(String username, String email, String rawPassword) {
         User user = new User();
-        user.setUsername(username);
+        user.setUsername(normalizeUsername(username));
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setEmailVerified(true);
         return userRepository.save(user);
     }
 
-    public void updateProfile(User user, String bio, String qq, String githubUrl) {
+    public void updateProfile(User user, String bio, String qq, String githubUrl, String personalBlogUrl) {
         user.setBio(StringUtils.hasText(bio) ? bio.trim() : null);
         user.setQq(normalizeQq(qq));
         user.setGithubUrl(normalizeGithubUrl(githubUrl));
+        user.setPersonalBlogUrl(normalizePersonalBlogUrl(personalBlogUrl));
         userRepository.save(user);
+    }
+
+    public User updateAccountProfile(User user,
+                                     String username,
+                                     String newPassword,
+                                     String bio,
+                                     String qq,
+                                     String githubUrl,
+                                     String personalBlogUrl) {
+        String normalizedUsername = normalizeUsername(username);
+        if (!normalizedUsername.equals(user.getUsername()) && userRepository.existsByUsername(normalizedUsername)) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
+
+        user.setUsername(normalizedUsername);
+        if (StringUtils.hasText(newPassword)) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+        }
+        user.setBio(StringUtils.hasText(bio) ? bio.trim() : null);
+        user.setQq(normalizeQq(qq));
+        user.setGithubUrl(normalizeGithubUrl(githubUrl));
+        user.setPersonalBlogUrl(normalizePersonalBlogUrl(personalBlogUrl));
+        return userRepository.save(user);
+    }
+
+    public boolean matchesPassword(String rawPassword, String encodedPassword) {
+        return StringUtils.hasText(rawPassword) && passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    public String normalizeUsername(String username) {
+        return StringUtils.hasText(username) ? username.trim() : "";
     }
 
     public String normalizeGithubUrl(String githubUrl) {
@@ -101,6 +134,17 @@ public class UserService implements UserDetailsService {
             return null;
         }
         return qq.trim();
+    }
+
+    public String normalizePersonalBlogUrl(String personalBlogUrl) {
+        if (!StringUtils.hasText(personalBlogUrl)) {
+            return null;
+        }
+        String value = personalBlogUrl.trim();
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            return "https://" + value.replaceFirst("^/+", "");
+        }
+        return value;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.example.blog.controller;
 
+import com.example.blog.model.RankingPeriod;
 import com.example.blog.model.Post;
 import com.example.blog.model.PostCategory;
 import com.example.blog.model.User;
@@ -32,9 +33,11 @@ public class MainController {
     @GetMapping("/")
     public String home(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "latest") String category,
+                       @RequestParam(defaultValue = "week") String rankPeriod,
                        Model model) {
         Pageable pageable = PageRequest.of(page, 6);
         Optional<PostCategory> selectedCategory = PostCategory.fromSlug(category);
+        RankingPeriod selectedRankingPeriod = RankingPeriod.fromSlug(rankPeriod);
         Page<Post> postsPage = selectedCategory
                 .map(postCategory -> postService.findByCategory(postCategory, pageable))
                 .orElseGet(() -> postService.findAll(pageable));
@@ -44,6 +47,10 @@ public class MainController {
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
+        model.addAttribute("selectedRankingPeriod", selectedRankingPeriod);
+        model.addAttribute("rankingPeriods", RankingPeriod.values());
+        model.addAttribute("contributionLeaderboard", postService.findContributionLeaderboard(selectedRankingPeriod, 8));
+        model.addAttribute("likeLeaderboard", postService.findLikeLeaderboard(selectedRankingPeriod, 8));
         return "index";
     }
 

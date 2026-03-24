@@ -33,8 +33,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.POST, "/posts/*/like").permitAll()
                         .requestMatchers(HttpMethod.POST, "/posts", "/posts/update/**", "/posts/delete/**", "/posts/preview", "/posts/*/comments", "/space/edit").authenticated()
-                        .requestMatchers("/space", "/space/edit", "/posts/new", "/posts/edit/**").authenticated()
+                        .requestMatchers("/space", "/space/edit", "/space/export", "/space/export/download", "/posts/new", "/posts/edit/**").authenticated()
                         .requestMatchers("/", "/about", "/search", "/css/**", "/js/**", "/images/**", "/register", "/login", "/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/search").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()

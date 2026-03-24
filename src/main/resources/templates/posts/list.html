@@ -26,7 +26,7 @@
                     <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章" th:value="${keyword}">
                     <button class="ll-search-submit" type="submit">搜索</button>
                 </form>
-                <a class="ll-header-link" href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
                 <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
             </div>
         </header>
@@ -87,7 +87,7 @@
         <footer class="ll-footer">
             <span>© 2026 烂柯的博客</span>
             <span> · Article List · </span>
-            <a href="https://github.com/CjhAIIt" target="_blank" rel="noreferrer">CjhAIIt</a>
+            <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
         </footer>
     </div>
 </main>

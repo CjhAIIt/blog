@@ -38,6 +38,9 @@ public class User implements UserDetails {
     @Column(name = "github_url_encrypted")
     private String githubUrlEncrypted;
 
+    @Column(name = "personal_blog_url")
+    private String personalBlogUrl;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -125,6 +128,14 @@ public class User implements UserDetails {
 
     public void setGithubUrl(String githubUrl) {
         this.githubUrlEncrypted = SensitiveFieldCrypto.encrypt(githubUrl);
+    }
+
+    public String getPersonalBlogUrl() {
+        return personalBlogUrl;
+    }
+
+    public void setPersonalBlogUrl(String personalBlogUrl) {
+        this.personalBlogUrl = personalBlogUrl;
     }
 
     public LocalDateTime getCreatedAt() {

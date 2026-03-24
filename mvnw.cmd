@@ -48,7 +48,7 @@ set CLASSPATH=%APP_HOME%\.mvn\wrapper\maven-wrapper.jar
 
 
 @rem Execute Maven
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MAVEN_OPTS% -classpath "%CLASSPATH%" org.apache.maven.wrapper.MavenWrapperMain %MAVEN_CMD_LINE_ARGS%
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MAVEN_OPTS% -Dmaven.multiModuleProjectDirectory=%APP_HOME% -classpath "%CLASSPATH%" org.apache.maven.wrapper.MavenWrapperMain %*
 
 :end
 @rem End local scope for the variables with windows NT shell

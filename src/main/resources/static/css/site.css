@@ -352,6 +352,133 @@ a {
     line-height: 1.8;
 }
 
+.ll-rank-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.ll-rank-header,
+.ll-rank-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ll-rank-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.ll-rank-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    color: var(--ll-muted);
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.ll-rank-tab.is-active,
+.ll-rank-tab:hover {
+    background: #fff;
+    color: var(--ll-text);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.ll-rank-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.ll-rank-card {
+    padding: 22px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+    box-shadow: var(--ll-shadow);
+}
+
+.ll-rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.ll-rank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    text-decoration: none;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ll-rank-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+}
+
+.ll-rank-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.ll-rank-index {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    color: #fff;
+    font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ll-rank-title {
+    color: #0f172a;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.ll-rank-subtitle {
+    margin-top: 4px;
+    color: var(--ll-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.ll-rank-value {
+    color: #1d4ed8;
+    font-family: "Bahnschrift", "Trebuchet MS", sans-serif;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.ll-rank-empty {
+    margin-top: 18px;
+}
+
 .ll-content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;
@@ -1097,6 +1224,28 @@ a {
     color: #fff;
 }
 
+.ll-like-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    box-shadow: 0 12px 24px rgba(239, 68, 68, 0.2);
+}
+
+.ll-like-button.is-disabled,
+.ll-like-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+    box-shadow: none;
+}
+
 .ll-space-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;
@@ -1499,6 +1648,7 @@ a {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .ll-rank-grid,
     .ll-content-grid,
     .ll-auth-layout,
     .ll-editor-grid,
@@ -1545,6 +1695,11 @@ a {
     }
 
     .ll-page-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ll-rank-header {
         align-items: flex-start;
         flex-direction: column;
     }

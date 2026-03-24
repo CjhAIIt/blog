@@ -31,9 +31,13 @@ public class Post {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "like_count")
+    private Integer likeCount;
+
     public Post() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.likeCount = 0;
     }
 
     public Post(String title, String content, PostCategory category, User author) {
@@ -106,6 +110,14 @@ public class Post {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public int getLikeCount() {
+        return likeCount == null ? 0 : likeCount;
+    }
+
+    public void setLikeCount(Integer likeCount) {
+        this.likeCount = likeCount == null ? 0 : likeCount;
     }
 
     @PreUpdate

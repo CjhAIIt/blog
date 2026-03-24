@@ -40,11 +40,11 @@ public class DataInitializer implements CommandLineRunner {
         if (userService.findAll().isEmpty()) {
             User admin = userService.createUser("admin", "admin@example.com", "password");
             admin.setBio("默认管理员账号，用于初始化博客内容。");
-            userService.updateProfile(admin, admin.getBio(), "10001", "https://github.com/CjhAIIt");
+            userService.updateProfile(admin, admin.getBio(), "10001", "https://github.com/CjhAIIt", null);
 
             User user = userService.createUser("user", "user@example.com", "password");
             user.setBio("默认普通用户账号，可用于测试个人空间。");
-            userService.updateProfile(user, user.getBio(), "10002", "https://github.com/CjhAIIt");
+            userService.updateProfile(user, user.getBio(), "10002", "https://github.com/CjhAIIt", null);
 
             Post welcomePost = postService.save(new Post(
                     "欢迎来到烂柯的博客",
@@ -60,8 +60,10 @@ public class DataInitializer implements CommandLineRunner {
                     PostCategory.PROJECT,
                     admin
             ));
+            welcomePost.setLikeCount(12);
+            postService.save(welcomePost);
 
-            postService.save(new Post(
+            Post springBootPost = postService.save(new Post(
                     "Spring Boot 入门记录",
                     """
                     ## 为什么选择 Spring Boot
@@ -73,8 +75,10 @@ public class DataInitializer implements CommandLineRunner {
                     PostCategory.FRONTEND_BACKEND,
                     admin
             ));
+            springBootPost.setLikeCount(8);
+            postService.save(springBootPost);
 
-            postService.save(new Post(
+            Post embeddedPost = postService.save(new Post(
                     "嵌入式学习清单",
                     """
                     ## 本周计划
@@ -86,6 +90,8 @@ public class DataInitializer implements CommandLineRunner {
                     PostCategory.EMBEDDED,
                     user
             ));
+            embeddedPost.setLikeCount(5);
+            postService.save(embeddedPost);
 
             commentService.save(welcomePost, user, "这一版支持 Markdown 和评论区了，整体比之前完整很多。");
         }

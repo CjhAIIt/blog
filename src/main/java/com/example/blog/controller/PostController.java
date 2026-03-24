@@ -7,6 +7,7 @@ import com.example.blog.service.CommentService;
 import com.example.blog.service.MarkdownService;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,12 +17,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/posts")
 public class PostController {
+    private static final String LIKED_POST_IDS_SESSION_KEY = "likedPostIds";
+
     private final PostService postService;
     private final UserService userService;
     private final MarkdownService markdownService;
@@ -46,7 +51,11 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public String viewPost(@PathVariable Long id, Model model, Principal principal, RedirectAttributes redirectAttributes) {
+    public String viewPost(@PathVariable Long id,
+                           Model model,
+                           Principal principal,
+                           RedirectAttributes redirectAttributes,
+                           HttpSession session) {
         Optional<Post> post = postService.findById(id);
         if (post.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "文章不存在");
@@ -59,6 +68,7 @@ public class PostController {
         model.addAttribute("canManage", principal != null && postService.canManage(currentPost, principal.getName()));
         model.addAttribute("comments", commentService.findByPostId(currentPost.getId()));
         model.addAttribute("commentCount", commentService.countByPostId(currentPost.getId()));
+        model.addAttribute("likedByCurrentSession", getLikedPostIds(session).contains(id));
         model.addAttribute("selectedCategory", currentPost.getCategorySlug());
         return "posts/view";
     }
@@ -210,5 +220,42 @@ public class PostController {
         commentService.save(post.get(), author, content);
         redirectAttributes.addFlashAttribute("message", "评论已发布");
         return "redirect:/posts/" + id + "#comments";
+    }
+
+    @PostMapping("/{id}/like")
+    public String likePost(@PathVariable Long id,
+                           HttpSession session,
+                           RedirectAttributes redirectAttributes) {
+        Optional<Post> post = postService.findById(id);
+        if (post.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "文章不存在");
+            return "redirect:/posts";
+        }
+
+        Set<Long> likedPostIds = getLikedPostIds(session);
+        if (likedPostIds.contains(id)) {
+            redirectAttributes.addFlashAttribute("error", "你已经给这篇文章点过赞了");
+            return "redirect:/posts/" + id;
+        }
+
+        Post likedPost = postService.likePost(id);
+        likedPostIds.add(id);
+        session.setAttribute(LIKED_POST_IDS_SESSION_KEY, likedPostIds);
+        redirectAttributes.addFlashAttribute("message", "点赞成功，当前点赞数为 " + likedPost.getLikeCount());
+        return "redirect:/posts/" + id;
+    }
+
+    private Set<Long> getLikedPostIds(HttpSession session) {
+        Object likedPostIds = session.getAttribute(LIKED_POST_IDS_SESSION_KEY);
+        if (likedPostIds instanceof Set<?> likedSet) {
+            Set<Long> normalizedIds = new HashSet<>();
+            for (Object value : likedSet) {
+                if (value instanceof Number numberValue) {
+                    normalizedIds.add(numberValue.longValue());
+                }
+            }
+            return normalizedIds;
+        }
+        return new HashSet<>();
     }
 }
