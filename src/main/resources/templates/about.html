@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/about">关于</a>
+            </nav>
+        </header>
+        <div class="ll-category-row">
+            <nav class="ll-category-links">
+                <a class="ll-category-link" href="/">最新</a>
+                <a class="ll-category-link" href="/?category=frontend-backend">前后端</a>
+                <a class="ll-category-link" href="/?category=embedded">嵌入式</a>
+                <a class="ll-category-link" href="/?category=big-data">大数据</a>
+                <a class="ll-category-link" href="/?category=project">项目</a>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-page-head ll-fade">
+            <div>
+                <h1 class="ll-page-title">关于这个博客</h1>
+                <p class="ll-page-desc">这是一个基于 Spring Boot + Thymeleaf 的个人写作站点，现在支持 Markdown 创作、分类归档、个人空间、资料加密和个人博客迁移导出。</p>
+            </div>
+        </section>
+
+        <div class="ll-content-grid">
+            <div class="ll-stack">
+                <section class="ll-section-card ll-fade">
+                    <h2 class="ll-section-title">当前能力</h2>
+                    <ul class="ll-side-list">
+                        <li>编辑器支持 Markdown、实时预览、文章大纲和本地草稿。</li>
+                        <li>首页固定五个分类：最新、前后端、嵌入式、大数据、项目。</li>
+                        <li>每个注册用户都有自己的个人空间和创作列表。</li>
+                        <li>每个成员都可以把自己的文章一键导出为可直接部署到 GitHub Pages 的静态博客包。</li>
+                        <li>注册完成后即可直接登录并开始创作。</li>
+                    </ul>
+                </section>
+
+                <section class="ll-section-card ll-fade">
+                    <h2 class="ll-section-title">安全处理</h2>
+                    <ul class="ll-side-list">
+                        <li>登录密码使用 BCrypt 加密存储。</li>
+                        <li>QQ 和 GitHub 主页链接以 AES 方式加密后入库。</li>
+                        <li>个人资料编辑、文章修改和删除都带权限限制。</li>
+                        <li>文章编辑、删除和个人资料修改都收到了权限限制。</li>
+                    </ul>
+                </section>
+            </div>
+
+            <aside class="ll-stack">
+                <section class="ll-side-card ll-fade">
+                    <h2 class="ll-side-title">开源与迁移</h2>
+                    <p class="ll-side-text">站点保留源码仓库入口，毕业后也可以把自己的文章安全迁移到个人博客。</p>
+                    <div class="ll-inline-actions">
+                        <a class="ll-side-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">源码仓库</a>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+</body>
+</html>

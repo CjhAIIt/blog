@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导出个人博客 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/space/edit">编辑资料</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">源码仓库</a>
+            </nav>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-section-card ll-fade">
+            <span class="ll-kicker">Portable Export / Graduation Migration</span>
+            <h1 class="ll-page-title">导出到个人博客</h1>
+            <p class="ll-page-desc">下载后会得到一个 ZIP，里面包含可直接部署到 GitHub Pages 的静态博客页面、原始 Markdown 和元数据。成员毕业后可以直接把自己的文章带走，不依赖实验室内网。</p>
+            <div class="ll-inline-actions">
+                <a class="ll-btn" href="/space/export/download">下载导出包</a>
+                <a class="ll-btn-secondary" href="/space/edit">完善个人资料</a>
+                <a class="ll-btn-secondary" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">查看项目源码</a>
+            </div>
+        </section>
+
+        <div class="ll-content-grid ll-fade">
+            <div class="ll-stack">
+                <section class="ll-section-card">
+                    <h2 class="ll-section-title">导出包包含什么</h2>
+                    <ul class="ll-side-list">
+                        <li>静态首页 `index.html`，上传到 GitHub 仓库即可作为个人博客首页。</li>
+                        <li>每篇文章对应的 `posts/*.html` 页面，可直接访问。</li>
+                        <li>`markdown/*.md` 原始 Markdown 文件，方便后续迁移到 Hexo、Hugo、VuePress 等系统。</li>
+                        <li>`metadata/profile.json` 和 `metadata/posts.json`，方便做二次导入。</li>
+                        <li>导出包不包含密码、邮箱、评论和其他成员的数据。</li>
+                    </ul>
+                </section>
+
+                <section class="ll-section-card">
+                    <h2 class="ll-section-title">推荐迁移步骤</h2>
+                    <ul class="ll-side-list">
+                        <li>先在 GitHub 创建个人博客仓库，例如 `username.github.io`。</li>
+                        <li>下载并解压当前导出包，把全部文件放到仓库根目录。</li>
+                        <li>在 GitHub Pages 中启用 `main` 分支根目录发布。</li>
+                        <li>如果你未来换博客框架，直接继续使用导出的 Markdown 和元数据即可。</li>
+                    </ul>
+                </section>
+            </div>
+
+            <aside class="ll-stack">
+                <section class="ll-side-card is-sticky">
+                    <h2 class="ll-side-title">当前导出配置</h2>
+                    <p class="ll-side-text">导出只会打包你自己名下的文章和公开资料。</p>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge" th:text="${#lists.size(exportPosts) + ' 篇文章'}">0 篇文章</span>
+                        <span class="ll-link-badge" th:text="${currentUser.username}">username</span>
+                        <a class="ll-link-badge"
+                           th:if="${currentUser.githubUrl != null and !#strings.isEmpty(currentUser.githubUrl)}"
+                           th:href="${currentUser.githubUrl}"
+                           target="_blank"
+                           rel="noreferrer">GitHub 主页</a>
+                        <a class="ll-link-badge"
+                           th:if="${currentUser.personalBlogUrl != null and !#strings.isEmpty(currentUser.personalBlogUrl)}"
+                           th:href="${currentUser.personalBlogUrl}"
+                           target="_blank"
+                           rel="noreferrer">个人博客地址</a>
+                        <a class="ll-link-badge" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                    </div>
+                    <p class="ll-form-note" th:if="${currentUser.personalBlogUrl == null or #strings.isEmpty(currentUser.personalBlogUrl)}">
+                        还没有填写个人博客地址，建议先在“编辑资料”中补充，导出说明会一起带上该地址。
+                    </p>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+</body>
+</html>

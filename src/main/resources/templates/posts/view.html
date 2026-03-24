@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${post.title + ' - 烂柯的博客'}">文章详情 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page" th:style="${'--ll-article-font:' + post.editorFont.cssStack}">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" th:href="@{/users/{username}(username=${post.author.username})}">作者空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" th:href="@{/posts/edit/{id}(id=${post.id})}" th:if="${canManage}">编辑文章</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+        <div class="ll-status ll-status--warning" th:if="${isDraftPreview}">这是草稿预览页，仅作者本人可见。</div>
+
+        <section class="ll-article-hero ll-fade">
+            <div class="ll-article-cover">
+                <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+            </div>
+            <div class="ll-feed-top">
+                <span class="ll-tag" th:text="${post.categoryDisplayName}">项目</span>
+                <div class="ll-inline-actions">
+                    <span class="ll-meta-pill" id="articleReadTime">约 1 分钟阅读</span>
+                    <span class="ll-meta-pill" th:text="${post.likeCount + ' 次点赞'}">0 次点赞</span>
+                    <span class="ll-meta-pill" th:text="${commentCount + ' 条评论'}">0 条评论</span>
+                    <span class="ll-meta-pill" th:text="${post.editorFont.label}">鸿蒙黑体</span>
+                </div>
+            </div>
+            <h1 class="ll-page-title" th:text="${post.title}">文章标题</h1>
+            <div class="ll-author-strip">
+                <img class="ll-avatar-photo ll-avatar-photo--md" th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}">
+                <div class="ll-author-copy">
+                    <a class="ll-author-name"
+                       th:href="@{/users/{username}(username=${post.author.username})}"
+                       th:text="${post.author.username}">作者</a>
+                    <div class="ll-article-meta">
+                        <span th:text="${'发布于 ' + #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">发布于 2026-03-19 21:00</span>
+                        <span class="ll-dot"></span>
+                        <span th:text="${post.statusDisplayName}">已发布</span>
+                        <span class="ll-dot"></span>
+                        <span>支持封面与字体展示</span>
+                    </div>
+                </div>
+                <div class="ll-inline-actions">
+                    <form class="ll-inline-form" th:if="${!isDraftPreview}" th:action="@{/posts/{id}/like(id=${post.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button class="ll-like-button"
+                                type="submit"
+                                th:disabled="${likedByCurrentSession}"
+                                th:classappend="${likedByCurrentSession ? ' is-disabled' : ''}">
+                            <span th:text="${likedByCurrentSession ? '已点赞' : '点赞文章'}">点赞文章</span>
+                            <strong th:text="${post.likeCount + ' 赞'}">0 赞</strong>
+                        </button>
+                    </form>
+                    <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">作者空间</a>
+                    <a class="ll-btn" th:href="@{/posts/edit/{id}(id=${post.id})}" th:if="${canManage}">编辑文章</a>
+                </div>
+            </div>
+
+            <div class="ll-article-snapshot">
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">累计点赞</span>
+                    <strong th:text="${post.likeCount}">0</strong>
+                    <span class="ll-metric-note">热度排行会实时刷新</span>
+                </article>
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">内容长度</span>
+                    <strong id="articleWordCount">0</strong>
+                    <span class="ll-metric-note">正文词元数</span>
+                </article>
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">标题数量</span>
+                    <strong id="articleHeadingCount">0</strong>
+                    <span class="ll-metric-note">便于快速浏览结构</span>
+                </article>
+                <article class="ll-metric-card">
+                    <span class="ll-metric-label">段落数量</span>
+                    <strong id="articleParagraphCount">0</strong>
+                    <span class="ll-metric-note">适合检查篇幅密度</span>
+                </article>
+            </div>
+        </section>
+
+        <div class="ll-content-grid">
+            <div class="ll-stack">
+                <article class="ll-article-card ll-fade">
+                    <div class="ll-article-body ll-markdown" th:utext="${renderedContent}"></div>
+                </article>
+
+                <section class="ll-comment-section ll-fade" id="comments" th:if="${!isDraftPreview}">
+                    <div class="ll-comment-card">
+                        <div class="ll-comment-head">
+                            <div>
+                                <div class="ll-side-title">评论区</div>
+                                <div class="ll-editor-caption">欢迎补充实践经验、指出问题或继续讨论文中的方案。</div>
+                            </div>
+                            <span class="ll-meta-pill" th:text="${commentCount + ' 条评论'}">0 条评论</span>
+                        </div>
+
+                        <form class="ll-comment-form" sec:authorize="isAuthenticated()"
+                              th:action="@{/posts/{id}/comments(id=${post.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <textarea class="ll-textarea" name="content" maxlength="500"
+                                      placeholder="写下你的补充、疑问或反馈，最长 500 字。" required></textarea>
+                            <div class="ll-form-actions">
+                                <button class="ll-btn" type="submit">发布评论</button>
+                                <a class="ll-btn-secondary" href="/login">切换账号</a>
+                            </div>
+                        </form>
+
+                        <div class="ll-empty ll-comment-empty" sec:authorize="!isAuthenticated()">
+                            登录后即可参与评论。
+                            <a href="/login">去登录</a>
+                        </div>
+                    </div>
+
+                    <div class="ll-comment-list" th:if="${!#lists.isEmpty(comments)}">
+                        <article class="ll-comment-item" th:each="comment : ${comments}">
+                            <img class="ll-avatar-photo ll-avatar-photo--sm" th:src="${comment.author.displayAvatarUrl}" th:alt="${comment.author.username}">
+                            <div>
+                                <div class="ll-comment-meta">
+                                    <span class="ll-comment-author" th:text="${comment.author.username}">用户名</span>
+                                    <span th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-03-19 21:20</span>
+                                </div>
+                                <div class="ll-comment-text" th:text="${comment.content}">评论内容</div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="ll-empty ll-comment-empty" th:if="${#lists.isEmpty(comments)}">
+                        还没有评论，欢迎留下第一条交流内容。
+                    </div>
+                </section>
+            </div>
+
+            <aside class="ll-stack">
+                <section class="ll-side-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">文章目录</h2>
+                    <div id="articleOutline" class="ll-outline-list">
+                        <div class="ll-outline-empty">如果正文包含标题，这里会自动生成目录。</div>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade">
+                    <h2 class="ll-side-title">作者名片</h2>
+                    <div class="ll-profile-inline">
+                        <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}">
+                        <div>
+                            <div class="ll-rank-title" th:text="${post.author.username}">作者</div>
+                            <p class="ll-side-text"
+                               th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这位作者还没有填写更详细的个人介绍。'}">
+                                这位作者还没有填写更详细的个人介绍。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge">个人主页已开通</span>
+                        <span class="ll-link-badge"
+                              th:if="${post.author.qq != null and !#strings.isEmpty(post.author.qq)}"
+                              th:text="${'QQ ' + post.author.qq}">QQ 123456</span>
+                        <a class="ll-link-badge"
+                           th:if="${post.author.githubUrl != null and !#strings.isEmpty(post.author.githubUrl)}"
+                           th:href="${post.author.githubUrl}"
+                           target="_blank"
+                           rel="noreferrer">GitHub 主页</a>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade">
+                    <h2 class="ll-side-title">文章信息</h2>
+                    <ul class="ll-side-list">
+                        <li th:text="${'所属分类：' + post.categoryDisplayName}">所属分类：项目</li>
+                        <li th:text="${'发布时间：' + #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">发布时间：2026-03-19 21:00</li>
+                        <li th:text="${'点赞数量：' + post.likeCount + ' 次'}">点赞数量：0 次</li>
+                        <li th:text="${'展示字体：' + post.editorFont.label}">展示字体：鸿蒙黑体</li>
+                    </ul>
+                    <div class="ll-form-actions">
+                        <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">查看作者主页</a>
+                    </div>
+                    <form class="ll-inline-form" th:if="${canManage}" th:action="@{/posts/delete/{id}(id=${post.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="ll-form-actions">
+                            <button class="ll-btn-secondary" type="submit" onclick="return confirm('确定要删除这篇文章吗？')">删除文章</button>
+                        </div>
+                    </form>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<script>
+    const articleBody = document.querySelector('.ll-article-body');
+    const outlineContainer = document.getElementById('articleOutline');
+    const wordCountElement = document.getElementById('articleWordCount');
+    const headingCountElement = document.getElementById('articleHeadingCount');
+    const paragraphCountElement = document.getElementById('articleParagraphCount');
+    const readTimeElement = document.getElementById('articleReadTime');
+
+    function slugify(text, index) {
+        const normalized = (text || '')
+            .toLowerCase()
+            .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+        return normalized || 'section-' + index;
+    }
+
+    function tokenize(text) {
+        return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || [];
+    }
+
+    function buildOutline() {
+        const headings = [...articleBody.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outlineContainer.innerHTML = '<div class="ll-outline-empty">这篇文章没有显式标题层级。</div>';
+            return;
+        }
+
+        outlineContainer.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) {
+                heading.id = slugify(heading.textContent, index);
+            }
+            const link = document.createElement('a');
+            link.href = '#' + heading.id;
+            link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
+            link.textContent = heading.textContent.trim();
+            outlineContainer.appendChild(link);
+        });
+    }
+
+    function updateArticleMetrics() {
+        const text = articleBody.textContent.trim();
+        const tokens = tokenize(text);
+        const paragraphs = [...articleBody.querySelectorAll('p')].filter(node => node.textContent.trim()).length;
+        const headings = articleBody.querySelectorAll('h1, h2, h3').length;
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+
+        wordCountElement.textContent = tokens.length.toLocaleString('zh-CN');
+        headingCountElement.textContent = headings;
+        paragraphCountElement.textContent = paragraphs;
+        readTimeElement.textContent = '约 ' + minutes + ' 分钟阅读';
+    }
+
+    buildOutline();
+    updateArticleMetrics();
+</script>
+</body>
+</html>

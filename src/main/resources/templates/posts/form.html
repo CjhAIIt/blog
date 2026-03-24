@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${(post.id == null ? '写文章' : '编辑文章') + ' - 烂柯的博客'}">写文章 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/space/drafts">草稿箱</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/space/edit">编辑资料</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <form th:object="${post}"
+              th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}"
+              method="post"
+              enctype="multipart/form-data"
+              class="ll-editor-shell"
+              th:attr="data-local-draft-key=${editorLocalDraftKey}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <section class="ll-editor-hero ll-fade">
+                <div class="ll-editor-topline">
+                    <span class="ll-kicker" th:text="${post.id == null ? '写作台 / Draft Studio' : '写作台 / Editing Session'}">写作台 / Draft Studio</span>
+                    <div class="ll-inline-actions">
+                        <span class="ll-toolbar-chip">服务器草稿箱</span>
+                        <span class="ll-toolbar-chip">实时预览</span>
+                        <span class="ll-toolbar-chip">十种字体</span>
+                        <span class="ll-toolbar-chip">封面上传</span>
+                    </div>
+                </div>
+                <h1 class="ll-space-title" th:text="${post.id == null ? '写一篇结构清楚、封面完整、可直接发布的 Markdown 博客' : '继续完善这篇文章的封面、字体与内容结构'}">写一篇结构清楚、封面完整、可直接发布的 Markdown 博客</h1>
+                <p class="ll-space-copy">
+                    这一版编辑器把草稿箱、字体选择、封面上传和 Markdown 导入放到一起。临时内容会保存在本地恢复点，点击“保存草稿”后会进入服务器草稿箱，不会因为刷新丢失。
+                </p>
+
+                <div class="ll-editor-metrics">
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">内容长度</span>
+                        <strong id="editorWordCount">0</strong>
+                        <span class="ll-metric-note">按中英文混合词元统计</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">预计阅读</span>
+                        <strong id="editorReadingMinutes">1 分钟</strong>
+                        <span class="ll-metric-note">帮助控制篇幅节奏</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">标题层级</span>
+                        <strong id="editorHeadingCount">0</strong>
+                        <span class="ll-metric-note">建议至少准备 2 个小节</span>
+                    </article>
+                    <article class="ll-metric-card">
+                        <span class="ll-metric-label">本地恢复点</span>
+                        <strong id="editorDraftState">未保存</strong>
+                        <span class="ll-metric-note">
+                            浏览器缓存 + 服务器草稿双保险
+                            <button type="button" class="ll-link-button" id="restoreLocalDraftButton" hidden>恢复本地内容</button>
+                        </span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="ll-editor-stage ll-fade">
+                <div class="ll-editor-main">
+                    <section class="ll-editor-card">
+                        <div class="ll-editor-panel-head">
+                            <div>
+                                <div class="ll-side-title">文章标题</div>
+                                <div class="ll-editor-caption">标题建议直接说明问题、结论或方案，不要只写“记录一下”。</div>
+                            </div>
+                            <span class="ll-meta-pill" th:text="${post.id == null ? '新建文章' : post.statusDisplayName}">新建文章</span>
+                        </div>
+                        <input class="ll-editor-title-input" type="text" id="title" th:field="*{title}" placeholder="例如：Spring Boot + MySQL 博客改造记录">
+                    </section>
+
+                    <section class="ll-editor-card">
+                        <div class="ll-editor-panel-head">
+                            <div>
+                                <div class="ll-side-title">发布设置</div>
+                                <div class="ll-editor-caption">分类、字体和封面都会直接影响博客的最终展示效果。</div>
+                            </div>
+                        </div>
+                        <div class="ll-settings-grid">
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="category">文章分类</label>
+                                <select class="ll-select" id="category" th:field="*{category}">
+                                    <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+                                </select>
+                            </div>
+
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="fontKey">展示字体</label>
+                                <select class="ll-select" id="fontKey" th:field="*{fontKey}">
+                                    <option th:each="font : ${editorFonts}"
+                                            th:value="${font.key}"
+                                            th:text="${font.label}"
+                                            th:attr="data-font-stack=${font.cssStack}">鸿蒙黑体</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="ll-upload-box">
+                            <div class="ll-upload-preview ll-upload-preview--cover">
+                                <img id="coverPreview" th:src="${post.displayCoverUrl}" alt="文章封面预览">
+                            </div>
+                            <div class="ll-upload-fields">
+                                <label class="ll-form-label" for="coverFile">文章封面</label>
+                                <input class="ll-input" type="file" id="coverFile" name="coverFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                                <label class="ll-checkbox">
+                                    <input type="checkbox" name="useDefaultCover" value="true">
+                                    <span>恢复默认封面</span>
+                                </label>
+                                <p class="ll-form-note">支持 JPG、PNG、WEBP、GIF。没有上传时会使用默认封面图。</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="ll-editor-card ll-editor-workspace" id="editorSurface">
+                        <div class="ll-editor-panel-head">
+                            <div>
+                                <div class="ll-side-title">正文创作区</div>
+                                <div class="ll-editor-caption">参考主流 Markdown 编辑器的双栏模式，左侧写作，右侧实时预览和目录联动。</div>
+                            </div>
+                            <div class="ll-editor-mode-switch">
+                                <button type="button" class="ll-editor-mode-button is-active" data-mode="split">分栏</button>
+                                <button type="button" class="ll-editor-mode-button" data-mode="write">专注写作</button>
+                                <button type="button" class="ll-editor-mode-button" data-mode="preview">专注预览</button>
+                            </div>
+                        </div>
+
+                        <div class="ll-editor-toolbar">
+                            <button type="button" data-command="h1">H1</button>
+                            <button type="button" data-command="h2">H2</button>
+                            <button type="button" data-command="bold">加粗</button>
+                            <button type="button" data-command="link">链接</button>
+                            <button type="button" data-command="quote">引用</button>
+                            <button type="button" data-command="list">列表</button>
+                            <button type="button" data-command="task">任务</button>
+                            <button type="button" data-command="code">代码块</button>
+                            <button type="button" data-command="table">表格</button>
+                            <button type="button" data-command="image">图片语法</button>
+                        </div>
+
+                        <div id="editorPanels" class="ll-editor-panels" data-mode="split">
+                            <div class="ll-editor-panel ll-editor-panel--write">
+                                <div class="ll-editor-panel-head">
+                                    <div>
+                                        <div class="ll-side-title">编辑区</div>
+                                        <div class="ll-editor-caption">支持 `Tab` 缩进、`Ctrl/Cmd + Enter` 快速提交。</div>
+                                    </div>
+                                    <span class="ll-meta-pill" id="editorLineCount">0 行</span>
+                                </div>
+                                <textarea class="ll-textarea ll-editor-textarea" id="content" th:field="*{content}" placeholder="先写背景，再写问题、过程、结果和复盘。"></textarea>
+                            </div>
+
+                            <div class="ll-editor-panel ll-editor-panel--preview">
+                                <div class="ll-editor-panel-head">
+                                    <div>
+                                        <div class="ll-side-title">阅读预览</div>
+                                        <div class="ll-editor-caption">预览区字体会同步使用你选中的展示字体。</div>
+                                    </div>
+                                    <span class="ll-meta-pill" id="previewStatus">实时更新</span>
+                                </div>
+                                <div id="markdownPreview" class="ll-article-body ll-markdown ll-preview-surface"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="ll-editor-card">
+                        <div class="ll-form-actions">
+                            <button class="ll-btn-secondary" type="submit" name="action" value="draft">保存草稿</button>
+                            <button class="ll-btn" type="submit" name="action" value="publish" th:text="${post.draft ? '发布草稿' : (post.id == null ? '发布文章' : '更新发布')}">发布文章</button>
+                            <a class="ll-btn-secondary" href="/space/drafts">查看草稿箱</a>
+                            <a class="ll-btn-secondary" href="/space">返回个人空间</a>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="ll-editor-sidebar">
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">写作概览</div>
+                        <div class="ll-guide-statlist">
+                            <div class="ll-guide-stat">
+                                <span>段落数量</span>
+                                <strong id="editorParagraphCount">0</strong>
+                            </div>
+                            <div class="ll-guide-stat">
+                                <span>当前分类</span>
+                                <strong id="editorCategoryLabel">项目</strong>
+                            </div>
+                        </div>
+                        <p>如果你的正文已经很长，尽量多用二级标题和三级标题，把一大坨内容拆开。</p>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">文章大纲</div>
+                        <div id="editorOutline" class="ll-outline-list ll-outline-list--editor">
+                            <div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>
+                        </div>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">Markdown 导入</div>
+                        <p>上传 `.md`、`.markdown` 或 `.txt` 文件，系统会直接帮你生成一篇新草稿。</p>
+                        <div class="ll-stack-sm">
+                            <input class="ll-input" type="file" name="markdownFile" accept=".md,.markdown,.txt" form="markdownImportForm" required>
+                            <select class="ll-select" name="category" form="markdownImportForm">
+                                <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+                            </select>
+                            <button class="ll-btn-secondary ll-btn-block" type="submit">导入为新草稿</button>
+                        </div>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">发布检查</div>
+                        <ul class="ll-guide-list">
+                            <li>标题是否足够明确，读者能一眼知道主题。</li>
+                            <li>封面是否合适，默认图是否需要替换。</li>
+                            <li>字体是否适合你的内容类型，例如长文更适合衬线字体。</li>
+                            <li>代码块、表格、引用是否已经在预览区检查过。</li>
+                        </ul>
+                    </section>
+                </aside>
+            </section>
+        </form>
+        <form id="markdownImportForm" action="/posts/import" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        </form>
+    </div>
+</main>
+
+<script>
+    const form = document.querySelector('.ll-editor-shell');
+    const textarea = document.getElementById('content');
+    const titleInput = document.getElementById('title');
+    const categorySelect = document.getElementById('category');
+    const fontSelect = document.getElementById('fontKey');
+    const coverFileInput = document.getElementById('coverFile');
+    const coverPreview = document.getElementById('coverPreview');
+    const preview = document.getElementById('markdownPreview');
+    const previewStatus = document.getElementById('previewStatus');
+    const outline = document.getElementById('editorOutline');
+    const panels = document.getElementById('editorPanels');
+    const restoreLocalDraftButton = document.getElementById('restoreLocalDraftButton');
+    const markdownImportForm = document.getElementById('markdownImportForm');
+    const markdownImportInput = document.querySelector('input[name="markdownFile"][form="markdownImportForm"]');
+    const markdownImportButton = markdownImportInput?.closest('.ll-stack-sm')?.querySelector('button[type="submit"]');
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const localDraftKey = 'll-editor-' + form.dataset.localDraftKey;
+    let previewTimer = null;
+    let draftTimer = null;
+    let pendingLocalDraft = null;
+
+    function tokenize(text) {
+        return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || [];
+    }
+
+    function countParagraphs(markdown) {
+        return (markdown || '')
+            .split(/\n\s*\n/)
+            .map(section => section.trim())
+            .filter(Boolean)
+            .length;
+    }
+
+    function countLines(markdown) {
+        return markdown ? markdown.split('\n').length : 0;
+    }
+
+    function countHeadings(markdown) {
+        return ((markdown || '').match(/^#{1,6}\s+/gm) || []).length;
+    }
+
+    function slugify(text, index) {
+        const normalized = (text || '')
+            .toLowerCase()
+            .replace(/<[^>]+>/g, '')
+            .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+        return normalized || 'heading-' + index;
+    }
+
+    function setDraftState(text) {
+        document.getElementById('editorDraftState').textContent = text;
+    }
+
+    function updateMetrics() {
+        const markdown = textarea.value;
+        const tokens = tokenize(markdown);
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+        const selectedLabel = categorySelect.options[categorySelect.selectedIndex]?.text || '未选择';
+
+        document.getElementById('editorWordCount').textContent = tokens.length.toLocaleString('zh-CN');
+        document.getElementById('editorReadingMinutes').textContent = minutes + ' 分钟';
+        document.getElementById('editorHeadingCount').textContent = countHeadings(markdown);
+        document.getElementById('editorParagraphCount').textContent = countParagraphs(markdown);
+        document.getElementById('editorLineCount').textContent = countLines(markdown) + ' 行';
+        document.getElementById('editorCategoryLabel').textContent = selectedLabel;
+    }
+
+    function updateFontPreview() {
+        const stack = fontSelect.options[fontSelect.selectedIndex]?.dataset.fontStack;
+        if (!stack) {
+            return;
+        }
+        document.documentElement.style.setProperty('--ll-editor-font', stack);
+        document.documentElement.style.setProperty('--ll-article-font', stack);
+    }
+
+    function renderOutline() {
+        const headings = [...preview.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outline.innerHTML = '<div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>';
+            return;
+        }
+
+        outline.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) {
+                heading.id = slugify(heading.textContent, index);
+            }
+            const link = document.createElement('a');
+            link.href = '#' + heading.id;
+            link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
+            link.textContent = heading.textContent.trim();
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                heading.scrollIntoView({behavior: 'smooth', block: 'center'});
+            });
+            outline.appendChild(link);
+        });
+    }
+
+    function setPreviewContent(html) {
+        if (!html || !html.trim()) {
+            preview.innerHTML = '<div class="ll-preview-placeholder">输入 Markdown 后，这里会生成适合阅读的排版预览。</div>';
+            return;
+        }
+        preview.innerHTML = html;
+    }
+
+    async function requestPreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(async () => {
+            previewStatus.textContent = '渲染中';
+            try {
+                const response = await fetch('/posts/preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: 'content=' + encodeURIComponent(textarea.value)
+                });
+                const html = await response.text();
+                setPreviewContent(html);
+                renderOutline();
+                previewStatus.textContent = '实时更新';
+            } catch (error) {
+                preview.innerHTML = '<div class="ll-preview-placeholder">预览暂时不可用，请稍后再试。</div>';
+                outline.innerHTML = '<div class="ll-outline-empty">预览失败，暂时无法生成大纲。</div>';
+                previewStatus.textContent = '预览异常';
+            }
+            updateMetrics();
+        }, 180);
+    }
+
+    function insertText(prefix, suffix = '', placeholder = '') {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.slice(start, end) || placeholder;
+        const replacement = prefix + selected + suffix;
+        textarea.setRangeText(replacement, start, end, 'end');
+        textarea.focus();
+        scheduleDraftSave();
+        requestPreview();
+    }
+
+    function insertBlock(snippet) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const prefix = textarea.value && !textarea.value.endsWith('\n') ? '\n' : '';
+        const replacement = prefix + snippet + '\n';
+        textarea.setRangeText(replacement, start, end, 'end');
+        textarea.focus();
+        scheduleDraftSave();
+        requestPreview();
+    }
+
+    function handleCommand(command) {
+        switch (command) {
+            case 'h1':
+                insertBlock('# 一级标题');
+                break;
+            case 'h2':
+                insertBlock('## 二级标题');
+                break;
+            case 'bold':
+                insertText('**', '**', '重点内容');
+                break;
+            case 'link':
+                insertText('[', '](https://example.com)', '链接文字');
+                break;
+            case 'quote':
+                insertBlock('> 写下一个关键结论');
+                break;
+            case 'list':
+                insertBlock('- 列表项');
+                break;
+            case 'task':
+                insertBlock('- [ ] 待办事项');
+                break;
+            case 'code':
+                insertBlock('```java\nSystem.out.println("Hello");\n```');
+                break;
+            case 'table':
+                insertBlock('| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |');
+                break;
+            case 'image':
+                insertBlock('![图片描述](https://example.com/image.png)');
+                break;
+            default:
+                break;
+        }
+    }
+
+    function updateMode(mode) {
+        panels.dataset.mode = mode;
+        document.querySelectorAll('.ll-editor-mode-button').forEach(button => {
+            button.classList.toggle('is-active', button.dataset.mode === mode);
+        });
+    }
+
+    function persistDraft() {
+        const payload = {
+            title: titleInput.value,
+            content: textarea.value,
+            category: categorySelect.value,
+            fontKey: fontSelect.value,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(localDraftKey, JSON.stringify(payload));
+        setDraftState('已暂存');
+    }
+
+    function scheduleDraftSave() {
+        setDraftState('编辑中');
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(persistDraft, 300);
+    }
+
+    function applySavedDraft(saved) {
+        titleInput.value = saved.title || '';
+        textarea.value = saved.content || '';
+        if (saved.category) {
+            categorySelect.value = saved.category;
+        }
+        if (saved.fontKey) {
+            fontSelect.value = saved.fontKey;
+        }
+        updateFontPreview();
+        updateMetrics();
+        requestPreview();
+        setDraftState('已恢复');
+    }
+
+    function restoreDraft() {
+        const raw = localStorage.getItem(localDraftKey);
+        if (!raw) {
+            setDraftState('未保存');
+            return;
+        }
+        try {
+            const saved = JSON.parse(raw);
+            if (!titleInput.value.trim() && !textarea.value.trim()) {
+                applySavedDraft(saved);
+                return;
+            }
+            pendingLocalDraft = saved;
+            restoreLocalDraftButton.hidden = false;
+            setDraftState('发现本地恢复点');
+        } catch (error) {
+            setDraftState('未保存');
+        }
+    }
+
+    function syncPreviewScroll() {
+        const maxSource = textarea.scrollHeight - textarea.clientHeight;
+        const maxTarget = preview.scrollHeight - preview.clientHeight;
+        if (maxSource <= 0 || maxTarget <= 0) {
+            return;
+        }
+        preview.scrollTop = (textarea.scrollTop / maxSource) * maxTarget;
+    }
+
+    function handleEditorShortcuts(event) {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.setRangeText('    ', start, end, 'end');
+            scheduleDraftSave();
+            requestPreview();
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    }
+
+    function handleCoverPreview() {
+        const file = coverFileInput.files?.[0];
+        if (!file) {
+            return;
+        }
+        coverPreview.src = URL.createObjectURL(file);
+    }
+
+    document.querySelectorAll('[data-command]').forEach(button => {
+        button.addEventListener('click', () => handleCommand(button.dataset.command));
+    });
+
+    document.querySelectorAll('.ll-editor-mode-button').forEach(button => {
+        button.addEventListener('click', () => updateMode(button.dataset.mode));
+    });
+
+    restoreLocalDraftButton.addEventListener('click', () => {
+        if (!pendingLocalDraft) {
+            return;
+        }
+        applySavedDraft(pendingLocalDraft);
+        restoreLocalDraftButton.hidden = true;
+    });
+
+    if (markdownImportButton && markdownImportForm) {
+        markdownImportButton.type = 'button';
+        markdownImportButton.addEventListener('click', () => markdownImportForm.requestSubmit());
+    }
+
+    textarea.addEventListener('input', () => {
+        scheduleDraftSave();
+        requestPreview();
+    });
+    textarea.addEventListener('scroll', syncPreviewScroll);
+    textarea.addEventListener('keydown', handleEditorShortcuts);
+    titleInput.addEventListener('input', scheduleDraftSave);
+    categorySelect.addEventListener('change', () => {
+        scheduleDraftSave();
+        updateMetrics();
+    });
+    fontSelect.addEventListener('change', () => {
+        scheduleDraftSave();
+        updateFontPreview();
+    });
+    coverFileInput.addEventListener('change', handleCoverPreview);
+
+    updateFontPreview();
+    restoreDraft();
+    updateMetrics();
+    requestPreview();
+</script>
+</body>
+</html>
