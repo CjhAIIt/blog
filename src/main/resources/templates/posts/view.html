@@ -110,6 +110,34 @@
                     <div class="ll-article-body ll-markdown" th:utext="${renderedContent}"></div>
                 </article>
 
+                <section class="ll-side-card ll-fade ll-author-card-inline">
+                    <h2 class="ll-side-title">作者名片</h2>
+                    <div class="ll-profile-inline">
+                        <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}">
+                        <div>
+                            <div class="ll-rank-title" th:text="${post.author.username}">作者</div>
+                            <p class="ll-side-text"
+                               th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这位作者还没有填写更详细的个人介绍。'}">
+                                这位作者还没有填写更详细的个人介绍。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge">个人主页已开通</span>
+                        <span class="ll-link-badge"
+                              th:if="${post.author.qq != null and !#strings.isEmpty(post.author.qq)}"
+                              th:text="${'QQ ' + post.author.qq}">QQ 123456</span>
+                        <a class="ll-link-badge"
+                           th:if="${post.author.githubUrl != null and !#strings.isEmpty(post.author.githubUrl)}"
+                           th:href="${post.author.githubUrl}"
+                           target="_blank"
+                           rel="noreferrer">GitHub 主页</a>
+                    </div>
+                    <div class="ll-form-actions">
+                        <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">查看作者主页</a>
+                    </div>
+                </section>
+
                 <section class="ll-comment-section ll-fade" id="comments" th:if="${!isDraftPreview}">
                     <div class="ll-comment-card">
                         <div class="ll-comment-head">
@@ -156,36 +184,11 @@
                 </section>
             </div>
 
-            <aside class="ll-stack">
-                <section class="ll-side-card is-sticky ll-fade">
+            <aside class="ll-stack ll-article-side">
+                <section class="ll-side-card ll-fade">
                     <h2 class="ll-side-title">文章目录</h2>
                     <div id="articleOutline" class="ll-outline-list">
                         <div class="ll-outline-empty">如果正文包含标题，这里会自动生成目录。</div>
-                    </div>
-                </section>
-
-                <section class="ll-side-card ll-fade">
-                    <h2 class="ll-side-title">作者名片</h2>
-                    <div class="ll-profile-inline">
-                        <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}">
-                        <div>
-                            <div class="ll-rank-title" th:text="${post.author.username}">作者</div>
-                            <p class="ll-side-text"
-                               th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这位作者还没有填写更详细的个人介绍。'}">
-                                这位作者还没有填写更详细的个人介绍。
-                            </p>
-                        </div>
-                    </div>
-                    <div class="ll-link-group">
-                        <span class="ll-link-badge">个人主页已开通</span>
-                        <span class="ll-link-badge"
-                              th:if="${post.author.qq != null and !#strings.isEmpty(post.author.qq)}"
-                              th:text="${'QQ ' + post.author.qq}">QQ 123456</span>
-                        <a class="ll-link-badge"
-                           th:if="${post.author.githubUrl != null and !#strings.isEmpty(post.author.githubUrl)}"
-                           th:href="${post.author.githubUrl}"
-                           target="_blank"
-                           rel="noreferrer">GitHub 主页</a>
                     </div>
                 </section>
 
@@ -197,9 +200,6 @@
                         <li th:text="${'点赞数量：' + post.likeCount + ' 次'}">点赞数量：0 次</li>
                         <li th:text="${'展示字体：' + post.editorFont.label}">展示字体：鸿蒙黑体</li>
                     </ul>
-                    <div class="ll-form-actions">
-                        <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">查看作者主页</a>
-                    </div>
                     <form class="ll-inline-form" th:if="${canManage}" th:action="@{/posts/delete/{id}(id=${post.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <div class="ll-form-actions">
