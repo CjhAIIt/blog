@@ -12,9 +12,12 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService implements UserDetailsService {
+    private static final Pattern REAL_NAME_PATTERN = Pattern.compile("^[\\u4E00-\\u9FFF]{1,5}$");
+
     @Resource
     private UserRepository userRepository;
 
@@ -76,7 +79,8 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    public void updateProfile(User user, String bio, String qq, String githubUrl, String personalBlogUrl) {
+    public void updateProfile(User user, String realName, String bio, String qq, String githubUrl, String personalBlogUrl) {
+        user.setRealName(normalizeRealName(realName));
         user.setBio(StringUtils.hasText(bio) ? bio.trim() : null);
         user.setQq(normalizeQq(qq));
         user.setGithubUrl(normalizeGithubUrl(githubUrl));
@@ -87,6 +91,7 @@ public class UserService implements UserDetailsService {
     public User updateAccountProfile(User user,
                                      String username,
                                      String newPassword,
+                                     String realName,
                                      String bio,
                                      String qq,
                                      String githubUrl,
@@ -101,6 +106,7 @@ public class UserService implements UserDetailsService {
         if (StringUtils.hasText(newPassword)) {
             user.setPassword(passwordEncoder.encode(newPassword));
         }
+        user.setRealName(normalizeRealName(realName));
         user.setBio(StringUtils.hasText(bio) ? bio.trim() : null);
         user.setQq(normalizeQq(qq));
         user.setGithubUrl(normalizeGithubUrl(githubUrl));
@@ -115,6 +121,18 @@ public class UserService implements UserDetailsService {
 
     public String normalizeUsername(String username) {
         return StringUtils.hasText(username) ? username.trim() : "";
+    }
+
+    public String normalizeRealName(String realName) {
+        if (!StringUtils.hasText(realName)) {
+            return null;
+        }
+
+        String normalized = realName.trim();
+        if (!REAL_NAME_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("真实姓名需为 1 到 5 个中文字符");
+        }
+        return normalized;
     }
 
     public String normalizeGithubUrl(String githubUrl) {

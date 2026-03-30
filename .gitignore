@@ -2,6 +2,7 @@ target/
 *.log
 *.out
 *.err
+.codex-tools/
 .idea/
 .vscode/
 apache-maven-*/

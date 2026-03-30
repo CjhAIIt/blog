@@ -294,8 +294,13 @@ public class PostController {
     @PostMapping("/{id}/comments")
     public String addComment(@PathVariable Long id,
                              @RequestParam String content,
+                             @RequestParam(value = "parentCommentId", required = false) Long parentCommentId,
                              Principal principal,
                              RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            redirectAttributes.addFlashAttribute("error", "请先登录后再发表评论");
+            return "redirect:/login";
+        }
         Optional<Post> post = postService.findById(id);
         if (post.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "文章不存在");
@@ -314,8 +319,13 @@ public class PostController {
             return "redirect:/posts/" + id;
         }
 
-        commentService.save(post.get(), userService.getByUsername(principal.getName()), content);
-        redirectAttributes.addFlashAttribute("message", "评论已发布");
+        try {
+            commentService.save(post.get(), userService.getByUsername(principal.getName()), content, parentCommentId);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/posts/" + id + "#comments";
+        }
+        redirectAttributes.addFlashAttribute("message", parentCommentId == null ? "评论已发布" : "回复已发布");
         return "redirect:/posts/" + id + "#comments";
     }
 

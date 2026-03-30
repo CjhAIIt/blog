@@ -23,10 +23,17 @@ import java.util.Optional;
 public class PostService {
     private final PostRepository postRepository;
     private final MarkdownService markdownService;
+    private final CommentService commentService;
+    private final NotificationService notificationService;
 
-    public PostService(PostRepository postRepository, MarkdownService markdownService) {
+    public PostService(PostRepository postRepository,
+                       MarkdownService markdownService,
+                       CommentService commentService,
+                       NotificationService notificationService) {
         this.postRepository = postRepository;
         this.markdownService = markdownService;
+        this.commentService = commentService;
+        this.notificationService = notificationService;
     }
 
     public List<Post> findAllIncludingDrafts() {
@@ -129,7 +136,10 @@ public class PostService {
         return postRepository.findTopByLikesSince(period.startAt(), pageable);
     }
 
+    @Transactional
     public void deleteById(Long id) {
+        notificationService.deleteByPostId(id);
+        commentService.deleteByPostId(id);
         postRepository.deleteById(id);
     }
 

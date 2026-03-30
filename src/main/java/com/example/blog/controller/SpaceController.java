@@ -3,6 +3,7 @@ package com.example.blog.controller;
 import com.example.blog.dto.ProfileForm;
 import com.example.blog.model.Post;
 import com.example.blog.model.User;
+import com.example.blog.service.CommentService;
 import com.example.blog.service.FileStorageService;
 import com.example.blog.service.PersonalBlogExportService;
 import com.example.blog.service.PostService;
@@ -34,15 +35,18 @@ import java.util.List;
 public class SpaceController {
     private final UserService userService;
     private final PostService postService;
+    private final CommentService commentService;
     private final PersonalBlogExportService personalBlogExportService;
     private final FileStorageService fileStorageService;
 
     public SpaceController(UserService userService,
                            PostService postService,
+                           CommentService commentService,
                            PersonalBlogExportService personalBlogExportService,
                            FileStorageService fileStorageService) {
         this.userService = userService;
         this.postService = postService;
+        this.commentService = commentService;
         this.personalBlogExportService = personalBlogExportService;
         this.fileStorageService = fileStorageService;
     }
@@ -56,12 +60,18 @@ public class SpaceController {
     public String userSpace(@PathVariable String username, Principal principal, Model model) {
         User profileUser = userService.getByUsername(username);
         boolean isOwner = principal != null && principal.getName().equals(profileUser.getUsername());
+        List<Post> publishedPosts = postService.findPublishedByAuthorId(profileUser.getId());
         List<Post> drafts = isOwner ? postService.findDraftsByAuthorId(profileUser.getId()) : List.of();
+        int totalLikes = publishedPosts.stream().mapToInt(Post::getLikeCount).sum();
 
         model.addAttribute("profileUser", profileUser);
-        model.addAttribute("posts", postService.findPublishedByAuthorId(profileUser.getId()));
+        model.addAttribute("posts", publishedPosts);
         model.addAttribute("drafts", drafts);
         model.addAttribute("draftCount", drafts.size());
+        model.addAttribute("publishedCount", publishedPosts.size());
+        model.addAttribute("totalLikeCount", totalLikes);
+        model.addAttribute("receivedCommentCount", commentService.countByPostAuthorId(profileUser.getId()));
+        model.addAttribute("latestPost", publishedPosts.isEmpty() ? null : publishedPosts.get(0));
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("selectedCategory", "latest");
         return "space/profile";
@@ -128,6 +138,9 @@ public class SpaceController {
         if (StringUtils.hasText(profileForm.getQq()) && !profileForm.getQq().trim().matches("\\d{5,12}")) {
             return redirectWithError("QQ 号格式不正确", profileForm, redirectAttributes);
         }
+        if (StringUtils.hasText(profileForm.getRealName()) && !profileForm.getRealName().trim().matches("^[\\u4E00-\\u9FFF]{1,5}$")) {
+            return redirectWithError("真实姓名需为 1 到 5 个中文字符", profileForm, redirectAttributes);
+        }
         if (StringUtils.hasText(profileForm.getConfirmPassword()) && !StringUtils.hasText(profileForm.getNewPassword())) {
             return redirectWithError("请先输入新密码", profileForm, redirectAttributes);
         }
@@ -162,6 +175,7 @@ public class SpaceController {
                     currentUser,
                     normalizedUsername,
                     profileForm.getNewPassword(),
+                    profileForm.getRealName(),
                     profileForm.getBio(),
                     profileForm.getQq(),
                     profileForm.getGithubUrl(),
@@ -180,6 +194,7 @@ public class SpaceController {
     private ProfileForm buildProfileForm(User currentUser) {
         ProfileForm profileForm = new ProfileForm();
         profileForm.setUsername(currentUser.getUsername());
+        profileForm.setRealName(currentUser.getRealName());
         profileForm.setBio(currentUser.getBio());
         profileForm.setQq(currentUser.getQq());
         profileForm.setGithubUrl(currentUser.getGithubUrl());

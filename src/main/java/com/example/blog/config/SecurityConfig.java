@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -34,10 +35,23 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.POST, "/posts/*/like").permitAll()
+                        .requestMatchers(
+                                AntPathRequestMatcher.antMatcher("/"),
+                                AntPathRequestMatcher.antMatcher("/about"),
+                                AntPathRequestMatcher.antMatcher("/search"),
+                                AntPathRequestMatcher.antMatcher("/leaderboards"),
+                                AntPathRequestMatcher.antMatcher("/users/**"),
+                                AntPathRequestMatcher.antMatcher("/css/**"),
+                                AntPathRequestMatcher.antMatcher("/js/**"),
+                                AntPathRequestMatcher.antMatcher("/images/**"),
+                                AntPathRequestMatcher.antMatcher("/uploads/**"),
+                                AntPathRequestMatcher.antMatcher("/register"),
+                                AntPathRequestMatcher.antMatcher("/login"),
+                                AntPathRequestMatcher.antMatcher("/error")
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/search").permitAll()
                         .requestMatchers(HttpMethod.POST, "/posts", "/posts/update/**", "/posts/delete/**", "/posts/preview", "/posts/*/comments", "/posts/import", "/space/edit").authenticated()
                         .requestMatchers("/space", "/space/edit", "/space/drafts", "/space/export", "/space/export/download", "/posts/new", "/posts/edit/**").authenticated()
-                        .requestMatchers("/", "/about", "/search", "/leaderboards", "/css/**", "/js/**", "/images/**", "/uploads/**", "/register", "/login", "/users/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/posts", "/posts/*", "/posts/search").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

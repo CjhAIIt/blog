@@ -22,6 +22,10 @@ public class Comment {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private Comment parentComment;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -66,6 +70,28 @@ public class Comment {
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public Comment getParentComment() {
+        return parentComment;
+    }
+
+    public void setParentComment(Comment parentComment) {
+        this.parentComment = parentComment;
+    }
+
+    public boolean isReply() {
+        return parentComment != null;
+    }
+
+    public int getReplyDepth() {
+        int depth = 0;
+        Comment current = parentComment;
+        while (current != null && depth < 5) {
+            depth++;
+            current = current.getParentComment();
+        }
+        return depth;
     }
 
     public LocalDateTime getCreatedAt() {

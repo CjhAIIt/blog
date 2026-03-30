@@ -24,6 +24,19 @@
             </nav>
             <div class="ll-header-actions">
                 <a class="ll-header-link" th:href="@{/posts/edit/{id}(id=${post.id})}" th:if="${canManage}">编辑文章</a>
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   sec:authorize="isAuthenticated()"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
                 <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
             </div>
         </header>
@@ -55,7 +68,10 @@
                 <div class="ll-author-copy">
                     <a class="ll-author-name"
                        th:href="@{/users/{username}(username=${post.author.username})}"
-                       th:text="${post.author.username}">作者</a>
+                       th:text="${post.author.displayName}">作者</a>
+                    <span class="ll-author-handle"
+                          th:if="${post.author.realName != null and !#strings.isEmpty(post.author.realName)}"
+                          th:text="${'@' + post.author.username}">@username</span>
                     <div class="ll-article-meta">
                         <span th:text="${'发布于 ' + #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">发布于 2026-03-19 21:00</span>
                         <span class="ll-dot"></span>
@@ -115,7 +131,8 @@
                     <div class="ll-profile-inline">
                         <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}">
                         <div>
-                            <div class="ll-rank-title" th:text="${post.author.username}">作者</div>
+                            <div class="ll-rank-title" th:text="${post.author.displayName}">作者</div>
+                            <div class="ll-space-card-handle" th:text="${'@' + post.author.username}">@username</div>
                             <p class="ll-side-text"
                                th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这位作者还没有填写更详细的个人介绍。'}">
                                 这位作者还没有填写更详细的个人介绍。
@@ -124,6 +141,9 @@
                     </div>
                     <div class="ll-link-group">
                         <span class="ll-link-badge">个人主页已开通</span>
+                        <span class="ll-link-badge"
+                              th:if="${post.author.realName != null and !#strings.isEmpty(post.author.realName)}"
+                              th:text="${'实名 ' + post.author.realName}">实名 张三</span>
                         <span class="ll-link-badge"
                               th:if="${post.author.qq != null and !#strings.isEmpty(post.author.qq)}"
                               th:text="${'QQ ' + post.author.qq}">QQ 123456</span>
@@ -151,7 +171,16 @@
                         <form class="ll-comment-form" sec:authorize="isAuthenticated()"
                               th:action="@{/posts/{id}/comments(id=${post.id})}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <textarea class="ll-textarea" name="content" maxlength="500"
+                            <input type="hidden" name="parentCommentId" id="parentCommentId">
+                            <div class="ll-comment-replying" id="replyNotice" hidden>
+                                <div>
+                                    <strong>正在回复：</strong>
+                                    <span id="replyTargetName">评论用户</span>
+                                    <span class="ll-comment-replying-snippet" id="replyTargetSnippet">评论摘要</span>
+                                </div>
+                                <button type="button" class="ll-link-button" id="cancelReplyButton">取消回复</button>
+                            </div>
+                            <textarea class="ll-textarea" id="commentContent" name="content" maxlength="500"
                                       placeholder="写下你的补充、疑问或反馈，最长 500 字。" required></textarea>
                             <div class="ll-form-actions">
                                 <button class="ll-btn" type="submit">发布评论</button>
@@ -166,14 +195,30 @@
                     </div>
 
                     <div class="ll-comment-list" th:if="${!#lists.isEmpty(comments)}">
-                        <article class="ll-comment-item" th:each="comment : ${comments}">
+                        <article class="ll-comment-item"
+                                 th:each="comment : ${comments}"
+                                 th:id="${'comment-' + comment.id}"
+                                 th:classappend="${comment.reply ? ' is-reply' : ''}"
+                                 th:style="${'--ll-comment-indent:' + (comment.replyDepth > 2 ? 2 : comment.replyDepth)}">
                             <img class="ll-avatar-photo ll-avatar-photo--sm" th:src="${comment.author.displayAvatarUrl}" th:alt="${comment.author.username}">
                             <div>
                                 <div class="ll-comment-meta">
-                                    <span class="ll-comment-author" th:text="${comment.author.username}">用户名</span>
+                                    <span class="ll-comment-author" th:text="${comment.author.displayName}">用户名</span>
+                                    <span class="ll-comment-handle"
+                                          th:if="${comment.author.realName != null and !#strings.isEmpty(comment.author.realName)}"
+                                          th:text="${'@' + comment.author.username}">@username</span>
+                                    <span th:if="${comment.reply and comment.parentComment != null}"
+                                          th:text="${'回复 ' + comment.parentComment.author.displayName}">回复 某人</span>
                                     <span th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-03-19 21:20</span>
                                 </div>
                                 <div class="ll-comment-text" th:text="${comment.content}">评论内容</div>
+                                <div class="ll-comment-actions">
+                                    <button type="button"
+                                            class="ll-link-button ll-comment-reply-button"
+                                            sec:authorize="isAuthenticated()"
+                                            th:attr="data-comment-id=${comment.id},data-author-name=${comment.author.displayName},data-comment-snippet=${#strings.abbreviate(comment.content, 36)}">回复</button>
+                                    <a class="ll-link-button" th:href="${'#comment-' + comment.id}">定位</a>
+                                </div>
                             </div>
                         </article>
                     </div>
@@ -219,6 +264,12 @@
     const headingCountElement = document.getElementById('articleHeadingCount');
     const paragraphCountElement = document.getElementById('articleParagraphCount');
     const readTimeElement = document.getElementById('articleReadTime');
+    const replyNotice = document.getElementById('replyNotice');
+    const parentCommentIdInput = document.getElementById('parentCommentId');
+    const replyTargetName = document.getElementById('replyTargetName');
+    const replyTargetSnippet = document.getElementById('replyTargetSnippet');
+    const commentContent = document.getElementById('commentContent');
+    const cancelReplyButton = document.getElementById('cancelReplyButton');
 
     function slugify(text, index) {
         const normalized = (text || '')
@@ -265,6 +316,29 @@
         paragraphCountElement.textContent = paragraphs;
         readTimeElement.textContent = '约 ' + minutes + ' 分钟阅读';
     }
+
+    function clearReplyTarget() {
+        if (!replyNotice) {
+            return;
+        }
+        parentCommentIdInput.value = '';
+        replyNotice.hidden = true;
+        replyTargetName.textContent = '';
+        replyTargetSnippet.textContent = '';
+    }
+
+    document.querySelectorAll('.ll-comment-reply-button').forEach(button => {
+        button.addEventListener('click', () => {
+            parentCommentIdInput.value = button.dataset.commentId;
+            replyTargetName.textContent = button.dataset.authorName || '评论用户';
+            replyTargetSnippet.textContent = button.dataset.commentSnippet || '';
+            replyNotice.hidden = false;
+            commentContent?.focus();
+            document.getElementById('comments')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+    });
+
+    cancelReplyButton?.addEventListener('click', clearReplyTarget);
 
     buildOutline();
     updateArticleMetrics();

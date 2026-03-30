@@ -2,6 +2,7 @@ package com.example.blog.dto;
 
 public class ProfileForm {
     private String username;
+    private String realName;
     private String currentPassword;
     private String newPassword;
     private String confirmPassword;
@@ -17,6 +18,14 @@ public class ProfileForm {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getRealName() {
+        return realName;
+    }
+
+    public void setRealName(String realName) {
+        this.realName = realName;
     }
 
     public String getCurrentPassword() {

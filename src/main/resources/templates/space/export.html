@@ -19,6 +19,20 @@
                 <a class="ll-header-link" href="/space/edit">编辑资料</a>
                 <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">源码仓库</a>
             </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+            </div>
         </header>
     </div>
 </div>

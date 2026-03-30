@@ -30,6 +30,9 @@ public class User implements UserDetails {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
+    @Column(name = "real_name", length = 16)
+    private String realName;
+
     @Column(columnDefinition = "TEXT")
     private String bio;
 
@@ -108,6 +111,18 @@ public class User implements UserDetails {
 
     public void setEmailVerified(boolean emailVerified) {
         this.emailVerified = emailVerified;
+    }
+
+    public String getRealName() {
+        return realName;
+    }
+
+    public void setRealName(String realName) {
+        this.realName = StringUtils.hasText(realName) ? realName.trim() : null;
+    }
+
+    public String getDisplayName() {
+        return StringUtils.hasText(realName) ? realName : username;
     }
 
     public String getBio() {

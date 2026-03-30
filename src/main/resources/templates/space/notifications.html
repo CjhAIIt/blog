@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息中心 - 烂柯的博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">烂柯的博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/space/drafts">草稿箱</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/space/edit">编辑资料</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-notice-hero ll-fade">
+            <div>
+                <span class="ll-kicker">Notification Center</span>
+                <h1 class="ll-page-title">消息中心</h1>
+                <p class="ll-page-desc">当有人评论你的博客，或者在评论区回复你时，消息会集中出现在这里。点击消息会自动跳到对应文章并标记已读。</p>
+            </div>
+            <div class="ll-inline-actions">
+                <span class="ll-meta-pill" th:text="${unreadNotificationCount + ' 条未读'}">0 条未读</span>
+                <form th:if="${unreadNotificationCount > 0}" action="/notifications/read-all" method="post" class="ll-inline-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="ll-btn-secondary" type="submit">全部标记为已读</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="ll-notice-list ll-fade" th:if="${!#lists.isEmpty(notifications)}">
+            <article class="ll-notice-card"
+                     th:each="notification : ${notifications}"
+                     th:classappend="${notification.unread ? ' is-unread' : ''}">
+                <img class="ll-avatar-photo ll-avatar-photo--md"
+                     th:src="${notification.actor.displayAvatarUrl}"
+                     th:alt="${notification.actor.username}">
+                <div class="ll-notice-body">
+                    <div class="ll-notice-topline">
+                        <span class="ll-tag" th:text="${notification.type.label}">博客新评论</span>
+                        <span class="ll-meta-pill" th:if="${notification.unread}">未读</span>
+                        <span class="ll-notice-time" th:text="${#temporals.format(notification.createdAt, 'yyyy-MM-dd HH:mm')}">2026-03-19 21:00</span>
+                    </div>
+                    <a class="ll-notice-title" th:href="@{/notifications/{id}(id=${notification.id})}" th:text="${notification.title}">有人评论了你的博客</a>
+                    <p class="ll-notice-text" th:text="${notification.snippet}">消息摘要</p>
+                    <div class="ll-link-group">
+                        <a class="ll-link-badge"
+                           th:href="@{/users/{username}(username=${notification.actor.username})}"
+                           th:text="${notification.actor.displayName}">评论者</a>
+                        <a class="ll-link-badge" th:href="@{/notifications/{id}(id=${notification.id})}">查看原文</a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div class="ll-empty ll-fade" th:if="${#lists.isEmpty(notifications)}">
+            现在还没有站内消息。
+            <a href="/posts">去看看最新文章</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

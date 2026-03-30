@@ -52,11 +52,11 @@ public class DataInitializer implements CommandLineRunner {
 
         User admin = userService.createUser("admin", "admin@example.com", "password");
         admin.setBio("默认管理员账号，用于初始化博客内容。");
-        userService.updateProfile(admin, admin.getBio(), "10001", "https://github.com/CjhAIIt", null);
+        userService.updateProfile(admin, "管理员", admin.getBio(), "10001", "https://github.com/CjhAIIt", null);
 
         User user = userService.createUser("user", "user@example.com", "password");
         user.setBio("默认普通用户账号，可用于测试个人空间。");
-        userService.updateProfile(user, user.getBio(), "10002", "https://github.com/CjhAIIt", null);
+        userService.updateProfile(user, "测试用户", user.getBio(), "10002", "https://github.com/CjhAIIt", null);
 
         Post welcomePost = postService.save(new Post(
                 "欢迎来到烂柯的博客",
