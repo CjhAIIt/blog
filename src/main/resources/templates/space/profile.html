@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profileUser.displayName + ' 的空间 - 博客'}">个人空间</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/about">关于</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/admin/verifications" th:if="${currentUserAdmin}">实名审核</a>
+                <a class="ll-header-link" href="/space/drafts" th:if="${isOwner}">草稿箱</a>
+                <a class="ll-header-link" href="/space/edit" th:if="${isOwner}">编辑资料</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-space-hero-v2 ll-fade">
+            <div class="ll-space-hero-grid">
+                <div class="ll-space-hero-copy">
+                    <span class="ll-kicker">个人空间</span>
+                    <div class="ll-profile-inline ll-profile-inline--hero">
+                        <img class="ll-avatar-photo ll-avatar-photo--xl" th:src="${profileUser.displayAvatarUrl}" th:alt="${profileUser.username}">
+                        <div>
+                            <div class="ll-space-display-name" th:text="${profileUser.displayName}">博主昵称</div>
+                            <div class="ll-space-handle" th:text="${'@' + profileUser.username}">@username</div>
+                        </div>
+                    </div>
+                    <h1 class="ll-space-title" th:text="${profileUser.displayName + ' 的创作主页'}">个人创作主页</h1>
+                    <p class="ll-space-copy"
+                       th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里展示该用户公开发布的文章与站内数据。'}">
+                        个人简介
+                    </p>
+
+                    <div class="ll-space-statline">
+                        <span class="ll-meta-pill" th:text="${publishedCount + ' 篇已发布'}">0 篇已发布</span>
+                        <span class="ll-meta-pill" th:text="${totalLikeCount + ' 个获赞'}">0 个获赞</span>
+                        <span class="ll-meta-pill" th:text="${receivedCommentCount + ' 条互动'}">0 条互动</span>
+                        <span class="ll-meta-pill" th:if="${canManageUserPosts}" th:text="${draftCount + ' 篇草稿'}">0 篇草稿</span>
+                        <span class="ll-meta-pill" th:text="${'加入于 ' + #temporals.format(profileUser.createdAt, 'yyyy-MM-dd')}">加入于 2026-04-02</span>
+                        <span class="ll-meta-pill" th:if="${currentUserAdmin and !isOwner}">管理员视角</span>
+                    </div>
+
+                    <div class="ll-space-actions">
+                        <a class="ll-btn" href="/posts/new" th:if="${isOwner and canWritePosts}">写新文章</a>
+                        <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner and !canWritePosts}">去完成实名审核</a>
+                        <a class="ll-btn-secondary" href="/space/drafts" th:if="${isOwner}">管理草稿</a>
+                        <a class="ll-btn-secondary" href="/space/export" th:if="${isOwner}">导出个人博客</a>
+                        <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner}">编辑个人资料</a>
+                        <a class="ll-btn-secondary" href="/admin/verifications" th:if="${currentUserAdmin}">管理员审核页</a>
+                        <a class="ll-btn-secondary"
+                           th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}"
+                           th:href="${profileUser.githubUrl}"
+                           target="_blank"
+                           rel="noreferrer">访问 GitHub</a>
+                        <a class="ll-btn-secondary"
+                           th:if="${profileUser.personalBlogUrl != null and !#strings.isEmpty(profileUser.personalBlogUrl)}"
+                           th:href="${profileUser.personalBlogUrl}"
+                           target="_blank"
+                           rel="noreferrer">访问个人博客</a>
+                    </div>
+                </div>
+
+                <section class="ll-space-hero-panel">
+                    <div class="ll-space-panel-label">实名状态</div>
+                    <div class="ll-space-panel-title"
+                         th:text="${showVerificationStatus ? profileUser.realNameVerificationStatusDisplayName : '站内创作者'}">
+                        已通过
+                    </div>
+                    <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerificationPending}">
+                        实名资料已提交管理员审核。审核通过前不能写博客、导入 Markdown 或编辑文章。
+                    </p>
+                    <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerificationRejected}">
+                        实名认证审核未通过，请修改实名信息后重新提交。
+                    </p>
+                    <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerified}">
+                        实名认证已通过，当前账号已具备写博客权限。
+                    </p>
+                    <p class="ll-space-panel-copy" th:if="${!showVerificationStatus}">
+                        该主页已开启公开访问，可查看作者最新发布的文章和创作记录。
+                    </p>
+                    <div class="ll-link-group" th:if="${showVerificationStatus}">
+                        <span class="ll-link-badge"
+                              th:if="${profileUser.realNameVerificationSubmittedAt != null}"
+                              th:text="${'提交于 ' + #temporals.format(profileUser.realNameVerificationSubmittedAt, 'yyyy-MM-dd HH:mm')}">
+                            提交于 2026-04-02 18:00
+                        </span>
+                        <span class="ll-link-badge"
+                              th:if="${profileUser.realNameVerificationReviewedAt != null}"
+                              th:text="${'审核于 ' + #temporals.format(profileUser.realNameVerificationReviewedAt, 'yyyy-MM-dd HH:mm')}">
+                            审核于 2026-04-02 18:30
+                        </span>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <div th:if="${isOwner and !canWritePosts}" class="ll-status ll-status--error">
+            <span th:text="${'当前实名认证状态：' + profileUser.realNameVerificationStatusDisplayName + '。审核通过后才能写博客。'}"></span>
+        </div>
+
+        <section class="ll-space-layout ll-fade">
+            <div class="ll-feed">
+                <section class="ll-space-overview-card ll-space-section-card">
+                    <div class="ll-editor-panel-head">
+                        <div>
+                            <h2 class="ll-side-title">创作概览</h2>
+                            <p class="ll-side-text">这里汇总该用户公开内容的产出和互动情况。</p>
+                        </div>
+                    </div>
+                    <div class="ll-space-overview-grid">
+                        <article class="ll-space-overview-metric">
+                            <span class="ll-space-overview-label">已发布</span>
+                            <strong th:text="${publishedCount}">0</strong>
+                            <span class="ll-space-overview-note">公开可读的文章总数</span>
+                        </article>
+                        <article class="ll-space-overview-metric">
+                            <span class="ll-space-overview-label">累计获赞</span>
+                            <strong th:text="${totalLikeCount}">0</strong>
+                            <span class="ll-space-overview-note">所有公开文章收到的点赞</span>
+                        </article>
+                        <article class="ll-space-overview-metric">
+                            <span class="ll-space-overview-label">收到互动</span>
+                            <strong th:text="${receivedCommentCount}">0</strong>
+                            <span class="ll-space-overview-note">评论与回复总量</span>
+                        </article>
+                        <article class="ll-space-overview-metric">
+                            <span class="ll-space-overview-label" th:text="${canManageUserPosts ? '草稿存量' : '加入年份'}">加入年份</span>
+                            <strong th:text="${canManageUserPosts ? draftCount : #temporals.format(profileUser.createdAt, 'yyyy')}">0</strong>
+                            <span class="ll-space-overview-note"
+                                  th:text="${canManageUserPosts ? '作者本人或管理员可以查看草稿' : '持续在这里公开整理内容'}">说明</span>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-space-section-card" th:if="${canManageUserPosts}">
+                    <div class="ll-editor-panel-head">
+                        <div>
+                            <h2 class="ll-side-title">草稿收纳区</h2>
+                            <p class="ll-side-text"
+                               th:text="${isOwner ? '这里保留你的草稿，方便随时继续编辑。' : '你正在以管理员身份查看该用户的草稿。'}">
+                                草稿说明
+                            </p>
+                        </div>
+                        <a class="ll-btn-secondary" href="/space/drafts" th:if="${isOwner}">打开草稿箱</a>
+                    </div>
+                    <div class="ll-draft-grid ll-draft-grid--compact" th:if="${!#lists.isEmpty(drafts)}">
+                        <article class="ll-draft-card" th:each="draft : ${drafts}">
+                            <div class="ll-draft-meta">
+                                <span class="ll-meta-pill" th:text="${draft.statusDisplayName}">草稿</span>
+                                <span th:text="${#temporals.format(draft.updatedAt, 'yyyy-MM-dd HH:mm')}">2026-04-02 20:00</span>
+                            </div>
+                            <h3 class="ll-feed-title">
+                                <a th:href="@{/posts/edit/{id}(id=${draft.id})}" th:text="${draft.title != null and !#strings.isEmpty(draft.title) ? draft.title : '未命名草稿'}">
+                                    未命名草稿
+                                </a>
+                            </h3>
+                            <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(draft.content, 96)}">草稿摘要</p>
+                        </article>
+                    </div>
+                    <div class="ll-empty" th:if="${#lists.isEmpty(drafts)}">当前没有草稿。</div>
+                </section>
+
+                <section class="ll-space-posts-panel ll-space-section-card">
+                    <section class="ll-editor-panel-head ll-space-feed-head">
+                        <div>
+                            <h2 class="ll-side-title">最近发布</h2>
+                            <p class="ll-side-text"
+                               th:text="${canManageUserPosts and !isOwner ? '管理员可以从这里进入文章详情后继续执行编辑或删除。' : '这里展示该用户最近公开发布的文章。'}">
+                                说明
+                            </p>
+                        </div>
+                    </section>
+
+                    <div class="ll-space-post-grid" th:if="${!#lists.isEmpty(posts)}">
+                        <article class="ll-feed-card ll-feed-card--space" th:each="post : ${posts}">
+                            <a class="ll-feed-cover ll-feed-cover--space" th:href="@{/posts/{id}(id=${post.id})}">
+                                <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+                            </a>
+                            <div class="ll-feed-top">
+                                <span class="ll-tag" th:text="${post.categoryDisplayName}">项目</span>
+                                <span class="ll-meta-pill" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2026-04-02 20:00</span>
+                            </div>
+                            <h2 class="ll-feed-title"><a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a></h2>
+                            <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(post.content, 112)}">文章摘要</p>
+                            <div class="ll-feed-meta">
+                                <span th:text="${post.editorFont.label}">字体</span>
+                                <span th:if="${post.plan != null}" th:text="${'计划：' + post.plan.name}">计划</span>
+                                <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
+                                <a class="ll-feed-action" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                                <a class="ll-feed-action" th:if="${isOwner and canWritePosts}" th:href="@{/posts/edit/{id}(id=${post.id})}">调整归档</a>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(posts)}" class="ll-empty">
+                        这个空间还没有发布文章。
+                        <a href="/posts/new" th:if="${isOwner and canWritePosts}">现在写第一篇文章</a>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="ll-side-stack">
+                <section class="ll-side-card is-sticky ll-fade ll-space-nameplate">
+                    <div class="ll-profile-inline">
+                        <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${profileUser.displayAvatarUrl}" th:alt="${profileUser.username}">
+                        <div>
+                            <div class="ll-rank-title" th:text="${profileUser.displayName}">博主名称</div>
+                            <div class="ll-space-card-handle" th:text="${'@' + profileUser.username}">@username</div>
+                        </div>
+                    </div>
+                    <p class="ll-side-text"
+                       th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这位博主还没有填写更详细的自我介绍。'}">
+                        个人简介
+                    </p>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge" th:if="${profileUser.realName != null and !#strings.isEmpty(profileUser.realName)}" th:text="${'实名 ' + profileUser.realName}">实名 张三</span>
+                        <span class="ll-link-badge" th:if="${showVerificationStatus}" th:text="${profileUser.realNameVerificationStatusDisplayName}">已通过</span>
+                        <span class="ll-link-badge" th:if="${profileUser.qq != null and !#strings.isEmpty(profileUser.qq)}" th:text="${'QQ ' + profileUser.qq}">QQ 123456</span>
+                        <a class="ll-link-badge" th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}" th:href="${profileUser.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
+                        <a class="ll-link-badge" th:if="${profileUser.personalBlogUrl != null and !#strings.isEmpty(profileUser.personalBlogUrl)}" th:href="${profileUser.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>
+                    </div>
+                    <div class="ll-form-actions" th:if="${isOwner}">
+                        <a class="ll-btn-secondary" href="/notifications">消息中心</a>
+                        <a class="ll-btn-secondary" href="/space/edit">编辑资料</a>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </div>
+</main>
+</body>
+</html>

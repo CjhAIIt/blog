@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章列表 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link is-active" href="/posts">文章</a>
+                <a class="ll-header-link" href="/plans">计划</a>
+                <a class="ll-header-link" href="/about">关于</a>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <form class="ll-header-form" action="/search" method="get">
+                    <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章" th:value="${keyword}">
+                    <button class="ll-search-submit" type="submit">搜索</button>
+                </form>
+                <a class="ll-header-bell" href="/notifications" sec:authorize="isAuthenticated()" th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}" aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge" th:if="${notificationUnreadCount > 0}" th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+            </div>
+        </header>
+
+        <div class="ll-category-row">
+            <nav class="ll-category-links">
+                <a class="ll-category-link" th:classappend="${selectedCategory == 'latest' ? ' is-active' : ''}" href="/posts">最新</a>
+                <a class="ll-category-link" th:each="category : ${postCategories}" th:classappend="${selectedCategory == category.slug ? ' is-active' : ''}" th:href="@{/posts(category=${category.slug})}" th:text="${category.displayName}">分类</a>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-page-head ll-fade">
+            <div>
+                <h1 class="ll-page-title" th:text="${keyword != null ? '搜索结果' : '全部文章'}">全部文章</h1>
+                <p class="ll-page-desc" th:if="${keyword != null}" th:text="${'当前关键词：' + keyword}">关键词</p>
+                <p class="ll-page-desc" th:if="${keyword == null}">这里只展示已发布文章，草稿会单独进入个人草稿箱。</p>
+            </div>
+            <div class="ll-inline-actions">
+                <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">写新文章</a>
+                <a class="ll-btn-secondary" href="/space/drafts" sec:authorize="isAuthenticated()">草稿箱</a>
+            </div>
+        </section>
+
+        <section class="ll-grid" th:if="${!#lists.isEmpty(posts)}">
+            <article class="ll-card ll-fade" th:each="post, stat : ${posts}">
+                <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
+                    <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+                    <span class="ll-media-badge" th:text="${post.categoryDisplayName}">分类</span>
+                    <span class="ll-media-mark" th:text="${stat.count < 10 ? '0' + stat.count : stat.count}">01</span>
+                </a>
+                <div class="ll-card-body">
+                    <div class="ll-card-topline">
+                        <span class="ll-meta-pill" th:text="${post.editorFont.label}">字体</span>
+                        <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">2026-03-19</span>
+                    </div>
+                    <h2 class="ll-card-title"><a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">标题</a></h2>
+                    <p class="ll-card-excerpt" th:text="${@markdownService.excerpt(post.content, 120)}">摘要</p>
+                    <div class="ll-card-meta">
+                        <a class="ll-side-link" th:href="@{/users/{username}(username=${post.author.username})}" th:text="${post.author.displayName}">作者</a>
+                        <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
+                        <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-fade">当前没有符合条件的文章。</div>
+
+        <footer class="ll-footer">
+            <span>© 2026 博客</span>
+            <span> · 文章索引 · </span>
+            <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

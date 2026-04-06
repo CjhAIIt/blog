@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计划分区 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+    <style>
+        .plan-card {
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff;
+            transition: box-shadow 0.3s;
+        }
+        .plan-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .plan-title {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .plan-title a {
+            text-decoration: none;
+            color: #333;
+        }
+        .plan-title a:hover {
+            color: #0066cc;
+        }
+        .plan-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .plan-desc {
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .plan-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .plan-progress {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .plan-filter-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin: 20px 0 24px;
+            flex-wrap: wrap;
+        }
+        .plan-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid #d9d9d9;
+            color: #555;
+            text-decoration: none;
+            background: #fff;
+        }
+        .plan-filter-chip.is-active {
+            border-color: #0066cc;
+            color: #0066cc;
+            background: rgba(0, 102, 204, 0.08);
+        }
+    </style>
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link is-active" href="/plans">计划</a>
+                <a class="ll-header-link" href="/about">关于</a>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-page-head ll-fade">
+            <div>
+                <h1 class="ll-page-title">全部计划</h1>
+                <p class="ll-page-desc">按“连续创作目标”组织的系列文章，形成清晰的学习/创作路线。</p>
+            </div>
+            <div class="ll-inline-actions" sec:authorize="isAuthenticated()">
+                <a class="ll-btn" href="/plans/new">新建计划</a>
+                <a class="ll-btn-secondary" href="/posts/new">写文章并归档</a>
+            </div>
+        </section>
+
+        <div class="plan-filter-row ll-fade">
+            <a class="plan-filter-chip" th:classappend="${activeFilter == 'public' ? ' is-active' : ''}" href="/plans">全部可见计划</a>
+            <a class="plan-filter-chip" th:classappend="${activeFilter == 'collaborative' ? ' is-active' : ''}" th:href="@{/plans(filter='collaborative')}">共创计划</a>
+            <a class="plan-filter-chip" sec:authorize="isAuthenticated()" th:classappend="${activeFilter == 'mine' ? ' is-active' : ''}" th:href="@{/plans(filter='mine')}">我的计划</a>
+        </div>
+
+        <div th:if="${plans.empty}" class="ll-empty ll-fade">
+            <span th:if="${activeFilter == 'mine'}">你还没有创建计划。</span>
+            <span th:if="${activeFilter != 'mine'}">当前筛选条件下还没有计划。</span>
+        </div>
+
+        <div th:if="${!plans.empty}" class="ll-fade">
+            <div class="plan-card" th:each="plan : ${plans.content}">
+                <div class="plan-header">
+                    <h2 class="plan-title">
+                        <a th:href="@{/plans/{id}(id=${plan.id})}" th:text="${plan.name}">计划名称</a>
+                    </h2>
+                    <span class="plan-progress" th:if="${plan.status == 0}">进行中</span>
+                    <span class="plan-progress" th:if="${plan.status == 1}">已完结</span>
+                    <span class="plan-progress" th:if="${plan.status == 2}">已搁置</span>
+                </div>
+                <div class="plan-meta">
+                    作者: <span th:text="${plan.author.displayName}">作者名</span>
+                    · 更新于 <span th:text="${#temporals.format(plan.updatedAt, 'yyyy-MM-dd HH:mm')}">时间</span>
+                    · 类型 <span th:text="${plan.accessTypeDisplayName}">计划类型</span>
+                </div>
+                <div class="plan-desc" th:text="${plan.description != null && !plan.description.isEmpty() ? plan.description : '暂无简介'}">计划简介</div>
+                <div class="plan-footer">
+                    <span>
+                        共需 <strong th:text="${plan.expectedCount}">0</strong> 篇
+                    </span>
+                    <a class="ll-btn-secondary" th:href="@{/plans/{id}(id=${plan.id})}">查看详情</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ll-pagination" th:if="${plans.totalPages > 1}">
+            <a th:if="${plans.hasPrevious()}" th:href="@{/plans(page=${currentPage - 1},filter=${activeFilter})}">上一页</a>
+            <span th:text="${currentPage + 1} + ' / ' + ${plans.totalPages}"></span>
+            <a th:if="${plans.hasNext()}" th:href="@{/plans(page=${currentPage + 1},filter=${activeFilter})}">下一页</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

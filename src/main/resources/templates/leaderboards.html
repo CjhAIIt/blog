@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排行榜 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   sec:authorize="isAuthenticated()"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-rank-page-hero ll-fade">
+            <div>
+                <span class="ll-kicker">站内排行榜</span>
+                <h1 class="ll-page-title">排行榜</h1>
+                <p class="ll-page-desc">按周、月、年统计发文数与点赞数，默认展示前 10 名。</p>
+            </div>
+            <div class="ll-rank-tabs">
+                <a class="ll-rank-tab"
+                   th:each="period : ${rankingPeriods}"
+                   th:classappend="${period == selectedRankingPeriod ? ' is-active' : ''}"
+                   th:href="@{/leaderboards(rankPeriod=${period.slug})}"
+                   th:text="${period.label}">周榜</a>
+            </div>
+        </section>
+
+        <section class="ll-rank-grid ll-rank-grid--page">
+            <article class="ll-rank-card ll-fade">
+                <div class="ll-rank-card-head">
+                    <div>
+                        <h2 class="ll-side-title">发文贡献榜</h2>
+                        <p class="ll-side-text" th:text="${selectedRankingPeriod.description}">按当前周期发文数实时统计</p>
+                    </div>
+                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+                </div>
+
+                <div class="ll-rank-list" th:if="${!#lists.isEmpty(contributionLeaderboard)}">
+                    <a class="ll-rank-item ll-rank-item--wide"
+                       th:each="entry, stat : ${contributionLeaderboard}"
+                       th:href="@{/users/{username}(username=${entry.username})}">
+                        <div class="ll-rank-main">
+                            <span class="ll-rank-index" th:text="${stat.count}">1</span>
+                            <div>
+                                <div class="ll-rank-title" th:text="${entry.username}">用户名</div>
+                                <div class="ll-rank-subtitle">本周期发文数</div>
+                            </div>
+                        </div>
+                        <strong class="ll-rank-value" th:text="${entry.postCount + ' 篇'}">0 篇</strong>
+                    </a>
+                </div>
+
+                <div class="ll-empty ll-rank-empty" th:if="${#lists.isEmpty(contributionLeaderboard)}">
+                    当前周期还没有新的发文记录。
+                </div>
+            </article>
+
+            <article class="ll-rank-card ll-fade">
+                <div class="ll-rank-card-head">
+                    <div>
+                        <h2 class="ll-side-title">点赞热度榜</h2>
+                        <p class="ll-side-text">统计本周期内文章获得的点赞数，展示点赞最高的内容。</p>
+                    </div>
+                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+                </div>
+
+                <div class="ll-rank-list" th:if="${!#lists.isEmpty(likeLeaderboard)}">
+                    <a class="ll-rank-item ll-rank-item--wide"
+                       th:each="rankPost, stat : ${likeLeaderboard}"
+                       th:href="@{/posts/{id}(id=${rankPost.id})}">
+                        <div class="ll-rank-main">
+                            <span class="ll-rank-index" th:text="${stat.count}">1</span>
+                            <div>
+                                <div class="ll-rank-title" th:text="${rankPost.title}">文章标题</div>
+                                <div class="ll-rank-subtitle" th:text="${'作者：' + rankPost.author.username}">作者：用户名</div>
+                            </div>
+                        </div>
+                        <strong class="ll-rank-value" th:text="${rankPost.likeCount + ' 赞'}">0 赞</strong>
+                    </a>
+                </div>
+
+                <div class="ll-empty ll-rank-empty" th:if="${#lists.isEmpty(likeLeaderboard)}">
+                    当前周期还没有文章进入点赞榜。
+                </div>
+            </article>
+        </section>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[Unit]
+Description=Blog Reverse SSH Tunnel To Public Proxy
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -NT -i /home/lab/.ssh/blog_reverse_tunnel_ed25519 -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/home/lab/.ssh/known_hosts -R 127.0.0.1:18012:127.0.0.1:8012 ubuntu@101.35.79.76
+Restart=always
+RestartSec=5
+SuccessExitStatus=255
+
+[Install]
+WantedBy=default.target

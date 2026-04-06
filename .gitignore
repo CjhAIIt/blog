@@ -1,0 +1,12 @@
+target/
+*.log
+*.out
+*.err
+.codex-tools/
+.idea/
+.vscode/
+apache-maven-*/
+*.zip
+*.class
+data/
+uploads/

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑个人资料 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/space/drafts">草稿箱</a>
+                <a class="ll-header-link" href="/posts/new" th:if="${currentUser.canPublishPosts()}">写文章</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/admin/verifications" th:if="${currentUser.admin}">实名审核</a>
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/space/export">导出博客</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <div class="ll-content-grid">
+            <section class="ll-section-card ll-fade">
+                <h1 class="ll-page-title">编辑个人资料</h1>
+                <p class="ll-page-desc">这里可以修改用户名、真实姓名、简介和头像。修改真实姓名后会重新进入实名认证审核。</p>
+
+                <section class="ll-side-card">
+                    <h2 class="ll-side-title">实名认证状态</h2>
+                    <p class="ll-side-text" th:text="${'当前状态：' + currentUser.realNameVerificationStatusDisplayName}">当前状态：待审核</p>
+                    <p class="ll-side-text" th:if="${currentUser.realNameVerificationPending}">
+                        实名资料已提交管理员审核，审核通过前不能写博客。
+                    </p>
+                    <p class="ll-side-text" th:if="${currentUser.realNameVerificationRejected}">
+                        当前实名审核未通过。请确认真实姓名后保存资料，系统会重新提交管理员审核。
+                    </p>
+                    <p class="ll-side-text" th:if="${currentUser.realNameVerified}">
+                        实名认证已通过，你现在可以写博客、导入 Markdown 和编辑文章。
+                    </p>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge"
+                              th:if="${currentUser.realNameVerificationSubmittedAt != null}"
+                              th:text="${'提交于 ' + #temporals.format(currentUser.realNameVerificationSubmittedAt, 'yyyy-MM-dd HH:mm')}">
+                            提交于 2026-04-02 20:00
+                        </span>
+                        <span class="ll-link-badge"
+                              th:if="${currentUser.realNameVerificationReviewedAt != null}"
+                              th:text="${'审核于 ' + #temporals.format(currentUser.realNameVerificationReviewedAt, 'yyyy-MM-dd HH:mm')}">
+                            审核于 2026-04-02 20:30
+                        </span>
+                    </div>
+                </section>
+
+                <form th:object="${profileForm}" action="/space/edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                    <div class="ll-upload-box ll-upload-box--profile">
+                        <div class="ll-upload-preview ll-upload-preview--avatar">
+                            <img id="avatarPreview" th:src="*{existingAvatarUrl}" alt="头像预览">
+                        </div>
+                        <div class="ll-upload-fields">
+                            <label class="ll-form-label" for="avatarFile">个人头像</label>
+                            <input class="ll-input" type="file" id="avatarFile" name="avatarFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                            <label class="ll-checkbox">
+                                <input type="checkbox" name="useDefaultAvatar" value="true">
+                                <span>恢复默认头像</span>
+                            </label>
+                            <p class="ll-form-note">支持 JPG、PNG、WEBP、GIF，未上传时会使用默认头像图。</p>
+                        </div>
+                    </div>
+
+                    <div class="ll-settings-grid">
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="username">用户名</label>
+                            <input class="ll-input" type="text" id="username" th:field="*{username}" placeholder="3 到 20 个字符" required>
+                        </div>
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="realName">真实姓名</label>
+                            <input class="ll-input"
+                                   type="text"
+                                   id="realName"
+                                   th:field="*{realName}"
+                                   maxlength="5"
+                                   pattern="[\u4E00-\u9FFF]{1,5}"
+                                   placeholder="1 到 5 个中文字符"
+                                   required>
+                            <p class="ll-form-note">用于实名认证审核和个人主页展示，不影响登录用户名。</p>
+                        </div>
+                    </div>
+
+                    <div class="ll-settings-grid">
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="qq">QQ</label>
+                            <input class="ll-input" type="text" id="qq" th:field="*{qq}" placeholder="填写 QQ 号">
+                        </div>
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="personalBlogUrl">个人博客地址</label>
+                            <input class="ll-input" type="text" id="personalBlogUrl" th:field="*{personalBlogUrl}" placeholder="例如 https://yourname.github.io/blog/">
+                        </div>
+                    </div>
+
+                    <div class="ll-form-field">
+                        <label class="ll-form-label" for="bio">自我介绍</label>
+                        <textarea class="ll-textarea" id="bio" th:field="*{bio}" placeholder="写一点关于自己的介绍..."></textarea>
+                    </div>
+
+                    <div class="ll-form-field">
+                        <label class="ll-form-label" for="githubUrl">GitHub 主页</label>
+                        <input class="ll-input" type="text" id="githubUrl" th:field="*{githubUrl}" placeholder="例如 https://github.com/yourname">
+                    </div>
+
+                    <div class="ll-settings-grid">
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="currentPassword">当前密码</label>
+                            <input class="ll-input" type="password" id="currentPassword" th:field="*{currentPassword}" placeholder="修改用户名或密码时必填" autocomplete="current-password">
+                        </div>
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="newPassword">新密码</label>
+                            <input class="ll-input" type="password" id="newPassword" th:field="*{newPassword}" placeholder="留空则不修改密码" autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div class="ll-form-field">
+                        <label class="ll-form-label" for="confirmPassword">确认新密码</label>
+                        <input class="ll-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" placeholder="再次输入新密码" autocomplete="new-password">
+                    </div>
+
+                    <div class="ll-form-actions">
+                        <button class="ll-btn" type="submit">保存资料</button>
+                        <a class="ll-btn-secondary" href="/space/drafts">草稿箱</a>
+                        <a class="ll-btn-secondary" href="/space/export">导出博客</a>
+                        <a class="ll-btn-secondary" href="/space">返回空间</a>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="ll-side-stack">
+                <section class="ll-side-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">填写建议</h2>
+                    <ul class="ll-side-list">
+                        <li>真实姓名是实名认证的核心字段，仅支持 1 到 5 个中文字符。</li>
+                        <li>修改真实姓名后会重新提交管理员审核，审核通过前不能写博客。</li>
+                        <li>登录、主页地址和站内跳转仍然使用用户名，不会被真实姓名替换。</li>
+                        <li>如果准备导出个人博客，建议先补全头像、简介和个人博客地址。</li>
+                    </ul>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<script>
+    const avatarInput = document.getElementById('avatarFile');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    avatarInput?.addEventListener('change', () => {
+        const file = avatarInput.files?.[0];
+        if (!file) {
+            return;
+        }
+        avatarPreview.src = URL.createObjectURL(file);
+    });
+</script>
+</body>
+</html>
