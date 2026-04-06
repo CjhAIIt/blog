@@ -22,10 +22,6 @@
                 <a class="ll-header-link" href="/about">关于</a>
             </nav>
             <div class="ll-header-actions">
-                <form class="ll-header-form" action="/search" method="get">
-                    <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章" th:value="${keyword}">
-                    <button class="ll-search-submit" type="submit">搜索</button>
-                </form>
                 <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
                 <a class="ll-header-bell"
                    href="/notifications"
@@ -40,6 +36,10 @@
                           th:if="${notificationUnreadCount > 0}"
                           th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
                 </a>
+                <form class="ll-header-form" action="/search" method="get">
+                    <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章" th:value="${keyword}">
+                    <button class="ll-search-submit" type="submit">搜索</button>
+                </form>
                 <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
             </div>
         </header>
