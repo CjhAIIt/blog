@@ -1,0 +1,386 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head(${post.title})}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <div class="mb-alert mb-alert--error" th:if="${isDraftPreview}">这是未公开文章的预览页，只有作者或管理员可以看到。</div>
+
+        <article class="mb-hero mb-hero--article">
+            <div class="mb-meta-ribbon">正在阅读</div>
+            <span class="mb-hero-kicker" th:text="${post.categoryDisplayName}">分类</span>
+            <h1 class="mb-article-title" th:text="${post.title}">文章标题</h1>
+            <div class="mb-post-meta mb-post-meta--article">
+                <span th:text="${post.author.displayName}">作者</span>
+                <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2026-04-10 11:00</span>
+                <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
+                <span th:text="${commentCount + ' 条评论'}">0 条评论</span>
+            </div>
+            <div class="mb-chip-row">
+                <span class="mb-chip" th:text="${post.statusDisplayName}">已发布</span>
+                <span class="mb-chip" th:text="${post.editorFont.label}">字体</span>
+                <span class="mb-chip" th:if="${post.scheduledPublishAt != null}" th:text="${#temporals.format(post.scheduledPublishAt, 'MM-dd HH:mm')}">计划时间</span>
+            </div>
+            <div class="mb-article-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
+            <div class="mb-article-snapshot">
+                <div class="mb-snapshot">
+                    <span>点赞</span>
+                    <strong th:text="${post.likeCount}">0</strong>
+                </div>
+                <div class="mb-snapshot">
+                    <span>评论</span>
+                    <strong th:text="${commentCount}">0</strong>
+                </div>
+                <div class="mb-snapshot">
+                    <span>作者</span>
+                    <strong th:text="${post.author.displayName}">作者</strong>
+                </div>
+                <div class="mb-snapshot">
+                    <span>状态</span>
+                    <strong th:text="${post.statusDisplayName}">已发布</strong>
+                </div>
+            </div>
+            <div class="mb-actions">
+                <form th:if="${viewer != null and !isDraftPreview}" th:action="@{/posts/{id}/like(id=${post.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="mb-btn" type="submit" th:disabled="${likedByCurrentUser}" th:text="${likedByCurrentUser ? '已点赞' : '点赞'}">点赞</button>
+                </form>
+                <a class="mb-btn-secondary" th:if="${viewer == null and !isDraftPreview}" href="/login">登录后点赞</a>
+                <a class="mb-btn-secondary" th:href="@{/users/{username}(username=${post.author.username})}">作者主页</a>
+                <a class="mb-btn-secondary" th:if="${canManage}" th:href="@{/posts/edit/{id}(id=${post.id})}">编辑</a>
+            </div>
+        </article>
+
+        <section class="mb-card" th:if="${showPlanContext}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">所属计划</h2>
+                    <div class="mb-section-note" th:text="${post.plan.accessTypeDisplayName}">计划类型</div>
+                </div>
+            </div>
+            <div class="mb-panel">
+                <h3 class="mb-post-title" th:text="${post.plan.name}">计划名称</h3>
+                <p class="mb-copy" th:text="${post.plan.description}">计划简介</p>
+                <div class="mb-actions">
+                    <span class="mb-chip" th:text="${'第 ' + post.planOrder + ' 篇'}">第 1 篇</span>
+                    <a class="mb-btn-secondary" th:href="@{/plans/{id}(id=${post.plan.id})}">查看计划</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent mb-reading-guide">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">阅读导览</h2>
+                    <div class="mb-section-note">手机上读长文也别太费劲，先看一眼节奏。</div>
+                </div>
+                <button type="button" class="mb-link-button mb-outline-toggle" id="mobileOutlineToggle" hidden>章节目录</button>
+            </div>
+            <div class="mb-reading-topline">
+                <div class="mb-progress mb-progress--reading"><div class="mb-progress-bar" id="mobileReadingProgressBar"></div></div>
+                <div class="mb-note mb-reading-progress-text" id="mobileReadingProgressText">刚开始阅读</div>
+            </div>
+            <div class="mb-reading-stats">
+                <div class="mb-reading-stat">
+                    <span>预计阅读</span>
+                    <strong id="mobileReadTime">1 分钟</strong>
+                </div>
+                <div class="mb-reading-stat">
+                    <span>标题层级</span>
+                    <strong id="mobileHeadingCount">0</strong>
+                </div>
+                <div class="mb-reading-stat">
+                    <span>段落数</span>
+                    <strong id="mobileParagraphCount">0</strong>
+                </div>
+                <div class="mb-reading-stat">
+                    <span>评论</span>
+                    <strong th:text="${commentCount}">0</strong>
+                </div>
+            </div>
+            <div class="mb-outline-panel" id="mobileOutlinePanel" hidden>
+                <div class="mb-outline-list" id="mobileOutlineList"></div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--article">
+            <div class="mb-section-head mb-section-head--article">
+                <div>
+                    <h2 class="mb-section-title">正文</h2>
+                    <div class="mb-section-note" th:text="${'按 ' + post.editorFont.label + ' 的排版来读，进度和目录会跟着你往下走。'}">按当前排版阅读，进度和目录会跟着你往下走。</div>
+                </div>
+                <a class="mb-link-button" href="#comments" th:if="${!isDraftPreview}">去评论</a>
+            </div>
+            <div class="mb-article-body mb-markdown" id="mobileArticleBody" th:utext="${renderedContent}"></div>
+        </section>
+
+        <section class="mb-card mb-author-card">
+            <div class="mb-profile-head">
+                <div class="mb-avatar-lg"><img th:src="${post.author.displayAvatarUrl}" th:alt="${post.author.username}"></div>
+                <div>
+                    <h2 class="mb-section-title" th:text="${post.author.displayName}">作者</h2>
+                    <div class="mb-section-note" th:text="${'@' + post.author.username}">@username</div>
+                    <p class="mb-copy" th:text="${post.author.bio != null and !#strings.isEmpty(post.author.bio) ? post.author.bio : '这个作者还没有写简介。'}">作者简介</p>
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:text="${post.categoryDisplayName}">分类</span>
+                        <span class="mb-badge-pill" th:if="${post.author.realName != null and !#strings.isEmpty(post.author.realName)}" th:text="${'实名 ' + post.author.realName}">实名</span>
+                        <a class="mb-badge-pill" th:if="${post.author.githubUrl != null and !#strings.isEmpty(post.author.githubUrl)}" th:href="${post.author.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
+                        <a class="mb-badge-pill" th:if="${post.author.personalBlogUrl != null and !#strings.isEmpty(post.author.personalBlogUrl)}" th:href="${post.author.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft mb-comments-shell" id="comments" th:if="${!isDraftPreview}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">评论区</h2>
+                    <div class="mb-section-note" th:text="${commentCount + ' 条评论'}">0 条评论</div>
+                </div>
+            </div>
+
+            <form th:if="${viewer != null}" th:action="@{/posts/{id}/comments(id=${post.id})}" method="post" class="mb-stack mb-comment-composer">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="hidden" name="parentCommentId" id="parentCommentId">
+                <div class="mb-reply-box" id="replyNotice" hidden>
+                    <div>
+                        <strong>正在回复：</strong>
+                        <span id="replyTargetName">评论用户</span>
+                        <span class="mb-note" id="replyTargetSnippet">评论摘要</span>
+                    </div>
+                    <button type="button" class="mb-link-button" id="cancelReplyButton">取消</button>
+                </div>
+                <textarea class="mb-textarea" id="commentContent" name="content" maxlength="500" placeholder="写点你的看法，最多 500 字。" required></textarea>
+                <div class="mb-comment-toolbar">
+                    <button type="button" class="mb-btn-secondary" id="toggleEmojiPanel">表情</button>
+                    <span class="mb-note">轻一点聊也行，补充观点也行，手机上随手回就好。</span>
+                </div>
+                <div class="mb-emoji-panel" id="commentEmojiPanel" hidden>
+                    <button type="button" class="mb-emoji-button" data-emoji="😄">😄</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="😂">😂</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="🥹">🥹</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="😉">😉</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="👍">👍</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="👀">👀</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="🎉">🎉</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="🔥">🔥</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="❤️">❤️</button>
+                    <button type="button" class="mb-emoji-button" data-emoji="🤝">🤝</button>
+                </div>
+                <div class="mb-form-actions">
+                    <button class="mb-btn" type="submit">发布评论</button>
+                </div>
+            </form>
+
+            <div class="mb-empty" th:if="${viewer == null}">登录后就可以参与评论。<a href="/login">去登录</a></div>
+
+            <div class="mb-comment-list" th:if="${!#lists.isEmpty(comments)}">
+                <article class="mb-comment-card mb-comment-entry" th:each="comment : ${comments}" th:id="${'comment-' + comment.id}" th:classappend="${comment.reply ? ' is-reply' : ''}" th:style="${comment.reply ? 'margin-left:' + ((comment.replyDepth > 2 ? 2 : comment.replyDepth) * 16) + 'px' : ''}">
+                    <div class="mb-inline-profile">
+                        <div class="mb-avatar"><img th:src="${comment.author.displayAvatarUrl}" th:alt="${comment.author.username}"></div>
+                        <div>
+                            <div class="mb-comment-meta">
+                                <span th:text="${comment.author.displayName}">用户名</span>
+                                <span th:text="${'@' + comment.author.username}">@username</span>
+                                <span th:if="${comment.reply and comment.parentComment != null}" th:text="${'回复 ' + comment.parentComment.author.displayName}">回复某人</span>
+                            </div>
+                            <div class="mb-note mb-comment-time" th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-04-10 11:00</div>
+                        </div>
+                    </div>
+                    <div class="mb-comment-body" th:text="${comment.content}">评论内容</div>
+                    <div class="mb-comment-actions">
+                        <button type="button" class="mb-link-button mb-comment-reply-button" th:if="${viewer != null}" th:attr="data-comment-id=${comment.id},data-author-name=${comment.author.displayName},data-comment-snippet=${#strings.abbreviate(comment.content, 36)}">回复</button>
+                        <a class="mb-link-button" th:href="${'#comment-' + comment.id}">定位</a>
+                        <form th:if="${currentUsername != null and (currentUserAdmin or currentUsername == comment.author.username or canManage)}" th:action="@{/posts/{postId}/comments/delete/{commentId}(postId=${post.id},commentId=${comment.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="mb-link-button" type="submit" onclick="return confirm('确定删除这条评论吗？')">删除</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+
+            <div class="mb-empty" th:if="${#lists.isEmpty(comments)}">还没有评论，欢迎来聊聊。</div>
+        </section>
+
+        <div class="mb-floating-actions" id="mobileArticleActions">
+            <a class="mb-floating-chip" href="#comments" th:if="${!isDraftPreview}">去评论</a>
+            <button type="button" class="mb-floating-chip" id="mobileScrollTopButton">回顶部</button>
+        </div>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('posts')}"></nav>
+</div>
+
+<script>
+    const articleBody = document.getElementById('mobileArticleBody');
+    const outlineToggleButton = document.getElementById('mobileOutlineToggle');
+    const outlinePanel = document.getElementById('mobileOutlinePanel');
+    const outlineList = document.getElementById('mobileOutlineList');
+    const mobileReadingProgressBar = document.getElementById('mobileReadingProgressBar');
+    const mobileReadingProgressText = document.getElementById('mobileReadingProgressText');
+    const mobileReadTime = document.getElementById('mobileReadTime');
+    const mobileHeadingCount = document.getElementById('mobileHeadingCount');
+    const mobileParagraphCount = document.getElementById('mobileParagraphCount');
+    const mobileArticleActions = document.getElementById('mobileArticleActions');
+    const mobileScrollTopButton = document.getElementById('mobileScrollTopButton');
+    const replyNotice = document.getElementById('replyNotice');
+    const parentCommentIdInput = document.getElementById('parentCommentId');
+    const replyTargetName = document.getElementById('replyTargetName');
+    const replyTargetSnippet = document.getElementById('replyTargetSnippet');
+    const commentContent = document.getElementById('commentContent');
+    const cancelReplyButton = document.getElementById('cancelReplyButton');
+    const toggleEmojiPanelButton = document.getElementById('toggleEmojiPanel');
+    const commentEmojiPanel = document.getElementById('commentEmojiPanel');
+
+    function slugify(text, index) { return ((text || '').toLowerCase().replace(/[^\w\u4e00-\u9fa5\s-]/g, '').trim().replace(/\s+/g, '-')) || 'section-' + index; }
+    function tokenize(text) { return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || []; }
+
+    function buildOutline() {
+        if (!articleBody || !outlineList || !outlineToggleButton || !outlinePanel) return;
+        const headings = [...articleBody.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outlineToggleButton.hidden = true;
+            outlinePanel.hidden = true;
+            return;
+        }
+        outlineToggleButton.hidden = false;
+        outlineList.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) heading.id = slugify(heading.textContent, index);
+            const link = document.createElement('a');
+            link.href = '#' + heading.id;
+            link.className = 'mb-outline-link mb-outline-link--level-' + heading.tagName.substring(1);
+            link.textContent = heading.textContent.trim();
+            link.dataset.targetId = heading.id;
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                outlinePanel.hidden = true;
+                outlineToggleButton.classList.remove('is-active');
+                const targetTop = heading.getBoundingClientRect().top + window.scrollY - 96;
+                window.scrollTo({top: targetTop, behavior: 'smooth'});
+            });
+            outlineList.appendChild(link);
+        });
+    }
+
+    function updateArticleMetrics() {
+        if (!articleBody) return;
+        const text = articleBody.textContent.trim();
+        const tokens = tokenize(text);
+        const paragraphs = [...articleBody.querySelectorAll('p')].filter(node => node.textContent.trim()).length;
+        const headings = articleBody.querySelectorAll('h1, h2, h3').length;
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+        if (mobileReadTime) mobileReadTime.textContent = minutes + ' 分钟';
+        if (mobileHeadingCount) mobileHeadingCount.textContent = headings;
+        if (mobileParagraphCount) mobileParagraphCount.textContent = paragraphs;
+    }
+
+    function updateOutlineActiveState() {
+        if (!articleBody || !outlineList) return;
+        const headings = [...articleBody.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) return;
+        let activeId = headings[0].id;
+        headings.forEach(heading => {
+            if (window.scrollY >= heading.offsetTop - 132) {
+                activeId = heading.id;
+            }
+        });
+        outlineList.querySelectorAll('.mb-outline-link').forEach(link => {
+            link.classList.toggle('is-active', link.dataset.targetId === activeId);
+        });
+    }
+
+    function updateReadingProgress() {
+        if (!articleBody || !mobileReadingProgressBar) return;
+        const start = articleBody.offsetTop - window.innerHeight * 0.28;
+        const end = articleBody.offsetTop + articleBody.offsetHeight - window.innerHeight * 0.6;
+        const progress = Math.max(0, Math.min(1, (window.scrollY - start) / Math.max(1, end - start)));
+        mobileReadingProgressBar.style.width = (progress * 100).toFixed(1) + '%';
+        if (!mobileReadingProgressText) return;
+        if (progress < 0.08) mobileReadingProgressText.textContent = '刚开始阅读';
+        else if (progress < 0.45) mobileReadingProgressText.textContent = '已经进入正文';
+        else if (progress < 0.85) mobileReadingProgressText.textContent = '读到中段了，继续往下';
+        else mobileReadingProgressText.textContent = '快读完了';
+    }
+
+    function updateFloatingActions() {
+        if (!mobileArticleActions) return;
+        mobileArticleActions.classList.toggle('is-visible', window.scrollY > 420);
+    }
+
+    function clearReplyTarget() {
+        if (!replyNotice) return;
+        parentCommentIdInput.value = '';
+        replyNotice.hidden = true;
+        replyTargetName.textContent = '';
+        replyTargetSnippet.textContent = '';
+    }
+
+    function toggleEmojiPanel(forceOpen) {
+        if (!commentEmojiPanel || !toggleEmojiPanelButton) return;
+        const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : commentEmojiPanel.hidden;
+        commentEmojiPanel.hidden = !shouldOpen;
+        toggleEmojiPanelButton.classList.toggle('is-active', shouldOpen);
+    }
+
+    function insertCommentAtCursor(text) {
+        if (!commentContent) return;
+        const start = commentContent.selectionStart ?? commentContent.value.length;
+        const end = commentContent.selectionEnd ?? start;
+        commentContent.setRangeText(text, start, end, 'end');
+        commentContent.focus();
+    }
+
+    document.querySelectorAll('.mb-comment-reply-button').forEach(button => {
+        button.addEventListener('click', () => {
+            parentCommentIdInput.value = button.dataset.commentId;
+            replyTargetName.textContent = button.dataset.authorName || '评论用户';
+            replyTargetSnippet.textContent = button.dataset.commentSnippet || '';
+            replyNotice.hidden = false;
+            commentContent?.focus();
+            document.getElementById('comments')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+    });
+
+    cancelReplyButton?.addEventListener('click', clearReplyTarget);
+    outlineToggleButton?.addEventListener('click', () => {
+        const shouldOpen = outlinePanel.hidden;
+        outlinePanel.hidden = !shouldOpen;
+        outlineToggleButton.classList.toggle('is-active', shouldOpen);
+    });
+    toggleEmojiPanelButton?.addEventListener('click', () => toggleEmojiPanel());
+    document.querySelectorAll('.mb-emoji-button').forEach(button => {
+        button.addEventListener('click', () => {
+            insertCommentAtCursor((button.dataset.emoji || '') + ' ');
+            toggleEmojiPanel(true);
+        });
+    });
+    document.addEventListener('click', event => {
+        if (!commentEmojiPanel || commentEmojiPanel.hidden) return;
+        if (commentEmojiPanel.contains(event.target) || toggleEmojiPanelButton?.contains(event.target)) {
+            return;
+        }
+        toggleEmojiPanel(false);
+    });
+    mobileScrollTopButton?.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+    window.addEventListener('scroll', () => {
+        updateOutlineActiveState();
+        updateReadingProgress();
+        updateFloatingActions();
+    }, {passive: true});
+    buildOutline();
+    updateArticleMetrics();
+    updateOutlineActiveState();
+    updateReadingProgress();
+    updateFloatingActions();
+</script>
+</body>
+</html>

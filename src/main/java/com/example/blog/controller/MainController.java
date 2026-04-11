@@ -6,6 +6,7 @@ import com.example.blog.model.RankingPeriod;
 import com.example.blog.model.User;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,10 +25,12 @@ import java.util.Optional;
 public class MainController {
     private final PostService postService;
     private final UserService userService;
+    private final ViewModeService viewModeService;
 
-    public MainController(PostService postService, UserService userService) {
+    public MainController(PostService postService, UserService userService, ViewModeService viewModeService) {
         this.postService = postService;
         this.userService = userService;
+        this.viewModeService = viewModeService;
     }
 
     @GetMapping("/")
@@ -46,7 +49,7 @@ public class MainController {
         model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
         model.addAttribute("featuredPosts", postService.findLikeLeaderboard(RankingPeriod.MONTH, 3));
-        return "index";
+        return view("index");
     }
 
     @GetMapping("/leaderboards")
@@ -56,24 +59,24 @@ public class MainController {
         model.addAttribute("rankingPeriods", RankingPeriod.values());
         model.addAttribute("contributionLeaderboard", postService.findContributionLeaderboard(selectedRankingPeriod, 10));
         model.addAttribute("likeLeaderboard", postService.findLikeLeaderboard(selectedRankingPeriod, 10));
-        return "leaderboards";
+        return view("leaderboards");
     }
 
     @GetMapping("/about")
     public String about(Model model) {
         model.addAttribute("selectedCategory", "latest");
-        return "about";
+        return view("about");
     }
 
     @GetMapping("/login")
     public String login() {
-        return "login";
+        return view("login");
     }
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("user", new User());
-        return "register";
+        return view("register");
     }
 
     @PostMapping("/register")
@@ -83,7 +86,7 @@ public class MainController {
                                Model model) {
         validateRegistration(user, confirmPassword, model);
         if (model.containsAttribute("error")) {
-            return "register";
+            return view("register");
         }
 
         try {
@@ -95,7 +98,7 @@ public class MainController {
             return "redirect:/login";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
-            return "register";
+            return view("register");
         }
     }
 
@@ -111,7 +114,11 @@ public class MainController {
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", "latest");
-        return "search";
+        return view("search");
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 
     private void validateRegistration(User user, String confirmPassword, Model model) {

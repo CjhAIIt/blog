@@ -3,6 +3,7 @@ package com.example.blog.controller;
 import com.example.blog.model.User;
 import com.example.blog.service.NotificationService;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +17,14 @@ import java.security.Principal;
 public class NotificationController {
     private final NotificationService notificationService;
     private final UserService userService;
+    private final ViewModeService viewModeService;
 
-    public NotificationController(NotificationService notificationService, UserService userService) {
+    public NotificationController(NotificationService notificationService,
+                                  UserService userService,
+                                  ViewModeService viewModeService) {
         this.notificationService = notificationService;
         this.userService = userService;
+        this.viewModeService = viewModeService;
     }
 
     @GetMapping("/notifications")
@@ -33,7 +38,7 @@ public class NotificationController {
         model.addAttribute("notifications", notificationService.findByRecipient(currentUser));
         model.addAttribute("unreadNotificationCount", notificationService.countUnreadByRecipientId(currentUser.getId()));
         model.addAttribute("selectedCategory", "latest");
-        return "space/notifications";
+        return view("space/notifications");
     }
 
     @GetMapping("/notifications/{id}")
@@ -63,5 +68,9 @@ public class NotificationController {
         notificationService.markAllAsRead(currentUser);
         redirectAttributes.addFlashAttribute("message", "全部消息已标记为已读");
         return "redirect:/notifications";
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 }

@@ -24,7 +24,15 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
     private static final Charset GB18030 = Charset.forName("GB18030");
-    private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
+    private static final Set<String> IMAGE_EXTENSIONS = Set.of(
+            "jpg", "jpeg", "jpe", "jfif", "pjpeg", "pjp",
+            "png", "apng",
+            "webp",
+            "gif",
+            "bmp", "dib",
+            "avif",
+            "ico"
+    );
     private static final Set<String> MARKDOWN_EXTENSIONS = Set.of("md", "markdown", "txt");
 
     private final Path uploadRoot;
@@ -39,6 +47,10 @@ public class FileStorageService {
 
     public String storeCover(MultipartFile file) {
         return storeImage(file, "covers");
+    }
+
+    public String storePostImage(MultipartFile file) {
+        return storeImage(file, "posts");
     }
 
     public String loadMarkdownContent(MultipartFile file) {
@@ -82,8 +94,8 @@ public class FileStorageService {
 
         String contentType = file.getContentType();
         String extension = extensionOf(file.getOriginalFilename());
-        if (!IMAGE_EXTENSIONS.contains(extension) || contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("仅支持上传 JPG、PNG、WEBP 或 GIF 图片");
+        if (!isSupportedImage(extension, contentType)) {
+            throw new IllegalArgumentException("仅支持上传主流网页图片格式：JPG、JPEG、JFIF、PNG、APNG、WEBP、GIF、BMP、AVIF、ICO");
         }
 
         try {
@@ -168,5 +180,17 @@ public class FileStorageService {
             return value.substring(1);
         }
         return value;
+    }
+
+    private boolean isSupportedImage(String extension, String contentType) {
+        if (!IMAGE_EXTENSIONS.contains(extension)) {
+            return false;
+        }
+        if (!StringUtils.hasText(contentType)) {
+            return true;
+        }
+        String normalizedType = contentType.trim().toLowerCase(Locale.ROOT);
+        return normalizedType.startsWith("image/")
+                || "application/octet-stream".equals(normalizedType);
     }
 }

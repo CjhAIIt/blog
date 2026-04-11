@@ -7,6 +7,7 @@ import com.example.blog.model.User;
 import com.example.blog.service.PlanService;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -30,11 +31,16 @@ public class PlanController {
     private final PlanService planService;
     private final PostService postService;
     private final UserService userService;
+    private final ViewModeService viewModeService;
 
-    public PlanController(PlanService planService, PostService postService, UserService userService) {
+    public PlanController(PlanService planService,
+                          PostService postService,
+                          UserService userService,
+                          ViewModeService viewModeService) {
         this.planService = planService;
         this.postService = postService;
         this.userService = userService;
+        this.viewModeService = viewModeService;
     }
 
     @ModelAttribute("planAccessTypes")
@@ -55,7 +61,7 @@ public class PlanController {
         model.addAttribute("currentPage", page);
         model.addAttribute("activeFilter", normalizeFilter(filter, currentUser));
         model.addAttribute("currentUser", currentUser);
-        return "plans/list";
+        return view("plans/list");
     }
 
     @GetMapping("/new")
@@ -68,7 +74,7 @@ public class PlanController {
         model.addAttribute("plan", new Plan());
         model.addAttribute("pageTitle", "新建计划");
         model.addAttribute("formAction", "/plans");
-        return "plans/form";
+        return view("plans/form");
     }
 
     @PostMapping
@@ -114,7 +120,7 @@ public class PlanController {
         model.addAttribute("plan", plan);
         model.addAttribute("pageTitle", "编辑计划");
         model.addAttribute("formAction", "/plans/" + id + "/edit");
-        return "plans/form";
+        return view("plans/form");
     }
 
     @PostMapping("/{id}/edit")
@@ -181,7 +187,7 @@ public class PlanController {
         model.addAttribute("canCreatePostInPlan", currentUser != null
                 && userService.canWritePosts(currentUser)
                 && planService.canJoin(plan, currentUser));
-        return "plans/view";
+        return view("plans/view");
     }
 
     private Page<Plan> resolvePlanPage(String filter, User currentUser, PageRequest pageable) {
@@ -203,5 +209,9 @@ public class PlanController {
             return "collaborative";
         }
         return "public";
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 }

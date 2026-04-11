@@ -27,5 +27,18 @@ class MarkdownServiceHtmlSanitizationTest {
         String html = markdownService.render("<img src=\"/uploads/covers/test.png\" alt=\"x\">");
         assertTrue(html.contains("src=\"/uploads/covers/test.png\""));
     }
+
+    @Test
+    void render_keeps_safe_semantic_html_blocks() {
+        String html = markdownService.render(
+                "<figure><img src=\"/uploads/posts/demo.png\" alt=\"演示图\" loading=\"lazy\"><figcaption>图片说明</figcaption></figure>"
+                        + "<details open><summary>展开说明</summary><p>这里是补充内容</p></details>"
+        );
+
+        assertTrue(html.contains("<figure>"));
+        assertTrue(html.contains("<figcaption>图片说明</figcaption>"));
+        assertTrue(html.contains("<details"));
+        assertTrue(html.contains("<summary>展开说明</summary>"));
+    }
 }
 

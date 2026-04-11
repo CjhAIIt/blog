@@ -44,110 +44,198 @@
         <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
 
-        <div class="ll-content-grid">
-            <section class="ll-section-card ll-fade">
-                <h1 class="ll-page-title">编辑个人资料</h1>
-                <p class="ll-page-desc">这里可以修改用户名、真实姓名、简介和头像。修改真实姓名后会重新进入实名认证审核。</p>
+        <section class="ll-space-hero-v2 ll-settings-hero ll-fade">
+            <div class="ll-space-hero-grid">
+                <div class="ll-space-hero-copy">
+                    <span class="ll-kicker">资料设置</span>
+                    <div class="ll-profile-inline ll-profile-inline--hero">
+                        <img class="ll-avatar-photo ll-avatar-photo--xl" th:src="${profileForm.existingAvatarUrl}" th:alt="${profileForm.username}">
+                        <div>
+                            <div class="ll-space-display-name">你的个人资料</div>
+                            <div class="ll-space-handle" th:text="${'@' + profileForm.username}">@username</div>
+                        </div>
+                    </div>
+                    <h1 class="ll-space-title">把空间整理成你想要的样子</h1>
+                    <p class="ll-space-copy">头像、简介、外链、实名状态和密码都在这里。先把公开展示的部分收顺，再处理安全项，会轻松很多。</p>
 
-                <section class="ll-side-card">
-                    <h2 class="ll-side-title">实名认证状态</h2>
-                    <p class="ll-side-text" th:text="${'当前状态：' + currentUser.realNameVerificationStatusDisplayName}">当前状态：待审核</p>
-                    <p class="ll-side-text" th:if="${currentUser.realNameVerificationPending}">
-                        实名资料已提交管理员审核，审核通过前不能写博客。
+                    <div class="ll-space-statline">
+                        <span class="ll-meta-pill" th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>
+                        <span class="ll-meta-pill" th:text="${currentUser.canPublishPosts() ? '当前可发布文章' : '还不能发布文章'}">当前可发布文章</span>
+                        <span class="ll-meta-pill" th:text="${notificationUnreadCount + ' 条提醒'}">0 条提醒</span>
+                        <span class="ll-meta-pill">资料实时保存到服务端</span>
+                    </div>
+
+                    <div class="ll-space-actions">
+                        <a class="ll-btn-secondary" href="/space">回个人空间</a>
+                        <a class="ll-btn-secondary" href="/space/drafts">看草稿箱</a>
+                        <a class="ll-btn-secondary" href="/space/export">导出博客</a>
+                    </div>
+                </div>
+
+                <section class="ll-space-hero-panel">
+                    <div class="ll-space-panel-label">认证状态</div>
+                    <div class="ll-space-panel-title" th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</div>
+                    <p class="ll-space-panel-copy" th:if="${currentUser.realNameVerificationPending}">
+                        实名资料已经提交管理员审核。通过之前不能写博客、导入 Markdown 或继续编辑文章。
                     </p>
-                    <p class="ll-side-text" th:if="${currentUser.realNameVerificationRejected}">
-                        当前实名审核未通过。请确认真实姓名后保存资料，系统会重新提交管理员审核。
+                    <p class="ll-space-panel-copy" th:if="${currentUser.realNameVerificationRejected}">
+                        这次实名审核没有通过。修改真实姓名后再保存一次，系统会重新进入审核流程。
                     </p>
-                    <p class="ll-side-text" th:if="${currentUser.realNameVerified}">
-                        实名认证已通过，你现在可以写博客、导入 Markdown 和编辑文章。
+                    <p class="ll-space-panel-copy" th:if="${currentUser.realNameVerified}">
+                        实名认证已经通过，现在可以正常写博客、导入 Markdown 和继续维护内容。
                     </p>
                     <div class="ll-link-group">
                         <span class="ll-link-badge"
                               th:if="${currentUser.realNameVerificationSubmittedAt != null}"
                               th:text="${'提交于 ' + #temporals.format(currentUser.realNameVerificationSubmittedAt, 'yyyy-MM-dd HH:mm')}">
-                            提交于 2026-04-02 20:00
+                            提交于 2026-04-11 11:00
                         </span>
                         <span class="ll-link-badge"
                               th:if="${currentUser.realNameVerificationReviewedAt != null}"
                               th:text="${'审核于 ' + #temporals.format(currentUser.realNameVerificationReviewedAt, 'yyyy-MM-dd HH:mm')}">
-                            审核于 2026-04-02 20:30
+                            审核于 2026-04-11 11:00
                         </span>
                     </div>
                 </section>
+            </div>
+        </section>
+
+        <div th:if="${!currentUser.canPublishPosts()}" class="ll-status ll-status--warning">
+            实名认证状态当前为 <span th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>，通过以后才能写博客和继续编辑文章。
+        </div>
+
+        <div class="ll-content-grid ll-content-grid--settings">
+            <section class="ll-section-card ll-settings-form-card ll-fade">
+                <div class="ll-form-section-head">
+                    <div>
+                        <h1 class="ll-page-title">编辑个人资料</h1>
+                        <p class="ll-page-desc">先整理公开展示的信息，再处理密码和账号项。这样保存以后，个人空间看起来会更完整。</p>
+                    </div>
+                </div>
 
                 <form th:object="${profileForm}" action="/space/edit" method="post" enctype="multipart/form-data">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-                    <div class="ll-upload-box ll-upload-box--profile">
-                        <div class="ll-upload-preview ll-upload-preview--avatar">
-                            <img id="avatarPreview" th:src="*{existingAvatarUrl}" alt="头像预览">
+                    <section class="ll-form-section">
+                        <div class="ll-form-section-head">
+                            <div>
+                                <h2 class="ll-side-title">头像和认证</h2>
+                                <p class="ll-form-section-copy">头像会直接影响个人空间和评论区的第一眼观感，顺手把这里也收一下。</p>
+                            </div>
                         </div>
-                        <div class="ll-upload-fields">
-                            <label class="ll-form-label" for="avatarFile">个人头像</label>
-                            <input class="ll-input" type="file" id="avatarFile" name="avatarFile" accept=".jpg,.jpeg,.png,.webp,.gif">
-                            <label class="ll-checkbox">
-                                <input type="checkbox" name="useDefaultAvatar" value="true">
-                                <span>恢复默认头像</span>
-                            </label>
-                            <p class="ll-form-note">支持 JPG、PNG、WEBP、GIF，未上传时会使用默认头像图。</p>
-                        </div>
-                    </div>
 
-                    <div class="ll-settings-grid">
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="username">用户名</label>
-                            <input class="ll-input" type="text" id="username" th:field="*{username}" placeholder="3 到 20 个字符" required>
-                        </div>
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="realName">真实姓名</label>
-                            <input class="ll-input"
-                                   type="text"
-                                   id="realName"
-                                   th:field="*{realName}"
-                                   maxlength="5"
-                                   pattern="[\u4E00-\u9FFF]{1,5}"
-                                   placeholder="1 到 5 个中文字符"
-                                   required>
-                            <p class="ll-form-note">用于实名认证审核和个人主页展示，不影响登录用户名。</p>
-                        </div>
-                    </div>
+                        <section class="ll-side-card ll-settings-status-card">
+                            <h3 class="ll-side-title">当前实名状态</h3>
+                            <p class="ll-side-text" th:text="${'当前状态：' + currentUser.realNameVerificationStatusDisplayName}">当前状态：待审核</p>
+                            <p class="ll-side-text" th:if="${currentUser.realNameVerificationPending}">
+                                实名资料已经提交审核，通过前不能写博客。
+                            </p>
+                            <p class="ll-side-text" th:if="${currentUser.realNameVerificationRejected}">
+                                修改真实姓名后重新保存，系统会再次提交管理员审核。
+                            </p>
+                            <p class="ll-side-text" th:if="${currentUser.realNameVerified}">
+                                当前账号已经通过实名认证，可以正常发布和维护内容。
+                            </p>
+                        </section>
 
-                    <div class="ll-settings-grid">
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="qq">QQ</label>
-                            <input class="ll-input" type="text" id="qq" th:field="*{qq}" placeholder="填写 QQ 号">
+                        <div class="ll-upload-box ll-upload-box--profile">
+                            <div class="ll-upload-preview ll-upload-preview--avatar">
+                                <img id="avatarPreview" th:src="*{existingAvatarUrl}" alt="头像预览">
+                            </div>
+                            <div class="ll-upload-fields">
+                                <label class="ll-form-label" for="avatarFile">个人头像</label>
+                                <input class="ll-input" type="file" id="avatarFile" name="avatarFile" accept="image/*">
+                                <label class="ll-checkbox">
+                                    <input type="checkbox" name="useDefaultAvatar" value="true">
+                                    <span>恢复默认头像</span>
+                                </label>
+                                <p class="ll-form-note">支持常见图片格式，例如 JPG、PNG、WEBP、GIF、BMP、AVIF 和 ICO。未上传时会继续使用默认头像。</p>
+                            </div>
                         </div>
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="personalBlogUrl">个人博客地址</label>
-                            <input class="ll-input" type="text" id="personalBlogUrl" th:field="*{personalBlogUrl}" placeholder="例如 https://yourname.github.io/blog/">
+                    </section>
+
+                    <section class="ll-form-section">
+                        <div class="ll-form-section-head">
+                            <div>
+                                <h2 class="ll-side-title">基础信息</h2>
+                                <p class="ll-form-section-copy">用户名会影响站内链接，真实姓名会进入实名审核流程，这两项改动都值得慢一点确认。</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="ll-form-field">
-                        <label class="ll-form-label" for="bio">自我介绍</label>
-                        <textarea class="ll-textarea" id="bio" th:field="*{bio}" placeholder="写一点关于自己的介绍..."></textarea>
-                    </div>
-
-                    <div class="ll-form-field">
-                        <label class="ll-form-label" for="githubUrl">GitHub 主页</label>
-                        <input class="ll-input" type="text" id="githubUrl" th:field="*{githubUrl}" placeholder="例如 https://github.com/yourname">
-                    </div>
-
-                    <div class="ll-settings-grid">
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="currentPassword">当前密码</label>
-                            <input class="ll-input" type="password" id="currentPassword" th:field="*{currentPassword}" placeholder="修改用户名或密码时必填" autocomplete="current-password">
+                        <div class="ll-settings-grid">
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="username">用户名</label>
+                                <input class="ll-input" type="text" id="username" th:field="*{username}" placeholder="3 到 20 个字符" required>
+                            </div>
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="realName">真实姓名</label>
+                                <input class="ll-input"
+                                       type="text"
+                                       id="realName"
+                                       th:field="*{realName}"
+                                       maxlength="5"
+                                       pattern="[\u4E00-\u9FFF]{1,5}"
+                                       placeholder="1 到 5 个中文字符"
+                                       required>
+                                <p class="ll-form-note">用于实名审核和个人主页展示，不会替代登录用户名。</p>
+                            </div>
                         </div>
-                        <div class="ll-form-field">
-                            <label class="ll-form-label" for="newPassword">新密码</label>
-                            <input class="ll-input" type="password" id="newPassword" th:field="*{newPassword}" placeholder="留空则不修改密码" autocomplete="new-password">
-                        </div>
-                    </div>
+                    </section>
 
-                    <div class="ll-form-field">
-                        <label class="ll-form-label" for="confirmPassword">确认新密码</label>
-                        <input class="ll-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" placeholder="再次输入新密码" autocomplete="new-password">
-                    </div>
+                    <section class="ll-form-section">
+                        <div class="ll-form-section-head">
+                            <div>
+                                <h2 class="ll-side-title">公开展示信息</h2>
+                                <p class="ll-form-section-copy">这些字段会直接影响别人看到你的方式，适合一起整理。</p>
+                            </div>
+                        </div>
+
+                        <div class="ll-settings-grid">
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="qq">QQ</label>
+                                <input class="ll-input" type="text" id="qq" th:field="*{qq}" placeholder="填写 QQ 号">
+                            </div>
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="personalBlogUrl">个人博客地址</label>
+                                <input class="ll-input" type="text" id="personalBlogUrl" th:field="*{personalBlogUrl}" placeholder="例如 https://yourname.github.io/blog/">
+                            </div>
+                        </div>
+
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="bio">自我介绍</label>
+                            <textarea class="ll-textarea" id="bio" th:field="*{bio}" placeholder="写一点关于自己的介绍..."></textarea>
+                        </div>
+
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="githubUrl">GitHub 主页</label>
+                            <input class="ll-input" type="text" id="githubUrl" th:field="*{githubUrl}" placeholder="例如 https://github.com/yourname">
+                        </div>
+                    </section>
+
+                    <section class="ll-form-section">
+                        <div class="ll-form-section-head">
+                            <div>
+                                <h2 class="ll-side-title">密码和安全</h2>
+                                <p class="ll-form-section-copy">只有修改用户名或密码时才需要当前密码，不打算改安全项的话可以留空。</p>
+                            </div>
+                        </div>
+
+                        <div class="ll-settings-grid">
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="currentPassword">当前密码</label>
+                                <input class="ll-input" type="password" id="currentPassword" th:field="*{currentPassword}" placeholder="修改用户名或密码时必填" autocomplete="current-password">
+                            </div>
+                            <div class="ll-form-field">
+                                <label class="ll-form-label" for="newPassword">新密码</label>
+                                <input class="ll-input" type="password" id="newPassword" th:field="*{newPassword}" placeholder="留空则不修改密码" autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <div class="ll-form-field">
+                            <label class="ll-form-label" for="confirmPassword">确认新密码</label>
+                            <input class="ll-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" placeholder="再次输入新密码" autocomplete="new-password">
+                        </div>
+                    </section>
 
                     <div class="ll-form-actions">
                         <button class="ll-btn" type="submit">保存资料</button>
@@ -159,17 +247,47 @@
             </section>
 
             <aside class="ll-side-stack">
-                <section class="ll-side-card is-sticky ll-fade">
+                <section class="ll-side-card ll-settings-profile-card is-sticky ll-fade">
+                    <div class="ll-profile-inline">
+                        <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${profileForm.existingAvatarUrl}" th:alt="${profileForm.username}">
+                        <div>
+                            <div class="ll-rank-title" th:text="${currentUser.displayName}">显示名称</div>
+                            <div class="ll-space-card-handle" th:text="${'@' + profileForm.username}">@username</div>
+                        </div>
+                    </div>
+                    <p class="ll-side-text"
+                       th:text="${profileForm.bio != null && !profileForm.bio.isEmpty() ? profileForm.bio : '介绍还没写出来，保存以后这里就会更像你自己的空间。'}">
+                        介绍还没写出来，保存以后这里就会更像你自己的空间。
+                    </p>
+                    <div class="ll-link-group">
+                        <span class="ll-link-badge" th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>
+                        <a class="ll-link-badge" th:if="${profileForm.githubUrl != null && !profileForm.githubUrl.isEmpty()}" th:href="${profileForm.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
+                        <a class="ll-link-badge" th:if="${profileForm.personalBlogUrl != null && !profileForm.personalBlogUrl.isEmpty()}" th:href="${profileForm.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade">
                     <h2 class="ll-side-title">填写建议</h2>
                     <ul class="ll-side-list">
-                        <li>真实姓名是实名认证的核心字段，仅支持 1 到 5 个中文字符。</li>
-                        <li>修改真实姓名后会重新提交管理员审核，审核通过前不能写博客。</li>
-                        <li>登录、主页地址和站内跳转仍然使用用户名，不会被真实姓名替换。</li>
-                        <li>如果准备导出个人博客，建议先补全头像、简介和个人博客地址。</li>
+                        <li>真实姓名是实名审核的核心字段，只支持 1 到 5 个中文字符。</li>
+                        <li>修改真实姓名后会重新提交管理员审核，通过前不能写博客。</li>
+                        <li>登录和站内链接仍然使用用户名，不会被真实姓名替代。</li>
+                        <li>如果准备导出博客，建议先把头像、简介和外链补完整。</li>
                     </ul>
                 </section>
             </aside>
         </div>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>资料设置</span>
+                    <span th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>
+                    <a href="/space">回个人空间</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </main>
 

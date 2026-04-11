@@ -12,6 +12,10 @@ import com.example.blog.service.MarkdownService;
 import com.example.blog.service.PlanService;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -27,11 +31,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,28 +52,39 @@ public class PostController {
     private final CommentService commentService;
     private final FileStorageService fileStorageService;
     private final PlanService planService;
+    private final ViewModeService viewModeService;
 
     public PostController(PostService postService,
                           UserService userService,
                           MarkdownService markdownService,
                           CommentService commentService,
                           FileStorageService fileStorageService,
-                          PlanService planService) {
+                          PlanService planService,
+                          ViewModeService viewModeService) {
         this.postService = postService;
         this.userService = userService;
         this.markdownService = markdownService;
         this.commentService = commentService;
         this.fileStorageService = fileStorageService;
         this.planService = planService;
+        this.viewModeService = viewModeService;
     }
 
     @GetMapping
-    public String listPosts(@RequestParam(defaultValue = "latest") String category, Model model) {
+    public String listPosts(@RequestParam(defaultValue = "latest") String category,
+                            @RequestParam(defaultValue = "0") int page,
+                            Model model) {
+        Pageable pageable = PageRequest.of(page, 12);
         Optional<PostCategory> selectedCategory = PostCategory.fromSlug(category);
-        List<Post> posts = selectedCategory.map(postService::findByCategory).orElseGet(postService::findAll);
-        model.addAttribute("posts", posts);
+        Page<Post> postsPage = selectedCategory
+                .map(value -> postService.findByCategory(value, pageable))
+                .orElseGet(() -> postService.findAll(pageable));
+        model.addAttribute("posts", postsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", postsPage.getTotalPages());
+        model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
-        return "posts/list";
+        return view("posts/list");
     }
 
     @GetMapping("/{id}")
@@ -98,7 +115,7 @@ public class PostController {
         model.addAttribute("selectedCategory", currentPost.getCategorySlug());
         model.addAttribute("showPlanContext", currentPost.getPlan() != null
                 && (currentPost.getPlan().isPublic() || planService.canJoin(currentPost.getPlan(), currentUser)));
-        return "posts/view";
+        return view("posts/view");
     }
 
     @GetMapping("/new")
@@ -127,7 +144,7 @@ public class PostController {
         model.addAttribute("editorLocalDraftKey", "new-" + UUID.randomUUID());
         model.addAttribute("selectedCategory", "latest");
         populatePlanOptions(model, currentUser);
-        return "posts/form";
+        return view("posts/form");
     }
 
     @GetMapping("/edit/{id}")
@@ -157,7 +174,7 @@ public class PostController {
         model.addAttribute("editorLocalDraftKey", "post-" + id);
         model.addAttribute("selectedCategory", post.get().getCategorySlug());
         populatePlanOptions(model, currentUser);
-        return "posts/form";
+        return view("posts/form");
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -347,18 +364,40 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public String searchPosts(@RequestParam String keyword, Model model) {
-        List<Post> posts = postService.findByKeyword(keyword);
-        model.addAttribute("posts", posts);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("selectedCategory", "latest");
-        return "posts/list";
+    public String searchPosts(@RequestParam String keyword) {
+        return "redirect:/search?keyword=" + UriUtils.encode(keyword, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @PostMapping(value = "/preview", produces = MediaType.TEXT_HTML_VALUE)
     @ResponseBody
     public ResponseEntity<String> previewMarkdown(@RequestParam String content) {
         return ResponseEntity.ok(markdownService.render(content));
+    }
+
+    @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> uploadEditorImage(@RequestParam("imageFile") MultipartFile imageFile,
+                                                                 Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "请先登录后再上传图片"));
+        }
+
+        User currentUser = userService.getByUsername(principal.getName());
+        if (!userService.canWritePosts(currentUser)) {
+            return ResponseEntity.status(403).body(Map.of("message", userService.getPostPermissionMessage(currentUser)));
+        }
+
+        try {
+            String imageUrl = fileStorageService.storePostImage(imageFile);
+            String altText = suggestImageAltText(imageFile.getOriginalFilename());
+            return ResponseEntity.ok(Map.of(
+                    "url", imageUrl,
+                    "markdown", buildMarkdownImage(imageUrl, altText),
+                    "html", buildFigureHtml(imageUrl, altText)
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/comments")
@@ -549,5 +588,49 @@ public class PostController {
             }
         }
         return nextPlanOrder;
+    }
+
+    private String suggestImageAltText(String originalFilename) {
+        if (!StringUtils.hasText(originalFilename)) {
+            return "插图";
+        }
+        int dotIndex = originalFilename.lastIndexOf('.');
+        String baseName = dotIndex > 0 ? originalFilename.substring(0, dotIndex) : originalFilename;
+        String normalized = baseName.replace('_', ' ').replace('-', ' ').trim();
+        return StringUtils.hasText(normalized) ? normalized : "插图";
+    }
+
+    private String buildMarkdownImage(String imageUrl, String altText) {
+        String normalizedAltText = altText
+                .replace("[", "")
+                .replace("]", "")
+                .replace("\r", " ")
+                .replace("\n", " ")
+                .trim();
+        return "![" + (StringUtils.hasText(normalizedAltText) ? normalizedAltText : "插图") + "](" + imageUrl + ")";
+    }
+
+    private String buildFigureHtml(String imageUrl, String altText) {
+        String escapedUrl = escapeHtml(imageUrl);
+        String escapedAltText = escapeHtml(altText);
+        return "<figure>\n"
+                + "  <img src=\"" + escapedUrl + "\" alt=\"" + escapedAltText + "\" loading=\"lazy\">\n"
+                + "  <figcaption>" + escapedAltText + "</figcaption>\n"
+                + "</figure>";
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 }

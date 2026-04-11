@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('搜索')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--search">
+            <div class="mb-meta-ribbon">站内搜索</div>
+            <span class="mb-hero-kicker">搜索</span>
+            <h1 class="mb-hero-title">想找什么，直接搜</h1>
+            <p class="mb-hero-copy">按标题、摘要和关键词查文章。想得很模糊也没关系，先打几个词，结果出来后再慢慢缩。</p>
+            <form class="mb-search-form" action="/search" method="get">
+                <input class="mb-search" type="search" name="keyword" th:value="${keyword}" placeholder="搜索文章、分类或计划名">
+                <button class="mb-btn" type="submit">搜索</button>
+            </form>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>匹配结果</span>
+                    <strong th:text="${totalItems}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>当前页</span>
+                    <strong th:text="${currentPage + 1}">1</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>总页数</span>
+                    <strong th:text="${totalPages == 0 ? 1 : totalPages}">1</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>搜索状态</span>
+                    <strong th:text="${#strings.isEmpty(keyword) ? '待输入' : '已搜索'}">已搜索</strong>
+                </article>
+            </div>
+            <div class="mb-chip-row">
+                <a class="mb-chip" href="/posts">全部文章</a>
+                <a class="mb-chip" href="/plans">计划分区</a>
+                <a class="mb-chip" href="/">回首页</a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent mb-browse-panel">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title" th:text="${#strings.isEmpty(keyword) ? '先输入关键词试试' : '换个方向继续找'}">换个方向继续找</h2>
+                    <div class="mb-section-note" th:text="${#strings.isEmpty(keyword) ? '可以试标题里的词、分类名、系列主题，或者你记得的一小段关键词。' : '如果结果太多，就换更具体的词；如果太少，可以把词放宽一点。'}">如果结果太多，就换更具体的词；如果太少，可以把词放宽一点。</div>
+                </div>
+                <span class="mb-inline-note" th:text="${#strings.isEmpty(keyword) ? '还没开始' : '继续缩小范围'}">继续缩小范围</span>
+            </div>
+            <div class="mb-quick-grid">
+                <a class="mb-quick-link" href="/posts">
+                    <strong>先翻最新文章</strong>
+                    <span>如果你只记得大概方向，先回文章列表看一圈也很快。</span>
+                </a>
+                <a class="mb-quick-link" href="/plans">
+                    <strong>按主题去找</strong>
+                    <span>某些内容更适合从计划里找，能顺着上下文一起看。</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title" th:text="${#strings.isEmpty(keyword) ? '搜索结果' : '“' + keyword + '” 的搜索结果'}">搜索结果</h2>
+                    <div class="mb-section-note" th:text="${#strings.isEmpty(keyword) ? '输入关键词后会直接显示匹配文章。' : totalItems + ' 条匹配'}">0 条匹配</div>
+                </div>
+                <a class="mb-section-link" href="/posts">去文章列表</a>
+            </div>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(posts)}">
+                <a class="mb-post-card mb-post-card--browse" th:each="post : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
+                    <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
+                    <div class="mb-post-meta">
+                        <span th:text="${post.categoryDisplayName}">分类</span>
+                        <span th:text="${post.author.displayName}">作者</span>
+                        <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
+                    </div>
+                    <h3 class="mb-post-title" th:text="${post.title}">文章标题</h3>
+                    <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 100)}">摘要</p>
+                    <div class="mb-post-footer">
+                        <span class="mb-note" th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                        <span class="mb-inline-note">打开看看</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}">没有找到匹配结果，换个关键词试试，或者先去 <a href="/posts">文章列表</a> 里翻翻。</div>
+            <div class="mb-pagination" th:if="${totalPages > 1}">
+                <a class="mb-page-button" th:classappend="${currentPage == 0 ? ' is-disabled' : ''}" th:href="@{/search(page=${currentPage - 1},keyword=${keyword})}">上一页</a>
+                <a class="mb-page-button" th:classappend="${currentPage + 1 >= totalPages ? ' is-disabled' : ''}" th:href="@{/search(page=${currentPage + 1},keyword=${keyword})}">下一页</a>
+            </div>
+            <div class="mb-page-indicator" th:if="${totalPages > 1}" th:text="${'第 ' + (currentPage + 1) + ' / ' + totalPages + ' 页'}">第 1 / 1 页</div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('posts')}"></nav>
+</div>
+</body>
+</html>

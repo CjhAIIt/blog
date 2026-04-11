@@ -17,7 +17,7 @@
             </a>
             <nav class="ll-header-links">
                 <a class="ll-header-link" href="/">首页</a>
-                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link is-active" href="/leaderboards">排行榜</a>
                 <a class="ll-header-link" href="/posts">文章</a>
                 <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
             </nav>
@@ -46,16 +46,57 @@
     <div class="ll-shell">
         <section class="ll-rank-page-hero ll-fade">
             <div>
-                <span class="ll-kicker">站内排行榜</span>
-                <h1 class="ll-page-title">排行榜</h1>
-                <p class="ll-page-desc">按周、月、年统计发文数与点赞数，默认展示前 10 名。</p>
+                <div class="ll-feed-top">
+                    <span class="ll-kicker">站内排行榜</span>
+                    <span class="ll-link-badge" th:text="${selectedRankingPeriod.label}">周榜</span>
+                    <span class="ll-link-badge">默认展示前 10 名</span>
+                </div>
+                <h1 class="ll-page-title">最近谁更活跃</h1>
+                <p class="ll-page-desc">这页更像站内的内容温度计。你能一眼看到最近谁在持续写、哪篇文章正被大家反复点开，以及这段时间站里的创作节奏往哪边走。</p>
+                <div class="ll-rank-tabs">
+                    <a class="ll-rank-tab"
+                       th:each="period : ${rankingPeriods}"
+                       th:classappend="${period == selectedRankingPeriod ? ' is-active' : ''}"
+                       th:href="@{/leaderboards(rankPeriod=${period.slug})}"
+                       th:text="${period.label}">周榜</a>
+                </div>
             </div>
-            <div class="ll-rank-tabs">
-                <a class="ll-rank-tab"
-                   th:each="period : ${rankingPeriods}"
-                   th:classappend="${period == selectedRankingPeriod ? ' is-active' : ''}"
-                   th:href="@{/leaderboards(rankPeriod=${period.slug})}"
-                   th:text="${period.label}">周榜</a>
+            <section class="ll-space-hero-panel ll-rank-page-panel">
+                <div class="ll-space-panel-label">当前观察窗口</div>
+                <div class="ll-space-panel-title" th:text="${selectedRankingPeriod.label + ' · 创作与热度双榜'}">周榜 · 创作与热度双榜</div>
+                <p class="ll-space-panel-copy" th:text="${selectedRankingPeriod.description + '。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。'}">按本周发布文章数量和点赞数实时统计。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。</p>
+            </section>
+        </section>
+
+        <section class="ll-space-overview-card ll-rank-overview-card ll-fade">
+            <div class="ll-editor-panel-head">
+                <div>
+                    <h2 class="ll-side-title">榜单速览</h2>
+                    <p class="ll-editor-caption">先看一眼这一期榜单的大致气氛，再决定是去追作者还是直接点进文章。</p>
+                </div>
+                <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+            </div>
+            <div class="ll-space-overview-grid">
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">统计周期</span>
+                    <strong th:text="${selectedRankingPeriod.label}">周榜</strong>
+                    <span class="ll-space-overview-note" th:text="${selectedRankingPeriod.description}">按当前周期内发布的文章数量统计</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">创作榜领跑</span>
+                    <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '待更新' : contributionLeaderboard[0].postCount + ' 篇'}">待更新</strong>
+                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(contributionLeaderboard) ? '这个周期里还没有新的创作记录。' : '@' + contributionLeaderboard[0].username + ' 暂时写得最多'}">这个周期里还没有新的创作记录。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">点赞榜领跑</span>
+                    <strong th:text="${#lists.isEmpty(likeLeaderboard) ? '待更新' : likeLeaderboard[0].likeCount + ' 赞'}">待更新</strong>
+                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(likeLeaderboard) ? '这个周期里还没有文章进入热度榜。' : '当前最热内容来自《' + likeLeaderboard[0].title + '》'}">这个周期里还没有文章进入热度榜。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">展示范围</span>
+                    <strong>前 10 名</strong>
+                    <span class="ll-space-overview-note">创作榜看谁持续输出，点赞榜看哪篇内容正在被集中阅读。</span>
+                </article>
             </div>
         </section>
 
@@ -64,20 +105,36 @@
                 <div class="ll-rank-card-head">
                     <div>
                         <h2 class="ll-side-title">发文贡献榜</h2>
-                        <p class="ll-side-text" th:text="${selectedRankingPeriod.description}">按当前周期发文数实时统计</p>
+                        <p class="ll-side-text" th:text="${selectedRankingPeriod.description + '，更适合看这段时间谁一直在稳定更新。'}">按当前周期发文数实时统计，更适合看这段时间谁一直在稳定更新。</p>
                     </div>
                     <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
                 </div>
 
+                <section class="ll-rank-lead" th:if="${!#lists.isEmpty(contributionLeaderboard)}">
+                    <div class="ll-rank-card-head">
+                        <span class="ll-link-badge">Top 1</span>
+                        <span class="ll-link-badge" th:text="${'@' + contributionLeaderboard[0].username}">@username</span>
+                    </div>
+                    <div class="ll-rank-lead-main">
+                        <div>
+                            <div class="ll-rank-title" th:text="${contributionLeaderboard[0].username}">用户名</div>
+                            <div class="ll-rank-subtitle">这段时间发文最稳定，适合顺着主页继续看最近在写什么。</div>
+                        </div>
+                        <strong class="ll-rank-lead-value" th:text="${contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
+                    </div>
+                </section>
+
                 <div class="ll-rank-list" th:if="${!#lists.isEmpty(contributionLeaderboard)}">
                     <a class="ll-rank-item ll-rank-item--wide"
                        th:each="entry, stat : ${contributionLeaderboard}"
+                       th:if="${stat.index > 0}"
                        th:href="@{/users/{username}(username=${entry.username})}">
                         <div class="ll-rank-main">
-                            <span class="ll-rank-index" th:text="${stat.count}">1</span>
+                            <span class="ll-rank-index" th:text="${stat.index + 1}">2</span>
                             <div>
-                                <div class="ll-rank-title" th:text="${entry.username}">用户名</div>
-                                <div class="ll-rank-subtitle">本周期发文数</div>
+                                <div class="ll-rank-title" th:text="${'@' + entry.username}">@用户名</div>
+                                <div class="ll-rank-subtitle" th:text="${'本周期发文 ' + entry.postCount + ' 篇'}">本周期发文 0 篇</div>
+                                <div class="ll-rank-item-note">点进主页就能继续看这位作者最近的公开内容。</div>
                             </div>
                         </div>
                         <strong class="ll-rank-value" th:text="${entry.postCount + ' 篇'}">0 篇</strong>
@@ -93,20 +150,36 @@
                 <div class="ll-rank-card-head">
                     <div>
                         <h2 class="ll-side-title">点赞热度榜</h2>
-                        <p class="ll-side-text">统计本周期内文章获得的点赞数，展示点赞最高的内容。</p>
+                        <p class="ll-side-text">统计本周期内文章获得的点赞数，更适合发现哪些内容正在被集中阅读和收藏。</p>
                     </div>
                     <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
                 </div>
 
+                <section class="ll-rank-lead ll-rank-lead--likes" th:if="${!#lists.isEmpty(likeLeaderboard)}">
+                    <div class="ll-rank-card-head">
+                        <span class="ll-link-badge">Top 1</span>
+                        <span class="ll-link-badge" th:text="${likeLeaderboard[0].categoryDisplayName}">分类</span>
+                    </div>
+                    <div class="ll-rank-lead-main">
+                        <div>
+                            <div class="ll-rank-title" th:text="${likeLeaderboard[0].title}">文章标题</div>
+                            <div class="ll-rank-subtitle" th:text="${'作者：@' + likeLeaderboard[0].author.username}">作者：@username</div>
+                        </div>
+                        <strong class="ll-rank-lead-value" th:text="${likeLeaderboard[0].likeCount + ' 赞'}">0 赞</strong>
+                    </div>
+                </section>
+
                 <div class="ll-rank-list" th:if="${!#lists.isEmpty(likeLeaderboard)}">
                     <a class="ll-rank-item ll-rank-item--wide"
                        th:each="rankPost, stat : ${likeLeaderboard}"
+                       th:if="${stat.index > 0}"
                        th:href="@{/posts/{id}(id=${rankPost.id})}">
                         <div class="ll-rank-main">
-                            <span class="ll-rank-index" th:text="${stat.count}">1</span>
+                            <span class="ll-rank-index" th:text="${stat.index + 1}">2</span>
                             <div>
                                 <div class="ll-rank-title" th:text="${rankPost.title}">文章标题</div>
                                 <div class="ll-rank-subtitle" th:text="${'作者：' + rankPost.author.username}">作者：用户名</div>
+                                <div class="ll-rank-item-note" th:text="${rankPost.categoryDisplayName + ' · 继续读这篇就能看到它为什么会被点进来'}">分类 · 继续读这篇就能看到它为什么会被点进来</div>
                             </div>
                         </div>
                         <strong class="ll-rank-value" th:text="${rankPost.likeCount + ' 赞'}">0 赞</strong>
@@ -118,6 +191,17 @@
                 </div>
             </article>
         </section>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>排行榜</span>
+                    <span th:text="${selectedRankingPeriod.label + ' 观察窗口'}">周榜观察窗口</span>
+                    <a href="/posts">去看最新文章</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </main>
 </body>

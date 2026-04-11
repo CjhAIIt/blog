@@ -3,6 +3,7 @@ package com.example.blog.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import java.util.Set;
 
 @Component
 @Order(0)
+@ConditionalOnProperty(name = "app.schema.compatibility.enabled", havingValue = "true")
 public class SchemaCompatibilityInitializer implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(SchemaCompatibilityInitializer.class);
     private static final Set<String> LEGACY_CONTENT_TYPES = Set.of("TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGVARCHAR");

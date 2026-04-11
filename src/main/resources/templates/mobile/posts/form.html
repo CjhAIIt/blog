@@ -1,0 +1,732 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head(${post.id == null ? '写文章' : '编辑文章'})}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <form th:object="${post}" th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}" method="post" enctype="multipart/form-data" class="mb-stack mb-editor-form" th:attr="data-local-draft-key=${editorLocalDraftKey}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <section class="mb-hero mb-hero--editor">
+                <div class="mb-meta-ribbon">写文章</div>
+                <span class="mb-hero-kicker" th:text="${post.id == null ? '新文章' : '继续编辑'}">新文章</span>
+                <h1 class="mb-hero-title" th:text="${post.id == null ? '在手机上把这篇慢慢写顺' : '继续把这篇文章写完'}">写文章</h1>
+                <p class="mb-hero-copy">想到哪就先写到哪，路上改一段、睡前补几行都可以；正文、预览、图片上传和发布流程都还在，不用专门切回电脑。</p>
+                <div class="mb-hero-stats">
+                    <article class="mb-hero-stat">
+                        <span>内容长度</span>
+                        <strong id="mobileEditorWordCount">0</strong>
+                    </article>
+                    <article class="mb-hero-stat">
+                        <span>预计阅读</span>
+                        <strong id="mobileEditorReadingMinutes">1 分钟</strong>
+                    </article>
+                    <article class="mb-hero-stat">
+                        <span>标题层级</span>
+                        <strong id="mobileEditorHeadingCount">0</strong>
+                    </article>
+                    <article class="mb-hero-stat">
+                        <span>本地暂存</span>
+                        <strong id="mobileEditorDraftState">未保存</strong>
+                    </article>
+                </div>
+                <div class="mb-actions">
+                    <span class="mb-inline-note" id="mobileEditorPublishMode">立即发布</span>
+                    <span class="mb-inline-note" id="mobileEditorCurrentPlan">独立文章</span>
+                    <button class="mb-link-button" type="button" id="mobileRestoreLocalDraftButton" hidden>恢复本地暂存</button>
+                </div>
+            </section>
+
+            <section class="mb-card mb-card--soft">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">发布概览</h2>
+                        <div class="mb-section-note">先看一眼分类、字体、发布方式和归档状态，手机上会更容易确认自己现在在发什么。</div>
+                    </div>
+                </div>
+                <div class="mb-editor-summary-grid">
+                    <article class="mb-editor-summary">
+                        <span>当前分类</span>
+                        <strong id="mobileEditorCategorySummary">项目</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>展示字体</span>
+                        <strong id="mobileEditorFontSummary" th:text="${post.editorFont.label}">鸿蒙黑体</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>发布方式</span>
+                        <strong id="mobileEditorPublishSummary" th:text="${post.scheduled ? '定时发布' : '立即发布'}">立即发布</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>归档方式</span>
+                        <strong id="mobileEditorPlanSummary" th:text="${post.plan != null ? post.plan.name : '独立文章'}">独立文章</strong>
+                    </article>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">标题与展示</h2>
+                        <div class="mb-section-note">先把标题、分类和字体定下来，下面的预览会更接近最终阅读效果。</div>
+                    </div>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="title">文章标题</label>
+                    <input class="mb-input" type="text" id="title" th:field="*{title}" maxlength="200" placeholder="比如：Spring Boot + MySQL 博客改造记录">
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="category">文章分类</label>
+                    <select class="mb-select" id="category" th:field="*{category}">
+                        <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+                    </select>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="fontKey">展示字体</label>
+                    <select class="mb-select" id="fontKey" th:field="*{fontKey}">
+                        <option th:each="font : ${editorFonts}" th:value="${font.key}" th:text="${font.label}" th:attr="data-font-stack=${font.cssStack}">字体</option>
+                    </select>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="scheduledPublishAt">定时发布时间</label>
+                    <input class="mb-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    <div class="mb-note">留空就是立即发布；如果填了时间，保存后可以直接按“定时发布”。</div>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">加入计划</h2>
+                        <div class="mb-section-note">如果这篇文章属于某个系列，可以在这里挂进去。</div>
+                    </div>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="planSelection">计划设置</label>
+                    <select class="mb-select" id="planSelection" name="planSelection">
+                        <option value="none" th:selected="${post.plan == null}">不加入计划</option>
+                        <option value="existing" th:selected="${post.plan != null}">加入已有计划</option>
+                        <option value="new">新建计划并加入</option>
+                    </select>
+                </div>
+                <div class="mb-field plan-existing-field" style="display:none;">
+                    <label class="mb-label" for="existingPlanId">已有计划</label>
+                    <select class="mb-select" id="existingPlanId" name="existingPlanId">
+                        <option value="" th:if="${#lists.isEmpty(userPlans)}">当前还没有可加入的计划</option>
+                        <option th:each="plan : ${userPlans}" th:value="${plan.id}" th:text="${plan.name + ' · ' + plan.accessTypeDisplayName}" th:selected="${post.plan != null && post.plan.id == plan.id}">计划</option>
+                    </select>
+                </div>
+                <div class="mb-field plan-new-field" style="display:none;">
+                    <label class="mb-label" for="newPlanName">新计划名称</label>
+                    <input class="mb-input" type="text" id="newPlanName" name="newPlanName" placeholder="比如：Spring 系列">
+                </div>
+                <div class="mb-field plan-new-field" style="display:none;">
+                    <label class="mb-label" for="newPlanAccessType">新计划类型</label>
+                    <select class="mb-select" id="newPlanAccessType" name="newPlanAccessType">
+                        <option value="PRIVATE">私密计划</option>
+                        <option value="COLLABORATIVE">共创计划</option>
+                    </select>
+                </div>
+                <div class="mb-field plan-order-field" style="display:none;">
+                    <label class="mb-label" for="planOrder">在计划中的顺序</label>
+                    <input class="mb-input" type="number" id="planOrder" name="planOrder" th:value="${post.planOrder}" min="1" placeholder="留空则自动排在后面">
+                    <div class="mb-note">如果这篇只是系列中的一篇，先挂进去，顺序后面还可以继续调。</div>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">封面</h2>
+                        <div class="mb-section-note">支持常见图片格式。</div>
+                    </div>
+                </div>
+                <div class="mb-upload-preview">
+                    <img id="coverPreview" th:src="${post.displayCoverUrl}" alt="文章封面预览">
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="coverFile">文章封面</label>
+                    <input class="mb-input" type="file" id="coverFile" name="coverFile" accept="image/*">
+                    <div class="mb-note">没时间挑图也没关系，先用默认封面发布，后面再补一张也来得及。</div>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label"><input type="checkbox" name="useDefaultCover" value="true"> 恢复默认封面</label>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">正文</h2>
+                        <div class="mb-section-note">上面写，下面看预览，手机上会更顺手。</div>
+                    </div>
+                </div>
+                <div class="mb-chip-row mb-editor-glance">
+                    <span class="mb-chip" id="mobileEditorLineCount">0 行</span>
+                    <span class="mb-chip" id="mobileEditorParagraphCount">0 段</span>
+                    <span class="mb-chip" id="mobileEditorHeadingLabel">0 个标题</span>
+                </div>
+                <div class="mb-editor-toolbar">
+                    <button type="button" data-command="h1">H1</button>
+                    <button type="button" data-command="h2">H2</button>
+                    <button type="button" data-command="bold">加粗</button>
+                    <button type="button" data-command="link">链接</button>
+                    <button type="button" data-command="quote">引用</button>
+                    <button type="button" data-command="list">列表</button>
+                    <button type="button" data-command="task">任务</button>
+                    <button type="button" data-command="image">插图</button>
+                    <button type="button" data-command="html">HTML</button>
+                    <button type="button" data-command="code">代码块</button>
+                </div>
+                <div class="mb-actions">
+                    <span class="mb-toolbar-status" id="editorToolbarStatus">支持 Markdown、HTML 和图片上传</span>
+                </div>
+                <input type="file" id="editorImageFile" accept="image/*" hidden>
+                <div class="mb-field">
+                    <label class="mb-label" for="content">文章正文</label>
+                    <textarea class="mb-textarea" id="content" th:field="*{content}" placeholder="先写背景，再写过程、结果和总结。"></textarea>
+                </div>
+            </section>
+
+            <section class="mb-card mb-card--article">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">预览</h2>
+                        <div class="mb-section-note" id="mobilePreviewStatus">这里显示最终阅读效果。</div>
+                    </div>
+                </div>
+                <div id="markdownPreview" class="mb-article-body mb-markdown">
+                    <div class="mb-empty">开始输入后，这里会显示预览。</div>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">阅读目录</h2>
+                        <div class="mb-section-note">加上标题后，这里会出现一份可以跳转的手机版目录。</div>
+                    </div>
+                </div>
+                <div id="mobileEditorOutline" class="mb-editor-outline">
+                    <div class="mb-editor-outline-empty">先写几个标题，这里就会自动整理出阅读顺序。</div>
+                </div>
+            </section>
+
+            <section class="mb-card">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">发布前检查</h2>
+                        <div class="mb-section-note">手机上最容易漏标题、结构和封面，我帮你在这里再拦一遍。</div>
+                    </div>
+                </div>
+                <div class="mb-editor-checklist">
+                    <article class="mb-editor-check-item" id="mobileEditorCheckTitle" data-tone="warn">
+                        <strong>标题状态</strong>
+                        <span id="mobileEditorChecklistTitle">先起一个能说明问题的标题，后面更容易收内容。</span>
+                    </article>
+                    <article class="mb-editor-check-item" id="mobileEditorCheckContent" data-tone="warn">
+                        <strong>正文长度</strong>
+                        <span id="mobileEditorChecklistContent">先写一段正文，预览区才会开始有阅读感。</span>
+                    </article>
+                    <article class="mb-editor-check-item" id="mobileEditorCheckStructure" data-tone="warn">
+                        <strong>结构节奏</strong>
+                        <span id="mobileEditorChecklistStructure">至少加 2 个小节标题，手机上读起来会轻松很多。</span>
+                    </article>
+                    <article class="mb-editor-check-item" id="mobileEditorCheckPolish" data-tone="neutral">
+                        <strong>封面与归档</strong>
+                        <span id="mobileEditorChecklistPolish">发之前可以顺手补封面，或者把它挂进某个计划里。</span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="mb-card mb-card--soft">
+                <div class="mb-section-head">
+                    <div>
+                        <h2 class="mb-section-title">发布动作</h2>
+                        <div class="mb-section-note">最后再看一眼标题、发布时间和归档方式，再决定是先存草稿还是直接发。</div>
+                    </div>
+                </div>
+                <div class="mb-editor-submit-grid">
+                    <article class="mb-editor-summary">
+                        <span>当前标题</span>
+                        <strong id="mobileEditorSubmitTitle">未命名草稿</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>发布时间</span>
+                        <strong id="mobileEditorSubmitSchedule">发布后立即可见</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>归档方式</span>
+                        <strong id="mobileEditorSubmitPlan">独立文章</strong>
+                    </article>
+                    <article class="mb-editor-summary">
+                        <span>封面状态</span>
+                        <strong id="mobileEditorSubmitCover">保留当前封面</strong>
+                    </article>
+                </div>
+                <div class="mb-form-actions">
+                    <button class="mb-btn-secondary" type="submit" name="action" value="draft">保存草稿</button>
+                    <button class="mb-btn-secondary" type="submit" name="action" value="schedule">定时发布</button>
+                    <button class="mb-btn" type="submit" name="action" value="publish" th:text="${post.draft or post.scheduled ? '立即发布' : (post.id == null ? '发布文章' : '更新发布')}">发布文章</button>
+                </div>
+            </section>
+        </form>
+
+        <form id="markdownImportFormMobile" class="mb-card" action="/posts/import" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">Markdown 导入</h2>
+                    <div class="mb-section-note">把本地 Markdown 文件直接导入成草稿。</div>
+                </div>
+            </div>
+            <div class="mb-field">
+                <label class="mb-label" for="markdownFile">Markdown 文件</label>
+                <input class="mb-input" type="file" id="markdownFile" name="markdownFile" accept=".md,.markdown,.txt" required>
+            </div>
+            <div class="mb-field">
+                <label class="mb-label" for="importCategory">文章分类</label>
+                <select class="mb-select" id="importCategory" name="category">
+                    <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+                </select>
+            </div>
+            <div class="mb-form-actions">
+                <button class="mb-btn" type="submit">导入为草稿</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('posts')}"></nav>
+</div>
+
+<script>
+    const form = document.querySelector('.mb-editor-form');
+    const titleInput = document.getElementById('title');
+    const textarea = document.getElementById('content');
+    const categorySelect = document.getElementById('category');
+    const fontSelect = document.getElementById('fontKey');
+    const scheduleInput = document.getElementById('scheduledPublishAt');
+    const planSelection = document.getElementById('planSelection');
+    const existingPlanSelect = document.getElementById('existingPlanId');
+    const newPlanNameInput = document.getElementById('newPlanName');
+    const newPlanAccessTypeSelect = document.getElementById('newPlanAccessType');
+    const planOrderInput = document.getElementById('planOrder');
+    const coverFileInput = document.getElementById('coverFile');
+    const useDefaultCoverCheckbox = document.querySelector('input[name="useDefaultCover"]');
+    const coverPreview = document.getElementById('coverPreview');
+    const initialCoverPreviewSrc = coverPreview?.getAttribute('src') || coverPreview?.src || '/images/default-cover.svg';
+    const preview = document.getElementById('markdownPreview');
+    const previewStatus = document.getElementById('mobilePreviewStatus');
+    const outline = document.getElementById('mobileEditorOutline');
+    const editorImageFileInput = document.getElementById('editorImageFile');
+    const editorToolbarStatus = document.getElementById('editorToolbarStatus');
+    const restoreLocalDraftButton = document.getElementById('mobileRestoreLocalDraftButton');
+    const editorWordCount = document.getElementById('mobileEditorWordCount');
+    const editorReadingMinutes = document.getElementById('mobileEditorReadingMinutes');
+    const editorHeadingCount = document.getElementById('mobileEditorHeadingCount');
+    const editorDraftState = document.getElementById('mobileEditorDraftState');
+    const editorPublishMode = document.getElementById('mobileEditorPublishMode');
+    const editorCurrentPlan = document.getElementById('mobileEditorCurrentPlan');
+    const editorCategorySummary = document.getElementById('mobileEditorCategorySummary');
+    const editorFontSummary = document.getElementById('mobileEditorFontSummary');
+    const editorPublishSummary = document.getElementById('mobileEditorPublishSummary');
+    const editorPlanSummary = document.getElementById('mobileEditorPlanSummary');
+    const editorLineCount = document.getElementById('mobileEditorLineCount');
+    const editorParagraphCount = document.getElementById('mobileEditorParagraphCount');
+    const editorHeadingLabel = document.getElementById('mobileEditorHeadingLabel');
+    const editorSubmitTitle = document.getElementById('mobileEditorSubmitTitle');
+    const editorSubmitSchedule = document.getElementById('mobileEditorSubmitSchedule');
+    const editorSubmitPlan = document.getElementById('mobileEditorSubmitPlan');
+    const editorSubmitCover = document.getElementById('mobileEditorSubmitCover');
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const localDraftKey = form?.dataset.localDraftKey ? 'mb-editor-' + form.dataset.localDraftKey : null;
+    let previewTimer = null;
+    let draftTimer = null;
+    let pendingLocalDraft = null;
+
+    function tokenize(text) { return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || []; }
+    function countParagraphs(markdown) { return (markdown || '').split(/\n\s*\n/).map(section => section.trim()).filter(Boolean).length; }
+    function countLines(markdown) { return markdown ? markdown.split('\n').length : 0; }
+    function countHeadings(markdown) { return ((markdown || '').match(/^#{1,6}\s+/gm) || []).length; }
+    function selectedText(select, fallback = '未选择') { return select?.options?.[select.selectedIndex]?.text || fallback; }
+
+    function slugify(text, index) {
+        const normalized = (text || '').toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\u4e00-\u9fa5\s-]/g, '').trim().replace(/\s+/g, '-');
+        return normalized || 'heading-' + index;
+    }
+
+    function setToolbarStatus(text, tone = 'neutral') {
+        if (!editorToolbarStatus) return;
+        editorToolbarStatus.textContent = text;
+        editorToolbarStatus.dataset.tone = tone;
+    }
+
+    function setPreviewStatus(text) {
+        if (!previewStatus) return;
+        previewStatus.textContent = text;
+    }
+
+    function setDraftState(text) {
+        if (!editorDraftState) return;
+        editorDraftState.textContent = text;
+    }
+
+    function setPreviewContent(html) {
+        if (!html || !html.trim()) {
+            preview.innerHTML = '<div class="mb-empty">开始输入后，这里会显示预览。</div>';
+            return;
+        }
+        preview.innerHTML = html;
+    }
+
+    function renderOutline() {
+        const headings = [...preview.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) {
+            outline.innerHTML = '<div class="mb-editor-outline-empty">先写几个标题，这里就会自动整理出阅读顺序。</div>';
+            return;
+        }
+        outline.innerHTML = '';
+        headings.forEach((heading, index) => {
+            if (!heading.id) heading.id = slugify(heading.textContent, index);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'mb-editor-outline-item mb-editor-outline-item--level-' + heading.tagName.substring(1);
+            button.textContent = heading.textContent.trim();
+            button.addEventListener('click', () => heading.scrollIntoView({behavior: 'smooth', block: 'center'}));
+            outline.appendChild(button);
+        });
+    }
+
+    function getPublishLabel() {
+        return scheduleInput.value ? '定时发布' : '立即发布';
+    }
+
+    function getScheduleSummary() {
+        return scheduleInput.value ? '计划于 ' + scheduleInput.value.replace('T', ' ') : '发布后立即可见';
+    }
+
+    function getPlanLabel() {
+        const selection = planSelection?.value || 'none';
+        const orderText = planOrderInput?.value ? ' · 第 ' + planOrderInput.value + ' 节' : '';
+        if (selection === 'existing') {
+            const existingLabel = selectedText(existingPlanSelect, '暂未选择计划');
+            return existingLabel + (existingLabel === '暂未选择计划' ? '' : orderText);
+        }
+        if (selection === 'new') {
+            const planName = newPlanNameInput?.value?.trim();
+            const accessLabel = selectedText(newPlanAccessTypeSelect, '新计划');
+            return (planName ? '新计划：' + planName : '新计划 · ' + accessLabel) + orderText;
+        }
+        return '独立文章';
+    }
+
+    function getCoverSummary() {
+        if (useDefaultCoverCheckbox?.checked) return '使用默认封面';
+        if (coverFileInput?.files?.length) return '已上传新封面';
+        return initialCoverPreviewSrc.includes('default-cover') ? '当前是默认封面' : '保留当前封面';
+    }
+
+    function updateCheckItem(itemId, messageId, tone, text) {
+        const item = document.getElementById(itemId);
+        const message = document.getElementById(messageId);
+        if (!item || !message) return;
+        item.dataset.tone = tone;
+        message.textContent = text;
+    }
+
+    function updateMetrics() {
+        const markdown = textarea.value;
+        const tokens = tokenize(markdown);
+        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
+        const headingCountValue = countHeadings(markdown);
+        const paragraphCountValue = countParagraphs(markdown);
+        const lineCountValue = countLines(markdown);
+        const categoryLabel = selectedText(categorySelect, '未选择');
+        const fontLabel = selectedText(fontSelect, '未选择');
+        const publishLabel = getPublishLabel();
+        const planLabel = getPlanLabel();
+        const titleValue = titleInput.value.trim();
+
+        if (editorWordCount) editorWordCount.textContent = tokens.length.toLocaleString('zh-CN');
+        if (editorReadingMinutes) editorReadingMinutes.textContent = minutes + ' 分钟';
+        if (editorHeadingCount) editorHeadingCount.textContent = headingCountValue;
+        if (editorPublishMode) editorPublishMode.textContent = publishLabel;
+        if (editorCurrentPlan) editorCurrentPlan.textContent = planLabel;
+        if (editorCategorySummary) editorCategorySummary.textContent = categoryLabel;
+        if (editorFontSummary) editorFontSummary.textContent = fontLabel;
+        if (editorPublishSummary) editorPublishSummary.textContent = publishLabel;
+        if (editorPlanSummary) editorPlanSummary.textContent = planLabel;
+        if (editorLineCount) editorLineCount.textContent = lineCountValue + ' 行';
+        if (editorParagraphCount) editorParagraphCount.textContent = paragraphCountValue + ' 段';
+        if (editorHeadingLabel) editorHeadingLabel.textContent = headingCountValue + ' 个标题';
+        if (editorSubmitTitle) editorSubmitTitle.textContent = titleValue || '未命名草稿';
+        if (editorSubmitSchedule) editorSubmitSchedule.textContent = getScheduleSummary();
+        if (editorSubmitPlan) editorSubmitPlan.textContent = planLabel;
+        if (editorSubmitCover) editorSubmitCover.textContent = getCoverSummary();
+
+        updateCheckItem(
+            'mobileEditorCheckTitle',
+            'mobileEditorChecklistTitle',
+            titleValue.length >= 8 ? 'good' : (titleValue.length > 0 ? 'neutral' : 'warn'),
+            titleValue.length >= 8
+                ? '标题已经能说明主题了，接下来主要看内容和节奏。'
+                : (titleValue.length > 0 ? '先用这个工作标题继续写，发前再把它收紧一点。' : '先起一个能说明问题的标题，后面更容易收内容。')
+        );
+        updateCheckItem(
+            'mobileEditorCheckContent',
+            'mobileEditorChecklistContent',
+            tokens.length >= 220 ? 'good' : (tokens.length >= 80 ? 'neutral' : 'warn'),
+            tokens.length >= 220
+                ? '正文已经有基本阅读长度了，现在更适合补细节和删冗余。'
+                : (tokens.length >= 80 ? '正文已经起量了，再补一点内容会更稳。' : '先写一段正文，预览区才会开始有阅读感。')
+        );
+        updateCheckItem(
+            'mobileEditorCheckStructure',
+            'mobileEditorChecklistStructure',
+            headingCountValue >= 2 ? 'good' : 'warn',
+            headingCountValue >= 2
+                ? '结构已经立起来了，继续补每个小节的内容就行。'
+                : '至少加 2 个小节标题，手机上读起来会轻松很多。'
+        );
+        const polished = getCoverSummary() !== '保留当前封面' || planLabel !== '独立文章';
+        updateCheckItem(
+            'mobileEditorCheckPolish',
+            'mobileEditorChecklistPolish',
+            polished ? 'good' : 'neutral',
+            polished
+                ? '封面或归档已经补上了，发布页看起来会更完整。'
+                : '发之前可以顺手补封面，或者把它挂进某个计划里。'
+        );
+    }
+
+    async function requestPreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(async () => {
+            setPreviewStatus('正在渲染预览...');
+            try {
+                const response = await fetch('/posts/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', [csrfHeader]: csrfToken},
+                    body: 'content=' + encodeURIComponent(textarea.value)
+                });
+                setPreviewContent(await response.text());
+                renderOutline();
+                setPreviewStatus('这里显示最终阅读效果。');
+            } catch (error) {
+                preview.innerHTML = '<div class="mb-empty">预览暂时不可用，请稍后再试。</div>';
+                outline.innerHTML = '<div class="mb-editor-outline-empty">预览失败，暂时无法生成目录。</div>';
+                setPreviewStatus('预览暂时不可用。');
+            }
+            updateMetrics();
+        }, 180);
+    }
+
+    function insertText(prefix, suffix = '', placeholder = '') {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.slice(start, end) || placeholder;
+        textarea.setRangeText(prefix + selected + suffix, start, end, 'end');
+        textarea.focus();
+        scheduleDraftSave();
+        updateMetrics();
+        requestPreview();
+    }
+
+    function insertBlock(snippet) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const prefix = textarea.value && !textarea.value.endsWith('\n') ? '\n' : '';
+        textarea.setRangeText(prefix + snippet + '\n', start, end, 'end');
+        textarea.focus();
+        scheduleDraftSave();
+        updateMetrics();
+        requestPreview();
+    }
+
+    async function uploadEditorImage(file) {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('imageFile', file);
+        setToolbarStatus('正在上传图片...', 'neutral');
+        try {
+            const response = await fetch('/posts/images', {
+                method: 'POST',
+                headers: {[csrfHeader]: csrfToken},
+                body: formData
+            });
+            if (response.redirected) {
+                throw new Error('登录状态已失效，请刷新页面后重新登录。');
+            }
+            const payload = (response.headers.get('content-type') || '').includes('application/json')
+                ? await response.json()
+                : {};
+            if (!response.ok) {
+                throw new Error(payload.message || '图片上传失败，请稍后再试。');
+            }
+            insertBlock(payload.html);
+            setToolbarStatus('图片已上传并插入正文', 'success');
+        } catch (error) {
+            setToolbarStatus(error.message || '图片上传失败，请稍后再试。', 'error');
+        } finally {
+            editorImageFileInput.value = '';
+        }
+    }
+
+    function handleCommand(command) {
+        switch (command) {
+            case 'h1': insertBlock('# 一级标题'); break;
+            case 'h2': insertBlock('## 二级标题'); break;
+            case 'bold': insertText('**', '**', '重点内容'); break;
+            case 'link': insertText('[', '](https://example.com)', '链接文字'); break;
+            case 'quote': insertBlock('> 这里写一句重点说明'); break;
+            case 'list': insertBlock('- 列表项'); break;
+            case 'task': insertBlock('- [ ] 待办事项'); break;
+            case 'image':
+                setToolbarStatus('选一张图后会自动上传并插入正文。', 'neutral');
+                editorImageFileInput.click();
+                break;
+            case 'html':
+                insertBlock('<details open>\n  <summary>补充说明</summary>\n  <p>这里可以直接写 HTML 内容，比如补充说明、展开块或图注。</p>\n</details>');
+                setToolbarStatus('已插入 HTML 示例', 'success');
+                break;
+            case 'code': insertBlock('```java\nSystem.out.println("Hello");\n```'); break;
+            default: break;
+        }
+    }
+
+    function togglePlanFields() {
+        const selection = planSelection.value;
+        document.querySelectorAll('.plan-existing-field').forEach(el => el.style.display = selection === 'existing' ? 'block' : 'none');
+        document.querySelectorAll('.plan-new-field').forEach(el => el.style.display = selection === 'new' ? 'block' : 'none');
+        document.querySelectorAll('.plan-order-field').forEach(el => el.style.display = selection !== 'none' ? 'block' : 'none');
+        updateMetrics();
+    }
+
+    function updateFontPreview() {
+        const stack = fontSelect.options[fontSelect.selectedIndex]?.dataset.fontStack;
+        if (!stack) return;
+        preview.style.fontFamily = stack;
+        textarea.style.fontFamily = stack;
+    }
+
+    function syncCoverPreviewState() {
+        if (!coverPreview) return;
+        if (useDefaultCoverCheckbox?.checked) {
+            coverPreview.src = '/images/default-cover.svg';
+            return;
+        }
+        const file = coverFileInput.files?.[0];
+        if (file) {
+            coverPreview.src = URL.createObjectURL(file);
+            return;
+        }
+        coverPreview.src = initialCoverPreviewSrc;
+    }
+
+    function persistDraft() {
+        if (!localDraftKey) return;
+        const payload = {
+            title: titleInput.value,
+            content: textarea.value,
+            category: categorySelect.value,
+            fontKey: fontSelect.value,
+            scheduledPublishAt: scheduleInput.value,
+            planSelection: planSelection.value,
+            existingPlanId: existingPlanSelect?.value || '',
+            newPlanName: newPlanNameInput?.value || '',
+            newPlanAccessType: newPlanAccessTypeSelect?.value || '',
+            planOrder: planOrderInput?.value || '',
+            useDefaultCover: !!useDefaultCoverCheckbox?.checked,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(localDraftKey, JSON.stringify(payload));
+        setDraftState('已暂存');
+    }
+
+    function scheduleDraftSave() {
+        if (!localDraftKey) return;
+        setDraftState('编辑中');
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(persistDraft, 300);
+    }
+
+    function applySavedDraft(saved) {
+        titleInput.value = saved.title || '';
+        textarea.value = saved.content || '';
+        if (saved.category) categorySelect.value = saved.category;
+        if (saved.fontKey) fontSelect.value = saved.fontKey;
+        if (saved.scheduledPublishAt !== undefined) scheduleInput.value = saved.scheduledPublishAt || '';
+        if (saved.planSelection) planSelection.value = saved.planSelection;
+        if (existingPlanSelect && saved.existingPlanId) existingPlanSelect.value = saved.existingPlanId;
+        if (newPlanNameInput) newPlanNameInput.value = saved.newPlanName || '';
+        if (newPlanAccessTypeSelect && saved.newPlanAccessType) newPlanAccessTypeSelect.value = saved.newPlanAccessType;
+        if (planOrderInput) planOrderInput.value = saved.planOrder || '';
+        if (useDefaultCoverCheckbox) useDefaultCoverCheckbox.checked = !!saved.useDefaultCover;
+        togglePlanFields();
+        updateFontPreview();
+        syncCoverPreviewState();
+        updateMetrics();
+        requestPreview();
+        setDraftState('已恢复');
+    }
+
+    function restoreDraft() {
+        if (!localDraftKey) {
+            setDraftState('未保存');
+            return;
+        }
+        const raw = localStorage.getItem(localDraftKey);
+        if (!raw) {
+            setDraftState('未保存');
+            return;
+        }
+        try {
+            const saved = JSON.parse(raw);
+            if (!titleInput.value.trim() && !textarea.value.trim()) {
+                applySavedDraft(saved);
+                return;
+            }
+            pendingLocalDraft = saved;
+            restoreLocalDraftButton.hidden = false;
+            setDraftState('发现暂存');
+        } catch (error) {
+            setDraftState('未保存');
+        }
+    }
+
+    document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => handleCommand(button.dataset.command)));
+    textarea.addEventListener('input', () => { scheduleDraftSave(); updateMetrics(); requestPreview(); });
+    titleInput.addEventListener('input', () => { scheduleDraftSave(); updateMetrics(); });
+    categorySelect.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
+    fontSelect.addEventListener('change', () => { scheduleDraftSave(); updateFontPreview(); updateMetrics(); });
+    scheduleInput.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
+    [planSelection, existingPlanSelect, newPlanNameInput, newPlanAccessTypeSelect, planOrderInput]
+        .filter(Boolean)
+        .forEach(element => element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', () => { scheduleDraftSave(); updateMetrics(); }));
+    useDefaultCoverCheckbox?.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
+    coverFileInput.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
+    editorImageFileInput.addEventListener('change', event => uploadEditorImage(event.target.files?.[0]));
+    restoreLocalDraftButton?.addEventListener('click', () => {
+        if (!pendingLocalDraft) return;
+        applySavedDraft(pendingLocalDraft);
+        restoreLocalDraftButton.hidden = true;
+    });
+
+    togglePlanFields();
+    updateFontPreview();
+    syncCoverPreviewState();
+    restoreDraft();
+    updateMetrics();
+    requestPreview();
+</script>
+</body>
+</html>

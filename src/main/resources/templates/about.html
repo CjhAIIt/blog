@@ -49,40 +49,46 @@
 
 <main class="ll-main">
     <div class="ll-shell">
-        <section class="ll-page-head ll-fade">
+        <section class="ll-page-head ll-page-head--about ll-fade">
             <div>
-                <h1 class="ll-page-title">关于这个博客</h1>
-                <p class="ll-page-desc">这是一个基于 Spring Boot + Thymeleaf 的个人写作站点，现在支持 Markdown 创作、分类归档、个人空间、资料加密和个人博客迁移导出。</p>
+                <span class="ll-kicker">关于这个站</span>
+                <h1 class="ll-page-title">给愿意长期写点东西的人，一个顺手的小站</h1>
+                <p class="ll-page-desc">它不是想把“功能很多”挂在嘴边，而是尽量把写作这件事做得自然一点：先写草稿，慢慢修改，按自己的节奏发布；真想搬家时，也能把内容带走。</p>
+            </div>
+            <div class="ll-page-head-note">
+                <span>写作节奏</span>
+                <strong>先记下来，再改顺，再发出去</strong>
+                <p>工具尽量往后站一点，让内容本身往前站。</p>
             </div>
         </section>
 
         <div class="ll-content-grid">
             <div class="ll-stack">
-                <section class="ll-section-card ll-fade">
+                <section class="ll-section-card ll-section-card--feature ll-fade">
                     <h2 class="ll-section-title">当前能力</h2>
                     <ul class="ll-side-list">
-                        <li>编辑器支持 Markdown、实时预览、文章大纲和本地草稿。</li>
-                        <li>首页固定五个分类：最新、前后端、嵌入式、大数据、项目。</li>
-                        <li>每个注册用户都有自己的个人空间和创作列表。</li>
-                        <li>每个成员都可以把自己的文章一键导出为可直接部署到 GitHub Pages 的静态博客包。</li>
-                        <li>注册完成后即可直接登录并开始创作。</li>
+                        <li>写文章时，可以一边敲 Markdown，一边看实时预览和大纲，草稿也会顺手存下来。</li>
+                        <li>首页按固定分类整理内容，常看的主题能更快找到。</li>
+                        <li>注册后就有自己的个人空间，可以集中管理文章、草稿和资料。</li>
+                        <li>每个人都能把自己的内容导出成静态博客包，之后迁到 GitHub Pages 也轻松。</li>
+                        <li>账号注册完成后就能直接开始写，不需要再走一堆额外流程。</li>
                     </ul>
                 </section>
 
                 <section class="ll-section-card ll-fade">
                     <h2 class="ll-section-title">安全处理</h2>
                     <ul class="ll-side-list">
-                        <li>登录密码使用 BCrypt 加密存储。</li>
-                        <li>QQ 和 GitHub 主页链接以 AES 方式加密后入库。</li>
-                        <li>文章、评论与个人资料的修改和删除均有权限控制。</li>
+                        <li>密码只保存加密结果，站点不会明文留存。</li>
+                        <li>QQ 和 GitHub 主页这类敏感资料会加密后再写入数据库。</li>
+                        <li>文章、评论和个人资料的改动都带权限控制，尽量避免误改和误删。</li>
                     </ul>
                 </section>
             </div>
 
             <aside class="ll-stack">
-                <section class="ll-side-card ll-fade">
+                <section class="ll-side-card ll-side-card--about ll-fade">
                     <h2 class="ll-side-title">开源与迁移</h2>
-                    <p class="ll-side-text">站点保留源码仓库入口，毕业后也可以把自己的文章安全迁移到个人博客。</p>
+                    <p class="ll-side-text">源码仓库一直保留着。如果以后想把这里写下的内容带去别处，也不用担心被平台绑住。</p>
                     <div class="ll-inline-actions">
                         <a class="ll-side-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">源码仓库</a>
                     </div>

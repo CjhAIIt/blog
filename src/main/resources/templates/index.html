@@ -50,6 +50,7 @@
             <nav class="ll-category-links">
                 <a class="ll-category-link" th:classappend="${selectedCategory == 'latest' ? ' is-active' : ''}" href="/">最新</a>
                 <a class="ll-category-link" th:each="category : ${postCategories}" th:classappend="${selectedCategory == category.slug ? ' is-active' : ''}" th:href="@{/(category=${category.slug})}" th:text="${category.displayName}">分类</a>
+                <a class="ll-category-link" href="/plans">计划</a>
             </nav>
         </div>
     </div>
@@ -61,11 +62,16 @@
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
 
         <section class="ll-home-hero ll-fade">
-            <div class="ll-home-copy">
+            <div class="ll-home-copy ll-home-copy--story">
                 <span class="ll-kicker">欢迎来到博客</span>
-                <h1 class="ll-page-title">用 Markdown 记录与分享</h1>
-                <p class="ll-page-desc">支持草稿、定时发布、封面与字体设置，也支持导入 Markdown。</p>
-                <div class="ll-inline-actions">
+                <h1 class="ll-page-title">把灵感先写下来，再慢慢打磨成文章</h1>
+                <p class="ll-page-desc">这里保留了 Markdown 写作的轻快，也把草稿、封面、定时发布和导入这些琐事收拾好了。你可以先记一段，等想清楚了，再挑个合适的时候发出来。</p>
+                <div class="ll-home-feature-list">
+                    <span class="ll-home-feature">草稿随手存</span>
+                    <span class="ll-home-feature">预览边写边看</span>
+                    <span class="ll-home-feature">想定时就定时</span>
+                </div>
+                <div class="ll-inline-actions ll-home-actions">
                     <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">开始写文章</a>
                     <a class="ll-btn-secondary" href="/leaderboards">查看排行榜</a>
                     <a class="ll-btn-secondary" href="/space/drafts" sec:authorize="isAuthenticated()">进入草稿箱</a>
@@ -74,9 +80,9 @@
             </div>
 
             <aside class="ll-home-side">
-                <div class="ll-home-highlight">
+                <div class="ll-home-highlight ll-home-highlight--accent">
                     <div class="ll-side-title">排行榜</div>
-                    <p class="ll-side-text">按周、月、年查看发文贡献与点赞热度，快速了解站内活跃情况。</p>
+                    <p class="ll-side-text">想看看最近谁更新得勤、哪几篇文章正在被更多人读到，去榜单里扫一眼就很清楚。</p>
                     <a class="ll-side-link ll-side-link--solid" href="/leaderboards">查看排行榜</a>
                 </div>
 
@@ -88,12 +94,20 @@
                             <span class="ll-mini-meta" th:text="${hotPost.likeCount + ' 个赞'}">0 个赞</span>
                         </a>
                     </div>
-                    <p class="ll-side-text" th:if="${#lists.isEmpty(featuredPosts)}">当前还没有进入热榜的文章，发布一篇试试看。</p>
+                    <p class="ll-side-text" th:if="${#lists.isEmpty(featuredPosts)}">这会儿热榜还空着，不如把今天那篇先发出来。</p>
                 </div>
             </aside>
         </section>
 
-        <section class="ll-grid" th:if="${!#lists.isEmpty(posts)}">
+        <section class="ll-home-stream-head ll-fade" th:if="${!#lists.isEmpty(posts)}">
+            <div>
+                <span class="ll-kicker ll-kicker--soft">最新更新</span>
+                <h2 class="ll-home-stream-title">最近写下来的内容</h2>
+            </div>
+            <p class="ll-home-stream-note">先看刚更新的，再慢慢决定今天想点进哪一篇。</p>
+        </section>
+
+        <section class="ll-grid ll-grid--home" th:if="${!#lists.isEmpty(posts)}">
             <article class="ll-card ll-fade" th:each="post, stat : ${posts}">
                 <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
                     <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
@@ -128,9 +142,15 @@
         </nav>
 
         <footer class="ll-footer">
-            <span>© 2026 博客</span>
-            <span> · Markdown 写作 · 草稿箱 · 附件 · </span>
-            <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>Markdown 写作</span>
+                    <span>草稿箱</span>
+                    <span>附件</span>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </div>
         </footer>
     </div>
 </main>

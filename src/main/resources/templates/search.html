@@ -18,7 +18,8 @@
             <nav class="ll-header-links">
                 <a class="ll-header-link" href="/">首页</a>
                 <a class="ll-header-link" href="/leaderboards">排行榜</a>
-                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link is-active" href="/posts">文章</a>
+                <a class="ll-header-link" href="/plans">计划</a>
                 <a class="ll-header-link" href="/about">关于</a>
             </nav>
             <div class="ll-header-actions">
@@ -48,18 +49,24 @@
 
 <main class="ll-main">
     <div class="ll-shell">
-        <section class="ll-page-head ll-fade">
+        <section class="ll-page-head ll-browse-hero ll-browse-hero--search ll-fade">
             <div>
+                <span class="ll-kicker ll-kicker--soft">站内搜索</span>
                 <h1 class="ll-page-title">搜索结果</h1>
                 <p class="ll-page-desc" th:text="${'关键词 “' + keyword + '” 共找到 ' + totalItems + ' 篇文章。'}">搜索结果</p>
             </div>
-            <div class="ll-inline-actions">
-                <a class="ll-btn-secondary" href="/posts">查看全部文章</a>
-                <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">搜索提示</span>
+                <strong>标题、正文和分类都会参与匹配</strong>
+                <p>如果结果不够准，试试更短的关键词，或者直接搜分类名。</p>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn-secondary" href="/posts">查看全部文章</a>
+                    <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+                </div>
             </div>
         </section>
 
-        <section class="ll-grid" th:if="${!#lists.isEmpty(posts)}">
+        <section class="ll-grid ll-grid--browse" th:if="${!#lists.isEmpty(posts)}">
             <article class="ll-card ll-fade" th:each="post, stat : ${posts}">
                 <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
                     <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
@@ -83,8 +90,8 @@
             </article>
         </section>
 
-        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-fade">
-            没有找到匹配结果，换一个关键词再试试。
+        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-empty--browse ll-fade">
+            没找到完全对上的结果，换个更短的词，或者试试分类名。
         </div>
 
         <nav class="ll-pagination" th:if="${totalPages > 1}">
@@ -96,6 +103,17 @@
             <a class="ll-page-link" th:if="${currentPage + 1 < totalPages}" th:href="@{/search(keyword=${keyword}, page=${currentPage + 1})}">下一页</a>
             <span class="ll-page-link" th:if="${currentPage + 1 >= totalPages}">下一页</span>
         </nav>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>站内搜索</span>
+                    <span th:text="${'关键词 ' + keyword}">关键词</span>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </main>
 </body>

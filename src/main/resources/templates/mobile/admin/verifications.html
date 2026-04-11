@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('实名认证审核')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--admin">
+            <div class="mb-meta-ribbon">审核台</div>
+            <span class="mb-hero-kicker">管理</span>
+            <h1 class="mb-hero-title">实名认证审核</h1>
+            <p class="mb-hero-copy">这页像手机上的准入闸口。你可以先扫一眼队列压力，再决定是通过、驳回，还是先点进对方主页确认信息。</p>
+            <div class="mb-actions">
+                <a class="mb-btn-secondary" href="/notifications">消息</a>
+                <a class="mb-btn" th:href="@{/users/{username}(username=${currentUser.username})}">我的主页</a>
+            </div>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>待审核</span>
+                    <strong th:text="${#lists.size(pendingUsers)}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>已审核</span>
+                    <strong th:text="${#lists.size(reviewedUsers)}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>当前建议</span>
+                    <strong th:text="${#lists.isEmpty(pendingUsers) ? '队列已清空' : '先处理新提交'}">先处理新提交</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>准入结果</span>
+                    <strong>通过后可发文</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">审核概览</h2>
+                    <div class="mb-section-note">先看队列压力，再决定这一轮从哪一批开始清。</div>
+                </div>
+                <span class="mb-inline-note" th:text="${'管理员：' + currentUser.displayName}">管理员：当前用户</span>
+            </div>
+            <div class="mb-stat-grid">
+                <article class="mb-stat">
+                    <strong th:text="${#lists.size(pendingUsers)}">0</strong>
+                    <span>还在队列里的申请数量，优先处理刚提交的通常最省心。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong th:text="${#lists.size(reviewedUsers)}">0</strong>
+                    <span>最近已经处理过的申请，会在下面继续留一份回看记录。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong>实名认证</strong>
+                    <span>通过后会开放发文、导入 Markdown 和内容编辑权限。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong th:text="${#lists.isEmpty(pendingUsers) ? '现在先巡检' : '先看姓名与邮箱'}">先看姓名与邮箱</strong>
+                    <span>拿不准的时候，退回修改通常比勉强放行更稳妥。</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--ink">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">审核时先看什么</h2>
+                    <div class="mb-section-note">先把判断标准压成几条明确规则，手机上处理会快很多。</div>
+                </div>
+            </div>
+            <div class="mb-quick-grid">
+                <div class="mb-quick-link">
+                    <strong>真实姓名</strong>
+                    <span>先看实名字段是否完整，格式明显不对时通常可以直接退回。</span>
+                </div>
+                <div class="mb-quick-link">
+                    <strong>账号信息</strong>
+                    <span>邮箱和注册时间能帮你判断这是不是一条正常的新用户申请。</span>
+                </div>
+                <div class="mb-quick-link mb-quick-link--wide">
+                    <strong>拿不准时别急着放行</strong>
+                    <span>通过会立即开放写作权限；如果信息还撑不起判断，先驳回让对方补资料更稳。</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">待审核队列</h2>
+                    <div class="mb-section-note" th:text="${#lists.size(pendingUsers) + ' 人待处理'}">0 人待处理</div>
+                </div>
+                <span class="mb-inline-note" th:text="${#lists.isEmpty(pendingUsers) ? '当前清空' : '优先看最新提交'}">优先看最新提交</span>
+            </div>
+            <div class="mb-admin-review-note">先看真实姓名是不是完整，再看邮箱和注册时间有没有明显异常；如果信息不够支撑判断，直接驳回重提会更省来回确认。</div>
+            <div class="mb-admin-grid" th:if="${!#lists.isEmpty(pendingUsers)}">
+                <article class="mb-user-card mb-admin-review-card" th:each="user : ${pendingUsers}">
+                    <div class="mb-admin-status-line">
+                        <div class="mb-inline-profile">
+                            <div class="mb-avatar"><img th:src="${user.displayAvatarUrl}" th:alt="${user.username}"></div>
+                            <div>
+                                <h3 class="mb-post-title" th:text="${user.displayName}">用户</h3>
+                                <div class="mb-section-note" th:text="${'@' + user.username}">@username</div>
+                            </div>
+                        </div>
+                        <span class="mb-badge-pill" th:text="${user.realNameVerificationStatusDisplayName}">待审核</span>
+                    </div>
+                    <div class="mb-key-list">
+                        <div class="mb-key-item">
+                            <strong>真实姓名</strong>
+                            <span th:text="${#strings.isEmpty(user.realName) ? '未填写' : user.realName}">张三</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>邮箱</strong>
+                            <span th:text="${user.email}">mail@example.com</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>注册时间</strong>
+                            <span th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'MM-dd HH:mm') : '未记录'}">04-10 11:00</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>提交时间</strong>
+                            <span th:text="${user.realNameVerificationSubmittedAt != null ? #temporals.format(user.realNameVerificationSubmittedAt, 'MM-dd HH:mm') : '未记录'}">04-10 11:00</span>
+                        </div>
+                    </div>
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:text="${user.createdAt != null ? '注册于 ' + #temporals.format(user.createdAt, 'MM-dd') : '新用户'}">注册于 04-10</span>
+                        <span class="mb-badge-pill">通过后可发文</span>
+                    </div>
+                    <div class="mb-form-actions">
+                        <a class="mb-btn-secondary" th:href="@{/users/{username}(username=${user.username})}">看主页</a>
+                        <form th:action="@{/admin/verifications/{id}/approve(id=${user.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="mb-btn" type="submit">通过</button>
+                        </form>
+                        <form th:action="@{/admin/verifications/{id}/reject(id=${user.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="mb-btn-secondary" type="submit">驳回</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(pendingUsers)}">当前没有待审核用户。</div>
+        </section>
+
+        <section class="mb-card">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">最近处理记录</h2>
+                    <div class="mb-section-note" th:text="${#lists.size(reviewedUsers) + ' 人'}">0 人</div>
+                </div>
+                <span class="mb-inline-note">方便回看节奏</span>
+            </div>
+            <div class="mb-admin-grid" th:if="${!#lists.isEmpty(reviewedUsers)}">
+                <article class="mb-user-card mb-admin-history-card" th:each="user : ${reviewedUsers}">
+                    <div class="mb-admin-status-line">
+                        <div class="mb-inline-profile">
+                            <div class="mb-avatar"><img th:src="${user.displayAvatarUrl}" th:alt="${user.username}"></div>
+                            <div>
+                                <h3 class="mb-post-title" th:text="${user.displayName}">用户</h3>
+                                <div class="mb-section-note" th:text="${'@' + user.username}">@username</div>
+                            </div>
+                        </div>
+                        <span class="mb-badge-pill" th:text="${user.realNameVerificationStatusDisplayName}">已通过</span>
+                    </div>
+                    <div class="mb-key-list">
+                        <div class="mb-key-item">
+                            <strong>真实姓名</strong>
+                            <span th:text="${#strings.isEmpty(user.realName) ? '未填写' : user.realName}">张三</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>审核时间</strong>
+                            <span th:text="${user.realNameVerificationReviewedAt != null ? #temporals.format(user.realNameVerificationReviewedAt, 'MM-dd HH:mm') : '未记录'}">04-10 11:00</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>结果说明</strong>
+                            <span th:text="${user.realNameVerificationStatusDisplayName}">已通过</span>
+                        </div>
+                    </div>
+                    <div class="mb-form-actions">
+                        <a class="mb-btn-secondary" th:href="@{/users/{username}(username=${user.username})}">查看主页</a>
+                    </div>
+                </article>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(reviewedUsers)}">还没有审核记录。</div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('space')}"></nav>
+</div>
+</body>
+</html>

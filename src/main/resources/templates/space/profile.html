@@ -121,6 +121,57 @@
 
         <section class="ll-space-layout ll-fade">
             <div class="ll-feed">
+                <section class="ll-space-workbench ll-space-section-card" th:if="${isOwner}">
+                    <div class="ll-editor-panel-head">
+                        <div>
+                            <h2 class="ll-side-title">今天先做什么</h2>
+                            <p class="ll-side-text">把最常点的入口收在一起，不用每次都在空间里来回找。</p>
+                        </div>
+                        <div class="ll-inline-actions">
+                            <a class="ll-btn" href="/posts/new" th:if="${canWritePosts}">写新文章</a>
+                            <a class="ll-btn-secondary" href="/notifications">看消息</a>
+                        </div>
+                    </div>
+                    <div class="ll-space-workbench-grid">
+                        <a class="ll-space-workbench-link" href="/space/drafts">
+                            <span class="ll-space-workbench-kicker">草稿箱</span>
+                            <strong th:text="${draftCount + ' 篇内容还没发'}">0 篇内容还没发</strong>
+                            <span>如果你只是想接着写，这里通常是今天最先要点开的地方。</span>
+                        </a>
+                        <a class="ll-space-workbench-link" href="/notifications">
+                            <span class="ll-space-workbench-kicker">消息中心</span>
+                            <strong th:text="${notificationUnreadCount + ' 条提醒等你处理'}">0 条提醒等你处理</strong>
+                            <span>评论、回复和互动都会先落到这里，清完以后会更清爽。</span>
+                        </a>
+                        <a class="ll-space-workbench-link" href="/space/edit">
+                            <span class="ll-space-workbench-kicker">资料整理</span>
+                            <strong th:text="${showVerificationStatus ? '头像、简介和实名认证都在这里' : '头像、简介和外链都在这里'}">头像、简介和外链都在这里</strong>
+                            <span>想顺手更新一下个人资料，或者补上外链，这里会比翻设置轻松得多。</span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="ll-space-highlight ll-space-section-card" th:if="${latestPost != null}">
+                    <a class="ll-space-highlight-cover" th:href="@{/posts/{id}(id=${latestPost.id})}">
+                        <img th:src="${latestPost.displayCoverUrl}" th:alt="${latestPost.title}">
+                    </a>
+                    <div class="ll-space-highlight-copy">
+                        <span class="ll-kicker ll-kicker--soft">最近发布</span>
+                        <h2 class="ll-feed-title">
+                            <a th:href="@{/posts/{id}(id=${latestPost.id})}" th:text="${latestPost.title}">文章标题</a>
+                        </h2>
+                        <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(latestPost.content, 148)}">文章摘要</p>
+                        <div class="ll-link-group">
+                            <span class="ll-link-badge" th:text="${latestPost.categoryDisplayName}">分类</span>
+                            <span class="ll-link-badge" th:text="${#temporals.format(latestPost.createdAt, 'yyyy-MM-dd HH:mm')}">2026-04-11 11:00</span>
+                            <span class="ll-link-badge" th:text="${latestPost.likeCount + ' 次点赞'}">0 次点赞</span>
+                        </div>
+                        <div class="ll-inline-actions">
+                            <a class="ll-btn-secondary" th:href="@{/posts/{id}(id=${latestPost.id})}">阅读全文</a>
+                            <a class="ll-btn" href="/posts/new" th:if="${isOwner and canWritePosts}">再写一篇</a>
+                        </div>
+                    </div>
+                </section>
                 <section class="ll-space-overview-card ll-space-section-card">
                     <div class="ll-editor-panel-head">
                         <div>
@@ -247,6 +298,17 @@
                 </section>
             </aside>
         </section>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>个人空间</span>
+                    <span th:text="${publishedCount + ' 篇公开内容'}">0 篇公开内容</span>
+                    <a href="/notifications" th:if="${isOwner}">消息中心</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </main>
 </body>

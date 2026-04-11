@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<body>
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle + ' - 博客'}">博客</title>
+    <link rel="stylesheet" href="/css/mobile.css">
+</head>
+
+<div th:fragment="alerts">
+    <div th:if="${successMessage}" class="mb-alert mb-alert--success"><span th:text="${successMessage}"></span></div>
+    <div th:if="${message}" class="mb-alert mb-alert--success"><span th:text="${message}"></span></div>
+    <div th:if="${error}" class="mb-alert mb-alert--error"><span th:text="${error}"></span></div>
+</div>
+
+<header th:fragment="header" class="mb-topbar">
+    <a class="mb-brand" href="/">
+        <span class="mb-brand-mark">LK</span>
+        <span class="mb-brand-copy">
+            <strong>博客</strong>
+            <span>随时看看 <i class="mb-brand-pulse" aria-hidden="true"></i></span>
+        </span>
+    </a>
+    <div class="mb-topbar-actions">
+        <a class="mb-topbar-link" th:if="${viewer != null}" href="/notifications">
+            消息
+            <span class="mb-badge" th:if="${notificationUnreadCount > 0}" th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+        </a>
+        <a class="mb-topbar-link" href="?device=desktop">桌面版</a>
+    </div>
+</header>
+
+<nav th:fragment="tabbar(activeTab)" class="mb-tabbar">
+    <a href="/" th:classappend="${activeTab == 'home' ? ' is-active' : ''}">首页</a>
+    <a href="/posts" th:classappend="${activeTab == 'posts' ? ' is-active' : ''}">文章</a>
+    <a href="/plans" th:classappend="${activeTab == 'plans' ? ' is-active' : ''}">计划</a>
+    <a th:href="${viewer != null ? '/space' : '/login'}" th:classappend="${activeTab == 'space' ? ' is-active' : ''}">我的</a>
+</nav>
+</body>
+</html>

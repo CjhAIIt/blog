@@ -43,6 +43,7 @@
             <nav class="ll-category-links">
                 <a class="ll-category-link" th:classappend="${selectedCategory == 'latest' ? ' is-active' : ''}" href="/posts">最新</a>
                 <a class="ll-category-link" th:each="category : ${postCategories}" th:classappend="${selectedCategory == category.slug ? ' is-active' : ''}" th:href="@{/posts(category=${category.slug})}" th:text="${category.displayName}">分类</a>
+                <a class="ll-category-link" href="/plans">计划</a>
             </nav>
         </div>
     </div>
@@ -53,19 +54,24 @@
         <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
 
-        <section class="ll-page-head ll-fade">
+        <section class="ll-page-head ll-browse-hero ll-fade">
             <div>
-                <h1 class="ll-page-title" th:text="${keyword != null ? '搜索结果' : '全部文章'}">全部文章</h1>
-                <p class="ll-page-desc" th:if="${keyword != null}" th:text="${'当前关键词：' + keyword}">关键词</p>
-                <p class="ll-page-desc" th:if="${keyword == null}">这里只展示已发布文章，草稿会单独进入个人草稿箱。</p>
+                <span class="ll-kicker ll-kicker--soft">文章索引</span>
+                <h1 class="ll-page-title">全部文章</h1>
+                <p class="ll-page-desc">这里是已经公开发布的内容。想慢慢改的那部分，会继续留在你的草稿箱里。</p>
             </div>
-            <div class="ll-inline-actions">
-                <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">写新文章</a>
-                <a class="ll-btn-secondary" href="/space/drafts" sec:authorize="isAuthenticated()">草稿箱</a>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">当前范围</span>
+                <strong th:text="${selectedCategory == 'latest' ? '最新公开内容' : '按分类浏览中'}">最新公开内容</strong>
+                <p th:text="${'本页共展示 ' + #lists.size(posts) + ' 篇内容，适合先扫一圈再决定读哪篇。'}">本页共展示 0 篇内容。</p>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">写新文章</a>
+                    <a class="ll-btn-secondary" href="/space/drafts" sec:authorize="isAuthenticated()">草稿箱</a>
+                </div>
             </div>
         </section>
 
-        <section class="ll-grid" th:if="${!#lists.isEmpty(posts)}">
+        <section class="ll-grid ll-grid--browse" th:if="${!#lists.isEmpty(posts)}">
             <article class="ll-card ll-fade" th:each="post, stat : ${posts}">
                 <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
                     <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
@@ -88,12 +94,27 @@
             </article>
         </section>
 
-        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-fade">当前没有符合条件的文章。</div>
+        <div th:if="${#lists.isEmpty(posts)}" class="ll-empty ll-empty--browse ll-fade">这一页暂时还没有内容，换个分类看看，或者晚点再来。</div>
+
+        <nav class="ll-pagination" th:if="${totalPages > 1}">
+            <a class="ll-page-link" th:if="${currentPage > 0}" th:href="@{/posts(page=${currentPage - 1}, category=${selectedCategory})}">上一页</a>
+            <span class="ll-page-link" th:if="${currentPage == 0}">上一页</span>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a class="ll-page-link" th:classappend="${i == currentPage ? ' is-active' : ''}" th:href="@{/posts(page=${i}, category=${selectedCategory})}" th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="ll-page-link" th:if="${currentPage + 1 < totalPages}" th:href="@{/posts(page=${currentPage + 1}, category=${selectedCategory})}">下一页</a>
+            <span class="ll-page-link" th:if="${currentPage + 1 >= totalPages}">下一页</span>
+        </nav>
 
         <footer class="ll-footer">
-            <span>© 2026 博客</span>
-            <span> · 文章索引 · </span>
-            <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>文章索引</span>
+                    <span>分类浏览</span>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </div>
         </footer>
     </div>
 </main>

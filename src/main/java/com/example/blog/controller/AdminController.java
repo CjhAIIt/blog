@@ -2,6 +2,7 @@ package com.example.blog.controller;
 
 import com.example.blog.model.User;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +17,11 @@ import java.security.Principal;
 @RequestMapping("/admin")
 public class AdminController {
     private final UserService userService;
+    private final ViewModeService viewModeService;
 
-    public AdminController(UserService userService) {
+    public AdminController(UserService userService, ViewModeService viewModeService) {
         this.userService = userService;
+        this.viewModeService = viewModeService;
     }
 
     @GetMapping("/verifications")
@@ -32,7 +35,7 @@ public class AdminController {
         model.addAttribute("pendingUsers", userService.findPendingRealNameVerifications());
         model.addAttribute("reviewedUsers", userService.findReviewedRealNameVerifications());
         model.addAttribute("selectedCategory", "latest");
-        return "admin/verifications";
+        return view("admin/verifications");
     }
 
     @PostMapping("/verifications/{id}/approve")
@@ -71,5 +74,9 @@ public class AdminController {
             return null;
         }
         return currentUser;
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 }

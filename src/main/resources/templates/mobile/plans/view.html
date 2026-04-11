@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head(${plan.name})}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--plans">
+            <div class="mb-meta-ribbon">计划详情</div>
+            <span class="mb-hero-kicker" th:text="${plan.accessTypeDisplayName}">计划类型</span>
+            <h1 class="mb-hero-title" th:text="${plan.name}">计划名称</h1>
+            <p class="mb-hero-copy" th:text="${plan.description != null and !#strings.isEmpty(plan.description) ? plan.description : '这个计划暂时还没有简介。'}">计划简介</p>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>完成度</span>
+                    <strong th:text="${progress + '%'}">0%</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>已发布</span>
+                    <strong th:text="${publishedCount}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>计划目标</span>
+                    <strong th:text="${plan.expectedCount}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>当前文章</span>
+                    <strong th:text="${#lists.size(posts)}">0</strong>
+                </article>
+            </div>
+            <div class="mb-chip-row">
+                <span class="mb-chip" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
+                <span class="mb-chip" th:text="${plan.public ? '可协作' : '私密计划'}">可协作</span>
+                <span class="mb-chip" th:text="${'作者 ' + plan.author.displayName}">作者</span>
+            </div>
+            <div class="mb-actions" th:if="${!#lists.isEmpty(posts) or canCreatePostInPlan or isAuthor}">
+                <a class="mb-btn-secondary" href="#planPosts" th:if="${!#lists.isEmpty(posts)}">查看目录</a>
+                <a class="mb-btn" th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">在计划里写</a>
+                <a class="mb-btn-secondary" th:if="${isAuthor}" th:href="@{/plans/{id}/edit(id=${plan.id})}">编辑计划</a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">完成进度</h2>
+                    <div class="mb-section-note">已经公开的文章会算进这条进度。</div>
+                </div>
+                <span class="mb-inline-note" th:text="${progress + '%'}">0%</span>
+            </div>
+            <div class="mb-progress"><div class="mb-progress-bar" th:style="${'width:' + progress + '%'}"></div></div>
+            <div class="mb-author-badges">
+                <span class="mb-badge-pill" th:text="${'已发布 ' + publishedCount + ' 篇'}">已发布 0 篇</span>
+                <span class="mb-badge-pill" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                <span class="mb-badge-pill" th:text="${plan.accessTypeDisplayName}">计划类型</span>
+            </div>
+            <div class="mb-quick-grid" style="margin-top: 16px;">
+                <a class="mb-quick-link" href="/plans">
+                    <strong>返回计划列表</strong>
+                    <span>继续看别的计划，或者切换筛选。</span>
+                </a>
+                <a class="mb-quick-link" th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">
+                    <strong>在这个计划里写文章</strong>
+                    <span>新文章会直接挂到当前计划下。</span>
+                </a>
+                <div class="mb-quick-link mb-quick-link--wide" th:if="${!canCreatePostInPlan}">
+                    <strong>现在先看内容</strong>
+                    <span>如果要继续写，需要先满足当前计划的加入条件，并拥有发文权限。</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-plan-roadmap" th:if="${!#lists.isEmpty(posts)}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">这组内容怎么读</h2>
+                    <div class="mb-section-note" th:text="${#lists.size(posts) + ' 篇内容，先看一眼路线，再决定从哪篇开始。'}">0 篇内容，先看一眼路线，再决定从哪篇开始。</div>
+                </div>
+                <span class="mb-inline-note">手机阅读路线</span>
+            </div>
+            <div class="mb-plan-rail">
+                <a class="mb-plan-step" th:each="post, iterStat : ${posts}" th:if="${iterStat.index < 4}" th:href="@{/posts/{id}(id=${post.id})}">
+                    <span class="mb-plan-step-order" th:text="${post.planOrder != null ? post.planOrder : iterStat.index + 1}">1</span>
+                    <div class="mb-plan-step-copy">
+                        <strong th:text="${post.title}">文章标题</strong>
+                        <span th:text="${post.statusDisplayName + ' · ' + post.categoryDisplayName}">已发布 · 分类</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-note mb-plan-roadmap-note" th:if="${#lists.size(posts) > 4}" th:text="${'下面还有 ' + (#lists.size(posts) - 4) + ' 篇，往下继续就是完整目录。'}">下面还有更多内容。</div>
+        </section>
+
+        <section class="mb-card mb-card--soft" id="planPosts">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">计划文章</h2>
+                    <div class="mb-section-note" th:text="${#lists.size(posts) + ' 篇，按计划顺序展示'}">0 篇，按计划顺序展示</div>
+                </div>
+                <a class="mb-section-link" th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">写下一篇</a>
+            </div>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(posts)}">
+                <a class="mb-post-card mb-post-card--browse" th:each="post : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
+                    <div class="mb-post-cover" th:if="${post.coverImageUrl != null and !#strings.isEmpty(post.coverImageUrl)}">
+                        <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+                    </div>
+                    <div class="mb-post-meta">
+                        <span th:text="${post.planOrder != null ? '第 ' + post.planOrder + ' 篇' : '未排序'}">第 1 篇</span>
+                        <span th:text="${post.statusDisplayName}">已发布</span>
+                    </div>
+                    <h3 class="mb-post-title" th:text="${post.title}">文章标题</h3>
+                    <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 90)}">摘要</p>
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:text="${post.categoryDisplayName}">分类</span>
+                        <span class="mb-badge-pill" th:text="${post.editorFont.label}">字体</span>
+                        <span class="mb-badge-pill" th:if="${post.scheduled and post.scheduledPublishAt != null}" th:text="${'定时 ' + #temporals.format(post.scheduledPublishAt, 'MM-dd HH:mm')}">定时 04-10 11:00</span>
+                    </div>
+                    <div class="mb-post-footer">
+                        <span class="mb-note" th:text="${post.likeCount + ' 次点赞'}">0 次点赞</span>
+                        <span class="mb-inline-note">继续往下读</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}">这个计划还没有文章。<a th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">去写第一篇</a></div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('plans')}"></nav>
+</div>
+</body>
+</html>

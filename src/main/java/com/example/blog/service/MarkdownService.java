@@ -44,9 +44,11 @@ public class MarkdownService {
         this.textRenderer = TextContentRenderer.builder().build();
         this.htmlSafelist = Safelist.relaxed()
                 .preserveRelativeLinks(true)
-                .addTags("div", "span")
+                .addTags("div", "span", "figure", "figcaption", "details", "summary", "picture", "source", "mark", "sup", "sub")
                 .addAttributes("a", "target", "rel")
-                .addAttributes("img", "loading")
+                .addAttributes("details", "open")
+                .addAttributes("img", "loading", "decoding", "width", "height", "srcset", "sizes")
+                .addAttributes("source", "srcset", "sizes", "type", "media")
                 .addAttributes("h1", "id")
                 .addAttributes("h2", "id")
                 .addAttributes("h3", "id")

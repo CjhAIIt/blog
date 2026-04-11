@@ -105,25 +105,37 @@
 
         <div class="ll-content-grid">
             <div class="ll-stack">
-                <div th:if="${showPlanContext}" class="ll-article-card ll-fade" style="background: #f8f9fa; border: 1px solid #e9ecef; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 1.2rem; color: #0066cc;">
-                            <a th:href="@{/plans/{id}(id=${post.plan.id})}" style="text-decoration: none; color: inherit;">所属计划：<span th:text="${post.plan.name}">计划名称</span></a>
-                        </h3>
-                        <span style="background: #e9ecef; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; color: #495057;">
+                <section th:if="${showPlanContext}" class="ll-article-card ll-plan-context ll-fade">
+                    <div class="ll-plan-context-head">
+                        <h2 class="ll-plan-context-title">
+                            <a th:href="@{/plans/{id}(id=${post.plan.id})}">所属计划：<span th:text="${post.plan.name}">计划名称</span></a>
+                        </h2>
+                        <span class="ll-plan-context-order">
                             第 <strong th:text="${post.planOrder}">1</strong> 篇
                         </span>
                     </div>
-                    <p style="margin: 0 0 8px 0; color: #495057; font-size: 0.9rem;">
+                    <p class="ll-plan-context-meta">
                         <span th:text="${post.plan.accessTypeDisplayName}">计划类型</span>
                     </p>
-                    <p style="margin: 0 0 15px 0; color: #6c757d; font-size: 0.95rem;" th:text="${post.plan.description != null ? post.plan.description : ''}"></p>
-                    <div style="display: flex; gap: 10px;">
-                        <a class="ll-btn-secondary" th:href="@{/plans/{id}(id=${post.plan.id})}" style="font-size: 0.85rem; padding: 4px 12px;">查看完整计划目录</a>
+                    <p class="ll-plan-context-desc" th:if="${post.plan.description != null and !#strings.isEmpty(post.plan.description)}" th:text="${post.plan.description}">计划描述</p>
+                    <div class="ll-inline-actions ll-plan-context-actions">
+                        <a class="ll-btn-secondary" th:href="@{/plans/{id}(id=${post.plan.id})}">查看完整计划目录</a>
                     </div>
-                </div>
+                </section>
 
-                <article class="ll-article-card ll-fade"><div class="ll-article-body ll-markdown" th:utext="${renderedContent}"></div></article>
+                <article class="ll-article-card ll-article-card--body ll-fade">
+                    <div class="ll-article-body-head">
+                        <div>
+                            <span class="ll-kicker ll-kicker--soft">正文</span>
+                            <div class="ll-article-body-note">按你选中的展示字体排版，目录会跟着阅读位置一起移动。</div>
+                        </div>
+                        <div class="ll-article-progress-box">
+                            <span>阅读进度</span>
+                            <div class="ll-article-progress-track"><span id="articleReadingProgressBar"></span></div>
+                        </div>
+                    </div>
+                    <div class="ll-article-body ll-markdown" th:utext="${renderedContent}"></div>
+                </article>
 
                 <section class="ll-side-card ll-fade ll-author-card-inline">
                     <h2 class="ll-side-title">作者名片</h2>
@@ -144,7 +156,7 @@
                 </section>
 
                 <section class="ll-comment-section ll-fade" id="comments" th:if="${!isDraftPreview}">
-                    <div class="ll-comment-card">
+                    <div class="ll-comment-card ll-comment-card--composer">
                         <div class="ll-comment-head">
                             <div>
                                 <div class="ll-side-title">评论区</div>
@@ -165,6 +177,28 @@
                                 <button type="button" class="ll-link-button" id="cancelReplyButton">取消回复</button>
                             </div>
                             <textarea class="ll-textarea" id="commentContent" name="content" maxlength="500" placeholder="写下你的补充、疑问或反馈，最长 500 字。" required></textarea>
+                            <div class="ll-comment-toolbar">
+                                <button type="button" class="ll-btn-secondary ll-btn-secondary--compact" id="toggleEmojiPanel">表情</button>
+                                <span class="ll-comment-toolbar-note">点击表情即可插入到当前光标位置。</span>
+                            </div>
+                            <div class="ll-emoji-panel" id="commentEmojiPanel" hidden>
+                                <button type="button" class="ll-emoji-button" data-emoji="😀" aria-label="笑脸">😀</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="😄" aria-label="开心">😄</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="😎" aria-label="酷">😎</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="🤔" aria-label="思考">🤔</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="😍" aria-label="喜欢">😍</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="😭" aria-label="流泪">😭</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="👍" aria-label="点赞">👍</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="👏" aria-label="鼓掌">👏</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="🙌" aria-label="庆祝">🙌</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="🎉" aria-label="庆祝礼花">🎉</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="🔥" aria-label="火">🔥</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="❤️" aria-label="爱心">❤️</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="✨" aria-label="闪光">✨</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="🚀" aria-label="火箭">🚀</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="☕" aria-label="咖啡">☕</button>
+                                <button type="button" class="ll-emoji-button" data-emoji="💡" aria-label="灵感">💡</button>
+                            </div>
                             <div class="ll-form-actions">
                                 <button class="ll-btn" type="submit">发布评论</button>
                                 <a class="ll-btn-secondary" href="/login">切换账号</a>
@@ -202,11 +236,11 @@
             </div>
 
             <aside class="ll-stack ll-article-side">
-                <section class="ll-side-card ll-fade">
+                <section class="ll-side-card ll-side-card--article ll-outline-card ll-fade">
                     <h2 class="ll-side-title">文章目录</h2>
                     <div id="articleOutline" class="ll-outline-list"><div class="ll-outline-empty">如果正文包含标题，这里会自动生成目录。</div></div>
                 </section>
-                <section class="ll-side-card ll-fade">
+                <section class="ll-side-card ll-side-card--article ll-info-card ll-fade">
                     <h2 class="ll-side-title">文章信息</h2>
                     <ul class="ll-side-list">
                         <li th:text="${'所属分类：' + post.categoryDisplayName}">所属分类</li>
@@ -222,6 +256,19 @@
                 </section>
             </aside>
         </div>
+
+        <button type="button" class="ll-scrolltop" id="articleScrollTop" aria-label="回到顶部">回到顶部</button>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>文章详情</span>
+                    <span th:text="${post.categoryDisplayName}">分类</span>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </main>
 
@@ -232,12 +279,17 @@
     const headingCountElement = document.getElementById('articleHeadingCount');
     const paragraphCountElement = document.getElementById('articleParagraphCount');
     const readTimeElement = document.getElementById('articleReadTime');
+    const articleProgressBar = document.getElementById('articleReadingProgressBar');
+    const articleBodyCard = document.querySelector('.ll-article-card--body');
+    const scrollTopButton = document.getElementById('articleScrollTop');
     const replyNotice = document.getElementById('replyNotice');
     const parentCommentIdInput = document.getElementById('parentCommentId');
     const replyTargetName = document.getElementById('replyTargetName');
     const replyTargetSnippet = document.getElementById('replyTargetSnippet');
     const commentContent = document.getElementById('commentContent');
     const cancelReplyButton = document.getElementById('cancelReplyButton');
+    const toggleEmojiPanelButton = document.getElementById('toggleEmojiPanel');
+    const commentEmojiPanel = document.getElementById('commentEmojiPanel');
 
     function slugify(text, index) { return ((text || '').toLowerCase().replace(/[^\w\u4e00-\u9fa5\s-]/g, '').trim().replace(/\s+/g, '-')) || 'section-' + index; }
     function tokenize(text) { return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || []; }
@@ -255,6 +307,12 @@
             link.href = '#' + heading.id;
             link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
             link.textContent = heading.textContent.trim();
+            link.dataset.targetId = heading.id;
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                const targetTop = heading.getBoundingClientRect().top + window.scrollY - 116;
+                window.scrollTo({top: targetTop, behavior: 'smooth'});
+            });
             outlineContainer.appendChild(link);
         });
     }
@@ -279,6 +337,49 @@
         replyTargetSnippet.textContent = '';
     }
 
+    function updateOutlineActiveState() {
+        if (!outlineContainer) return;
+        const headings = [...articleBody.querySelectorAll('h1, h2, h3')];
+        if (!headings.length) return;
+        let activeId = headings[0].id;
+        headings.forEach(heading => {
+            if (window.scrollY >= heading.offsetTop - 160) {
+                activeId = heading.id;
+            }
+        });
+        outlineContainer.querySelectorAll('.ll-outline-link').forEach(link => {
+            link.classList.toggle('is-active', link.dataset.targetId === activeId);
+        });
+    }
+
+    function updateReadingProgress() {
+        if (!articleBodyCard || !articleProgressBar) return;
+        const start = articleBodyCard.offsetTop - 160;
+        const end = articleBodyCard.offsetTop + articleBodyCard.offsetHeight - window.innerHeight * 0.55;
+        const progress = Math.max(0, Math.min(1, (window.scrollY - start) / Math.max(1, end - start)));
+        articleProgressBar.style.width = (progress * 100).toFixed(1) + '%';
+    }
+
+    function updateScrollTopButton() {
+        if (!scrollTopButton) return;
+        scrollTopButton.classList.toggle('is-visible', window.scrollY > 720);
+    }
+
+    function toggleEmojiPanel(forceOpen) {
+        if (!commentEmojiPanel || !toggleEmojiPanelButton) return;
+        const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : commentEmojiPanel.hidden;
+        commentEmojiPanel.hidden = !shouldOpen;
+        toggleEmojiPanelButton.classList.toggle('is-active', shouldOpen);
+    }
+
+    function insertCommentAtCursor(text) {
+        if (!commentContent) return;
+        const start = commentContent.selectionStart ?? commentContent.value.length;
+        const end = commentContent.selectionEnd ?? start;
+        commentContent.setRangeText(text, start, end, 'end');
+        commentContent.focus();
+    }
+
     document.querySelectorAll('.ll-comment-reply-button').forEach(button => {
         button.addEventListener('click', () => {
             parentCommentIdInput.value = button.dataset.commentId;
@@ -290,9 +391,33 @@
         });
     });
 
+    toggleEmojiPanelButton?.addEventListener('click', () => toggleEmojiPanel());
+    document.querySelectorAll('.ll-emoji-button').forEach(button => {
+        button.addEventListener('click', () => {
+            insertCommentAtCursor((button.dataset.emoji || '') + ' ');
+            toggleEmojiPanel(true);
+        });
+    });
+    document.addEventListener('click', event => {
+        if (!commentEmojiPanel || commentEmojiPanel.hidden) return;
+        if (commentEmojiPanel.contains(event.target) || toggleEmojiPanelButton?.contains(event.target)) {
+            return;
+        }
+        toggleEmojiPanel(false);
+    });
+
     cancelReplyButton?.addEventListener('click', clearReplyTarget);
+    scrollTopButton?.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+    window.addEventListener('scroll', () => {
+        updateOutlineActiveState();
+        updateReadingProgress();
+        updateScrollTopButton();
+    }, {passive: true});
     buildOutline();
     updateArticleMetrics();
+    updateOutlineActiveState();
+    updateReadingProgress();
+    updateScrollTopButton();
 </script>
 </body>
 </html>

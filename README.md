@@ -12,17 +12,11 @@
 - 封面图与头像上传
 - 独立排行榜页、搜索页、个人博客导出
 
-## 技术栈
+## 最近更新
 
-- Java 17
-- Spring Boot 3.2.0
-- Spring MVC
-- Spring Security
-- Spring Data JPA
-- Thymeleaf
-- CommonMark
-- MySQL 8.0
-- Maven Wrapper
+- 优化前端界面，提升用户体验
+- 改进介绍内容，使其更自然友好
+- MD编译器新增侧边栏收起功能，便于专注编写
 
 ## 目录结构
 

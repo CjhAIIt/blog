@@ -9,6 +9,7 @@ import com.example.blog.service.FileStorageService;
 import com.example.blog.service.PersonalBlogExportService;
 import com.example.blog.service.PostService;
 import com.example.blog.service.UserService;
+import com.example.blog.service.ViewModeService;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -40,17 +41,20 @@ public class SpaceController {
     private final CommentService commentService;
     private final PersonalBlogExportService personalBlogExportService;
     private final FileStorageService fileStorageService;
+    private final ViewModeService viewModeService;
 
     public SpaceController(UserService userService,
                            PostService postService,
                            CommentService commentService,
                            PersonalBlogExportService personalBlogExportService,
-                           FileStorageService fileStorageService) {
+                           FileStorageService fileStorageService,
+                           ViewModeService viewModeService) {
         this.userService = userService;
         this.postService = postService;
         this.commentService = commentService;
         this.personalBlogExportService = personalBlogExportService;
         this.fileStorageService = fileStorageService;
+        this.viewModeService = viewModeService;
     }
 
     @GetMapping("/space")
@@ -83,7 +87,7 @@ public class SpaceController {
         model.addAttribute("currentUserAdmin", currentUser != null && currentUser.isAdmin());
         model.addAttribute("showVerificationStatus", isOwner || (currentUser != null && currentUser.isAdmin()));
         model.addAttribute("selectedCategory", "latest");
-        return "space/profile";
+        return view("space/profile");
     }
 
     @GetMapping("/space/drafts")
@@ -92,7 +96,7 @@ public class SpaceController {
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("drafts", postService.findDraftsByAuthorId(currentUser.getId()));
         model.addAttribute("selectedCategory", "latest");
-        return "space/drafts";
+        return view("space/drafts");
     }
 
     @GetMapping("/space/edit")
@@ -103,7 +107,7 @@ public class SpaceController {
             model.addAttribute("profileForm", buildProfileForm(currentUser));
         }
         model.addAttribute("selectedCategory", "latest");
-        return "space/edit";
+        return view("space/edit");
     }
 
     @GetMapping("/space/export")
@@ -112,7 +116,7 @@ public class SpaceController {
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("exportPosts", postService.findPublishedByAuthorId(currentUser.getId()));
         model.addAttribute("selectedCategory", "latest");
-        return "space/export";
+        return view("space/export");
     }
 
     @GetMapping("/space/export/download")
@@ -258,5 +262,9 @@ public class SpaceController {
                 );
         refreshedAuthentication.setDetails(currentAuthentication.getDetails());
         SecurityContextHolder.getContext().setAuthentication(refreshedAuthentication);
+    }
+
+    private String view(String name) {
+        return viewModeService.view(name);
     }
 }

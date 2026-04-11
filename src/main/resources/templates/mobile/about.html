@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('关于')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <section class="mb-banner">
+            <span class="mb-kicker">关于</span>
+            <h1 class="mb-title mb-banner-title">这不是缩小版桌面页</h1>
+            <p class="mb-copy mb-banner-copy">手机端不是把原页面硬塞进小屏里，而是把阅读、写作和互动重新摆了一遍，尽量让你单手也能顺着用下去。</p>
+        </section>
+
+        <section class="mb-card">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">现在支持什么</h2>
+                    <div class="mb-section-note">内容还是同一套，只是把最常用的动作往更顺手的位置挪了挪。</div>
+                </div>
+            </div>
+            <div class="mb-list">
+                <div class="mb-panel">
+                    <h3 class="mb-post-title">内容发布</h3>
+                    <p class="mb-copy">写文章时，Markdown、预览、图片上传、封面和定时发布都还在，不会因为换到手机就少一半功能。</p>
+                </div>
+                <div class="mb-panel">
+                    <h3 class="mb-post-title">互动功能</h3>
+                    <p class="mb-copy">点赞、评论、回复和消息提醒都保留着，路上刷到一半也能顺手回。</p>
+                </div>
+                <div class="mb-panel">
+                    <h3 class="mb-post-title">专题整理</h3>
+                    <p class="mb-copy">计划分区和个人空间也重新排过，找系列内容、翻草稿、改资料都不需要来回缩放。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">怎么切换</h2>
+                </div>
+            </div>
+            <div class="mb-list">
+                <div class="mb-panel">
+                    <p class="mb-copy">用手机浏览器打开时，默认会优先进入这一套更适合小屏阅读的页面。</p>
+                    <p class="mb-copy">如果你临时想切回桌面版，点右上角的“桌面版”就行，或者在地址后加上 `?device=desktop`。</p>
+                    <p class="mb-copy">反过来，在电脑上也可以用 `?device=mobile` 看看手机端布局。</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('home')}"></nav>
+</div>
+</body>
+</html>

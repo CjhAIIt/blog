@@ -54,8 +54,8 @@
                         <span class="ll-toolbar-chip">封面上传</span>
                     </div>
                 </div>
-                <h1 class="ll-space-title" th:text="${post.id == null ? '写一篇可以直接发布的 Markdown 文章' : '继续完善这篇文章'}">写文章</h1>
-                <p class="ll-space-copy">现在支持草稿、立即发布和定时发布。点赞改为登录账号唯一记录，文章作者和管理员都能管理评论。</p>
+                <h1 class="ll-space-title" th:text="${post.id == null ? '写一篇可以慢慢打磨的 Markdown 文章' : '继续把这篇文章写顺'}">写文章</h1>
+                <p class="ll-space-copy">先把想法记下来，边写边看效果；写完可以立刻发，也可以先放进草稿箱，等更合适的时候再发布。</p>
 
                 <div class="ll-editor-metrics">
                     <article class="ll-metric-card">
@@ -79,9 +79,24 @@
                         <span class="ll-metric-note">浏览器缓存 + 服务器草稿双保险 <button type="button" class="ll-link-button" id="restoreLocalDraftButton" hidden>恢复本地内容</button></span>
                     </article>
                 </div>
+
+                <div class="ll-editor-rhythm">
+                    <article class="ll-editor-rhythm-card">
+                        <strong>先把标题和结论钉住</strong>
+                        <span>哪怕只是工作标题，也比空着写更容易把内容往一个方向收。</span>
+                    </article>
+                    <article class="ll-editor-rhythm-card">
+                        <strong>正文先搭骨架再补细节</strong>
+                        <span>先写出 2 到 3 个小节，预览区会比一整段长文更好调整节奏。</span>
+                    </article>
+                    <article class="ll-editor-rhythm-card">
+                        <strong>发前再补封面和归档</strong>
+                        <span>最后决定封面、计划和发布时间，通常会比一上来就纠结这些更顺。</span>
+                    </article>
+                </div>
             </section>
 
-            <section class="ll-editor-stage ll-fade">
+            <section class="ll-editor-stage ll-fade" id="editorStage" data-sidebar-state="expanded">
                 <div class="ll-editor-main">
                     <section class="ll-editor-card">
                         <div class="ll-editor-panel-head">
@@ -101,63 +116,99 @@
                                 <div class="ll-editor-caption">分类、字体、封面和发布时间会直接影响博客展示效果。</div>
                             </div>
                         </div>
-                        <div class="ll-settings-grid">
-                            <div class="ll-form-field">
-                                <label class="ll-form-label" for="category">文章分类</label>
-                                <select class="ll-select" id="category" th:field="*{category}">
-                                    <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
-                                </select>
-                            </div>
-                            <div class="ll-form-field">
-                                <label class="ll-form-label" for="fontKey">展示字体</label>
-                                <select class="ll-select" id="fontKey" th:field="*{fontKey}">
-                                    <option th:each="font : ${editorFonts}" th:value="${font.key}" th:text="${font.label}" th:attr="data-font-stack=${font.cssStack}">字体</option>
-                                </select>
-                            </div>
-                            <div class="ll-form-field">
-                                <label class="ll-form-label" for="scheduledPublishAt">定时发布时间</label>
-                                <input class="ll-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
-                                <p class="ll-form-note">点击“定时发布”时生效，必须晚于当前时间。</p>
-                            </div>
+                        <div class="ll-space-overview-grid ll-editor-settings-overview">
+                            <article class="ll-space-overview-metric">
+                                <span class="ll-space-overview-label">当前分类</span>
+                                <strong id="editorCategorySummary">项目</strong>
+                            </article>
+                            <article class="ll-space-overview-metric">
+                                <span class="ll-space-overview-label">阅读字体</span>
+                                <strong id="editorFontSummary" th:text="${post.editorFont.label}">鸿蒙黑体</strong>
+                            </article>
+                            <article class="ll-space-overview-metric">
+                                <span class="ll-space-overview-label">发布方式</span>
+                                <strong id="editorPublishSummary" th:text="${post.scheduled ? '定时发布' : '立即发布'}">立即发布</strong>
+                            </article>
+                            <article class="ll-space-overview-metric">
+                                <span class="ll-space-overview-label">归档方式</span>
+                                <strong id="editorPlanSummary" th:text="${post.plan != null ? post.plan.name : '独立文章'}">独立文章</strong>
+                            </article>
                         </div>
 
-                        <div class="ll-settings-grid" style="margin-top: 20px;">
-                            <div class="ll-form-field" style="grid-column: span 3;">
-                                <label class="ll-form-label" for="planSelection">加入计划</label>
-                                <select class="ll-select" id="planSelection" name="planSelection" onchange="togglePlanFields()">
-                                    <option value="none" th:selected="${post.plan == null}">不加入计划</option>
-                                    <option value="existing" th:selected="${post.plan != null}">加入已有计划</option>
-                                    <option value="new">新建计划并加入</option>
-                                </select>
+                        <section class="ll-form-section">
+                            <div class="ll-form-section-head">
+                                <div>
+                                    <div class="ll-side-title">展示方式</div>
+                                    <p class="ll-form-section-copy">先把分类、字体和发布时间定下来，预览区的阅读感会更接近最终效果。</p>
+                                </div>
                             </div>
-                            
-                            <div class="ll-form-field plan-existing-field" style="display: none;">
-                                <label class="ll-form-label" for="existingPlanId">选择已有计划</label>
-                                <select class="ll-select" id="existingPlanId" name="existingPlanId">
-                                    <option th:each="plan : ${userPlans}" th:value="${plan.id}" th:text="${plan.name + ' · ' + plan.accessTypeDisplayName}" th:selected="${post.plan != null && post.plan.id == plan.id}"></option>
-                                </select>
-                                <p class="ll-form-note">共创计划允许多人投稿；私密计划只有创建者可以继续归档。</p>
+                            <div class="ll-settings-grid ll-settings-grid--editor">
+                                <div class="ll-form-field">
+                                    <label class="ll-form-label" for="category">文章分类</label>
+                                    <select class="ll-select" id="category" th:field="*{category}">
+                                        <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+                                    </select>
+                                </div>
+                                <div class="ll-form-field">
+                                    <label class="ll-form-label" for="fontKey">展示字体</label>
+                                    <select class="ll-select" id="fontKey" th:field="*{fontKey}">
+                                        <option th:each="font : ${editorFonts}" th:value="${font.key}" th:text="${font.label}" th:attr="data-font-stack=${font.cssStack}">字体</option>
+                                    </select>
+                                </div>
+                                <div class="ll-form-field ll-form-field--wide">
+                                    <label class="ll-form-label" for="scheduledPublishAt">定时发布时间</label>
+                                    <input class="ll-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                                    <p class="ll-form-note">点击“定时发布”时生效，必须晚于当前时间；如果留空，就按普通发布处理。</p>
+                                </div>
                             </div>
-                            
-                            <div class="ll-form-field plan-new-field" style="display: none;">
-                                <label class="ll-form-label" for="newPlanName">新建计划名称</label>
-                                <input class="ll-input" type="text" id="newPlanName" name="newPlanName" placeholder="例如：Spring 系列计划">
-                            </div>
+                        </section>
 
-                            <div class="ll-form-field plan-new-field" style="display: none;">
-                                <label class="ll-form-label" for="newPlanAccessType">新计划类型</label>
-                                <select class="ll-select" id="newPlanAccessType" name="newPlanAccessType">
-                                    <option value="PRIVATE">私密计划</option>
-                                    <option value="COLLABORATIVE">共创计划</option>
-                                </select>
+                        <section class="ll-form-section">
+                            <div class="ll-form-section-head">
+                                <div>
+                                    <div class="ll-side-title">计划归档与封面</div>
+                                    <p class="ll-form-section-copy">这一块更像发前整理台，决定它是不是独立文章、要不要放进系列里，以及封面用哪一张。</p>
+                                </div>
                             </div>
-                            
-                            <div class="ll-form-field plan-order-field" style="display: none;">
-                                <label class="ll-form-label" for="planOrder">在计划中的章节号</label>
-                                <input class="ll-input" type="number" id="planOrder" name="planOrder" th:value="${post.planOrder}" placeholder="留空自动顺延" min="1">
-                                <p class="ll-form-note">已发布文章也可以重新编辑后迁移到别的计划。</p>
+                            <div class="ll-settings-grid ll-settings-grid--editor ll-settings-grid--editor-loose">
+                                <div class="ll-form-field ll-form-field--wide">
+                                    <label class="ll-form-label" for="planSelection">加入计划</label>
+                                    <select class="ll-select" id="planSelection" name="planSelection" onchange="togglePlanFields()">
+                                        <option value="none" th:selected="${post.plan == null}">不加入计划</option>
+                                        <option value="existing" th:selected="${post.plan != null}">加入已有计划</option>
+                                        <option value="new">新建计划并加入</option>
+                                    </select>
+                                </div>
+
+                                <div class="ll-form-field plan-existing-field" style="display: none;">
+                                    <label class="ll-form-label" for="existingPlanId">选择已有计划</label>
+                                    <select class="ll-select" id="existingPlanId" name="existingPlanId">
+                                        <option value="" th:if="${#lists.isEmpty(userPlans)}">当前还没有可加入的计划</option>
+                                        <option th:each="plan : ${userPlans}" th:value="${plan.id}" th:text="${plan.name + ' · ' + plan.accessTypeDisplayName}" th:selected="${post.plan != null && post.plan.id == plan.id}"></option>
+                                    </select>
+                                    <p class="ll-form-note">共创计划允许多人投稿；私密计划只有创建者可以继续归档。</p>
+                                </div>
+
+                                <div class="ll-form-field plan-new-field" style="display: none;">
+                                    <label class="ll-form-label" for="newPlanName">新建计划名称</label>
+                                    <input class="ll-input" type="text" id="newPlanName" name="newPlanName" placeholder="例如：Spring 系列计划">
+                                </div>
+
+                                <div class="ll-form-field plan-new-field" style="display: none;">
+                                    <label class="ll-form-label" for="newPlanAccessType">新计划类型</label>
+                                    <select class="ll-select" id="newPlanAccessType" name="newPlanAccessType">
+                                        <option value="PRIVATE">私密计划</option>
+                                        <option value="COLLABORATIVE">共创计划</option>
+                                    </select>
+                                </div>
+
+                                <div class="ll-form-field plan-order-field" style="display: none;">
+                                    <label class="ll-form-label" for="planOrder">在计划中的章节号</label>
+                                    <input class="ll-input" type="number" id="planOrder" name="planOrder" th:value="${post.planOrder}" placeholder="留空自动顺延" min="1">
+                                    <p class="ll-form-note">已发布文章也可以重新编辑后迁移到别的计划。</p>
+                                </div>
                             </div>
-                        </div>
+                        </section>
 
                         <script>
                             function togglePlanFields() {
@@ -165,23 +216,26 @@
                                 document.querySelectorAll('.plan-existing-field').forEach(el => el.style.display = selection === 'existing' ? 'block' : 'none');
                                 document.querySelectorAll('.plan-new-field').forEach(el => el.style.display = selection === 'new' ? 'block' : 'none');
                                 document.querySelectorAll('.plan-order-field').forEach(el => el.style.display = selection !== 'none' ? 'block' : 'none');
+                                if (typeof updateMetrics === 'function') {
+                                    updateMetrics();
+                                }
                             }
                             // Initialize on load
                             document.addEventListener('DOMContentLoaded', togglePlanFields);
                         </script>
 
-                        <div class="ll-upload-box" style="margin-top: 20px;">
+                        <div class="ll-upload-box ll-upload-box--editor">
                             <div class="ll-upload-preview ll-upload-preview--cover">
                                 <img id="coverPreview" th:src="${post.displayCoverUrl}" alt="文章封面预览">
                             </div>
                             <div class="ll-upload-fields">
                                 <label class="ll-form-label" for="coverFile">文章封面</label>
-                                <input class="ll-input" type="file" id="coverFile" name="coverFile" accept=".jpg,.jpeg,.png,.webp,.gif">
+                                <input class="ll-input" type="file" id="coverFile" name="coverFile" accept="image/*">
                                 <label class="ll-checkbox">
                                     <input type="checkbox" name="useDefaultCover" value="true">
                                     <span>恢复默认封面</span>
                                 </label>
-                                <p class="ll-form-note">支持 JPG、PNG、WEBP、GIF，没有上传时使用默认封面图。</p>
+                                <p class="ll-form-note">支持主流网页图片格式，例如 JPG、PNG、WEBP、GIF、BMP、AVIF、ICO 等，没有上传时使用默认封面图。</p>
                             </div>
                         </div>
                     </section>
@@ -192,10 +246,13 @@
                                 <div class="ll-side-title">正文创作区</div>
                                 <div class="ll-editor-caption">左侧写作，右侧实时预览。</div>
                             </div>
-                            <div class="ll-editor-mode-switch">
-                                <button type="button" class="ll-editor-mode-button is-active" data-mode="split">分栏</button>
-                                <button type="button" class="ll-editor-mode-button" data-mode="write">专注写作</button>
-                                <button type="button" class="ll-editor-mode-button" data-mode="preview">专注预览</button>
+                            <div class="ll-editor-panel-actions">
+                                <button type="button" class="ll-editor-sidebar-toggle" id="editorSidebarToggle" aria-controls="editorSidebar" aria-expanded="true">收起侧栏</button>
+                                <div class="ll-editor-mode-switch">
+                                    <button type="button" class="ll-editor-mode-button is-active" data-mode="split">分栏</button>
+                                    <button type="button" class="ll-editor-mode-button" data-mode="write">专注写作</button>
+                                    <button type="button" class="ll-editor-mode-button" data-mode="preview">专注预览</button>
+                                </div>
                             </div>
                         </div>
 
@@ -207,8 +264,15 @@
                             <button type="button" data-command="quote">引用</button>
                             <button type="button" data-command="list">列表</button>
                             <button type="button" data-command="task">任务</button>
+                            <button type="button" data-command="image">插图</button>
+                            <button type="button" data-command="html">HTML 片段</button>
                             <button type="button" data-command="code">代码块</button>
                         </div>
+                        <div class="ll-editor-toolbar-meta">
+                            <span class="ll-editor-caption">支持 Markdown + 安全 HTML。插图会上传到本地 `/uploads/posts/`，并以 `figure` 片段插入正文。</span>
+                            <span class="ll-toolbar-status" id="editorToolbarStatus">可直接使用 `figure`、`details`、`img` 等常用 HTML 标签</span>
+                        </div>
+                        <input type="file" id="editorImageFile" accept="image/*" hidden>
 
                         <div id="editorPanels" class="ll-editor-panels" data-mode="split">
                             <div class="ll-editor-panel ll-editor-panel--write">
@@ -235,17 +299,43 @@
                     </section>
 
                     <section class="ll-editor-card">
-                        <div class="ll-form-actions">
-                            <button class="ll-btn-secondary" type="submit" name="action" value="draft">保存草稿</button>
-                            <button class="ll-btn-secondary" type="submit" name="action" value="schedule">定时发布</button>
-                            <button class="ll-btn" type="submit" name="action" value="publish" th:text="${post.draft or post.scheduled ? '立即发布' : (post.id == null ? '发布文章' : '更新发布')}">发布文章</button>
-                            <a class="ll-btn-secondary" href="/space/drafts">查看草稿箱</a>
-                            <a class="ll-btn-secondary" href="/space">返回个人空间</a>
+                        <div class="ll-form-section-head">
+                            <div>
+                                <div class="ll-side-title">发布动作</div>
+                                <p class="ll-form-section-copy">发之前再看一眼标题、发布时间和归档方式，通常能少掉很多返工。</p>
+                            </div>
+                        </div>
+                        <div class="ll-editor-submit-grid">
+                            <div class="ll-editor-submit-summary">
+                                <article class="ll-editor-submit-item">
+                                    <span>当前标题</span>
+                                    <strong id="editorSubmitTitle">未命名草稿</strong>
+                                </article>
+                                <article class="ll-editor-submit-item">
+                                    <span>发布时间</span>
+                                    <strong id="editorSubmitSchedule">发布后立即可见</strong>
+                                </article>
+                                <article class="ll-editor-submit-item">
+                                    <span>归档方式</span>
+                                    <strong id="editorSubmitPlan">独立文章</strong>
+                                </article>
+                                <article class="ll-editor-submit-item">
+                                    <span>封面状态</span>
+                                    <strong id="editorSubmitCover">保留当前封面</strong>
+                                </article>
+                            </div>
+                            <div class="ll-form-actions ll-form-actions--editor-submit">
+                                <button class="ll-btn-secondary" type="submit" name="action" value="draft">保存草稿</button>
+                                <button class="ll-btn-secondary" type="submit" name="action" value="schedule">定时发布</button>
+                                <button class="ll-btn" type="submit" name="action" value="publish" th:text="${post.draft or post.scheduled ? '立即发布' : (post.id == null ? '发布文章' : '更新发布')}">发布文章</button>
+                                <a class="ll-btn-secondary" href="/space/drafts">查看草稿箱</a>
+                                <a class="ll-btn-secondary" href="/space">返回个人空间</a>
+                            </div>
                         </div>
                     </section>
                 </div>
 
-                <aside class="ll-editor-sidebar">
+                <aside class="ll-editor-sidebar" id="editorSidebar">
                     <section class="ll-guide-card">
                         <div class="ll-side-title">写作概览</div>
                         <div class="ll-guide-statlist">
@@ -261,6 +351,32 @@
                                 <span>发布方式</span>
                                 <strong id="editorPublishLabel">立即发布</strong>
                             </div>
+                            <div class="ll-guide-stat">
+                                <span>计划归档</span>
+                                <strong id="editorPlanLabel">独立文章</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="ll-guide-card">
+                        <div class="ll-side-title">发布前检查</div>
+                        <div class="ll-editor-checklist">
+                            <article class="ll-editor-check-item" id="editorCheckTitle" data-tone="warn">
+                                <strong>标题状态</strong>
+                                <span id="editorChecklistTitle">先起一个能说明问题的标题，后面更容易收内容。</span>
+                            </article>
+                            <article class="ll-editor-check-item" id="editorCheckContent" data-tone="warn">
+                                <strong>正文长度</strong>
+                                <span id="editorChecklistContent">先写一段正文，预览区才会开始有阅读感。</span>
+                            </article>
+                            <article class="ll-editor-check-item" id="editorCheckStructure" data-tone="warn">
+                                <strong>结构节奏</strong>
+                                <span id="editorChecklistStructure">至少加 2 个小节标题，会比一整段长文更好读。</span>
+                            </article>
+                            <article class="ll-editor-check-item" id="editorCheckPolish" data-tone="neutral">
+                                <strong>封面与归档</strong>
+                                <span id="editorChecklistPolish">发之前可以顺手补封面，或者把它挂进某个计划里。</span>
+                            </article>
                         </div>
                     </section>
 
@@ -298,19 +414,40 @@
     const categorySelect = document.getElementById('category');
     const fontSelect = document.getElementById('fontKey');
     const scheduleInput = document.getElementById('scheduledPublishAt');
+    const planSelection = document.getElementById('planSelection');
+    const existingPlanSelect = document.getElementById('existingPlanId');
+    const newPlanNameInput = document.getElementById('newPlanName');
+    const newPlanAccessTypeSelect = document.getElementById('newPlanAccessType');
+    const planOrderInput = document.getElementById('planOrder');
     const coverFileInput = document.getElementById('coverFile');
+    const useDefaultCoverCheckbox = document.querySelector('input[name="useDefaultCover"]');
     const coverPreview = document.getElementById('coverPreview');
+    const initialCoverPreviewSrc = coverPreview?.getAttribute('src') || coverPreview?.src || '/images/default-cover.svg';
     const preview = document.getElementById('markdownPreview');
     const previewStatus = document.getElementById('previewStatus');
     const outline = document.getElementById('editorOutline');
+    const editorStage = document.getElementById('editorStage');
     const panels = document.getElementById('editorPanels');
+    const editorImageFileInput = document.getElementById('editorImageFile');
+    const editorSidebarToggle = document.getElementById('editorSidebarToggle');
+    const editorToolbarStatus = document.getElementById('editorToolbarStatus');
     const restoreLocalDraftButton = document.getElementById('restoreLocalDraftButton');
     const markdownImportForm = document.getElementById('markdownImportForm');
     const markdownImportInput = document.querySelector('input[name="markdownFile"][form="markdownImportForm"]');
     const markdownImportButton = markdownImportInput?.closest('.ll-stack-sm')?.querySelector('button[type="submit"]');
+    const editorCategorySummary = document.getElementById('editorCategorySummary');
+    const editorFontSummary = document.getElementById('editorFontSummary');
+    const editorPublishSummary = document.getElementById('editorPublishSummary');
+    const editorPlanSummary = document.getElementById('editorPlanSummary');
+    const editorPlanLabel = document.getElementById('editorPlanLabel');
+    const editorSubmitTitle = document.getElementById('editorSubmitTitle');
+    const editorSubmitSchedule = document.getElementById('editorSubmitSchedule');
+    const editorSubmitPlan = document.getElementById('editorSubmitPlan');
+    const editorSubmitCover = document.getElementById('editorSubmitCover');
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     const localDraftKey = 'll-editor-' + form.dataset.localDraftKey;
+    const editorSidebarStateKey = 'll-editor-sidebar-state';
     let previewTimer = null;
     let draftTimer = null;
     let pendingLocalDraft = null;
@@ -319,6 +456,7 @@
     function countParagraphs(markdown) { return (markdown || '').split(/\n\s*\n/).map(section => section.trim()).filter(Boolean).length; }
     function countLines(markdown) { return markdown ? markdown.split('\n').length : 0; }
     function countHeadings(markdown) { return ((markdown || '').match(/^#{1,6}\s+/gm) || []).length; }
+    function selectedText(select, fallback = '未选择') { return select?.options?.[select.selectedIndex]?.text || fallback; }
 
     function slugify(text, index) {
         const normalized = (text || '').toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\u4e00-\u9fa5\s-]/g, '').trim().replace(/\s+/g, '-');
@@ -327,18 +465,109 @@
 
     function setDraftState(text) { document.getElementById('editorDraftState').textContent = text; }
 
+    function setToolbarStatus(text, tone = 'neutral') {
+        if (!editorToolbarStatus) return;
+        editorToolbarStatus.textContent = text;
+        editorToolbarStatus.dataset.tone = tone;
+    }
+
+    function getPublishLabel() {
+        return scheduleInput.value ? '定时发布' : '立即发布';
+    }
+
+    function getScheduleSummary() {
+        return scheduleInput.value ? '计划于 ' + scheduleInput.value.replace('T', ' ') : '发布后立即可见';
+    }
+
+    function getPlanLabel() {
+        const selection = planSelection?.value || 'none';
+        const orderText = planOrderInput?.value ? ' · 第 ' + planOrderInput.value + ' 节' : '';
+        if (selection === 'existing') {
+            const existingLabel = selectedText(existingPlanSelect, '暂未选择计划');
+            return existingLabel + (existingLabel === '暂未选择计划' ? '' : orderText);
+        }
+        if (selection === 'new') {
+            const planName = newPlanNameInput?.value?.trim();
+            const accessLabel = selectedText(newPlanAccessTypeSelect, '新计划');
+            return (planName ? '新计划：' + planName : '新计划 · ' + accessLabel) + orderText;
+        }
+        return '独立文章';
+    }
+
+    function getCoverSummary() {
+        if (useDefaultCoverCheckbox?.checked) return '使用默认封面';
+        if (coverFileInput?.files?.length) return '已上传新封面';
+        return initialCoverPreviewSrc.includes('default-cover') ? '当前是默认封面' : '保留当前封面';
+    }
+
+    function updateCheckItem(itemId, messageId, tone, text) {
+        const item = document.getElementById(itemId);
+        const message = document.getElementById(messageId);
+        if (!item || !message) return;
+        item.dataset.tone = tone;
+        message.textContent = text;
+    }
+
     function updateMetrics() {
         const markdown = textarea.value;
         const tokens = tokenize(markdown);
         const minutes = Math.max(1, Math.ceil(tokens.length / 220));
-        const selectedLabel = categorySelect.options[categorySelect.selectedIndex]?.text || '未选择';
+        const headingCount = countHeadings(markdown);
+        const selectedLabel = selectedText(categorySelect, '未选择');
+        const fontLabel = selectedText(fontSelect, '未选择');
+        const publishLabel = getPublishLabel();
+        const planLabel = getPlanLabel();
+        const titleValue = titleInput.value.trim();
         document.getElementById('editorWordCount').textContent = tokens.length.toLocaleString('zh-CN');
         document.getElementById('editorReadingMinutes').textContent = minutes + ' 分钟';
-        document.getElementById('editorHeadingCount').textContent = countHeadings(markdown);
+        document.getElementById('editorHeadingCount').textContent = headingCount;
         document.getElementById('editorParagraphCount').textContent = countParagraphs(markdown);
         document.getElementById('editorLineCount').textContent = countLines(markdown) + ' 行';
         document.getElementById('editorCategoryLabel').textContent = selectedLabel;
-        document.getElementById('editorPublishLabel').textContent = scheduleInput.value ? '定时发布' : '立即发布';
+        document.getElementById('editorPublishLabel').textContent = publishLabel;
+        if (editorPlanLabel) editorPlanLabel.textContent = planLabel;
+        if (editorCategorySummary) editorCategorySummary.textContent = selectedLabel;
+        if (editorFontSummary) editorFontSummary.textContent = fontLabel;
+        if (editorPublishSummary) editorPublishSummary.textContent = publishLabel;
+        if (editorPlanSummary) editorPlanSummary.textContent = planLabel;
+        if (editorSubmitTitle) editorSubmitTitle.textContent = titleValue || '未命名草稿';
+        if (editorSubmitSchedule) editorSubmitSchedule.textContent = getScheduleSummary();
+        if (editorSubmitPlan) editorSubmitPlan.textContent = planLabel;
+        if (editorSubmitCover) editorSubmitCover.textContent = getCoverSummary();
+
+        updateCheckItem(
+            'editorCheckTitle',
+            'editorChecklistTitle',
+            titleValue.length >= 8 ? 'good' : (titleValue.length > 0 ? 'neutral' : 'warn'),
+            titleValue.length >= 8
+                ? '标题已经能说明主题了，后面主要看内容和节奏。'
+                : (titleValue.length > 0 ? '先用这个工作标题继续写，发前再把它收紧一点。' : '先起一个能说明问题的标题，后面更容易收内容。')
+        );
+        updateCheckItem(
+            'editorCheckContent',
+            'editorChecklistContent',
+            tokens.length >= 220 ? 'good' : (tokens.length >= 80 ? 'neutral' : 'warn'),
+            tokens.length >= 220
+                ? '正文已经有基本阅读长度了，现在更适合补细节和删冗余。'
+                : (tokens.length >= 80 ? '正文已经起量了，再补一点内容会更稳。' : '先写一段正文，预览区才会开始有阅读感。')
+        );
+        updateCheckItem(
+            'editorCheckStructure',
+            'editorChecklistStructure',
+            headingCount >= 2 ? 'good' : 'warn',
+            headingCount >= 2
+                ? '结构已经立起来了，可以继续补每个小节的细节。'
+                : '至少加 2 个小节标题，会比一整段长文更好读。'
+        );
+        const polished = getCoverSummary() !== '保留当前封面' || planLabel !== '独立文章';
+        updateCheckItem(
+            'editorCheckPolish',
+            'editorChecklistPolish',
+            polished ? 'good' : 'neutral',
+            polished
+                ? '封面或归档已经补上了，发布页看起来会更完整。'
+                : '发之前可以顺手补封面，或者把它挂进某个计划里。'
+        );
     }
 
     function updateFontPreview() {
@@ -420,6 +649,37 @@
         requestPreview();
     }
 
+    async function uploadEditorImage(file) {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('imageFile', file);
+        setToolbarStatus('正在上传图片...', 'neutral');
+        try {
+            const response = await fetch('/posts/images', {
+                method: 'POST',
+                headers: {[csrfHeader]: csrfToken},
+                body: formData
+            });
+            if (response.redirected) {
+                throw new Error('登录状态已失效，请刷新页面后重新登录。');
+            }
+            const payload = (response.headers.get('content-type') || '').includes('application/json')
+                ? await response.json()
+                : {};
+            if (!response.ok) {
+                throw new Error(payload.message || '图片上传失败，请稍后再试。');
+            }
+            insertBlock(payload.html);
+            setToolbarStatus('图片已上传并插入正文', 'success');
+        } catch (error) {
+            setToolbarStatus(error.message || '图片上传失败，请稍后再试。', 'error');
+        } finally {
+            if (editorImageFileInput) {
+                editorImageFileInput.value = '';
+            }
+        }
+    }
+
     function handleCommand(command) {
         switch (command) {
             case 'h1': insertBlock('# 一级标题'); break;
@@ -429,6 +689,14 @@
             case 'quote': insertBlock('> 写下一条关键结论'); break;
             case 'list': insertBlock('- 列表项'); break;
             case 'task': insertBlock('- [ ] 待办事项'); break;
+            case 'image':
+                setToolbarStatus('选择一张图片后会自动上传并插入 HTML 片段', 'neutral');
+                editorImageFileInput?.click();
+                break;
+            case 'html':
+                insertBlock('<details open>\n  <summary>展开补充说明</summary>\n  <p>这里可以直接写 HTML 内容，例如插图说明、补充结论或折叠块。</p>\n</details>');
+                setToolbarStatus('已插入 HTML 片段示例', 'success');
+                break;
             case 'code': insertBlock('```java\nSystem.out.println("Hello");\n```'); break;
             default: break;
         }
@@ -437,6 +705,15 @@
     function updateMode(mode) {
         panels.dataset.mode = mode;
         document.querySelectorAll('.ll-editor-mode-button').forEach(button => button.classList.toggle('is-active', button.dataset.mode === mode));
+    }
+
+    function updateSidebarState(state) {
+        const collapsed = state === 'collapsed';
+        editorStage.dataset.sidebarState = collapsed ? 'collapsed' : 'expanded';
+        if (editorSidebarToggle) {
+            editorSidebarToggle.textContent = collapsed ? '展开侧栏' : '收起侧栏';
+            editorSidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+        }
     }
 
     function persistDraft() {
@@ -507,14 +784,31 @@
         }
     }
 
-    function handleCoverPreview() {
+    function syncCoverPreviewState() {
+        if (!coverPreview) return;
+        if (useDefaultCoverCheckbox?.checked) {
+            coverPreview.src = '/images/default-cover.svg';
+            return;
+        }
         const file = coverFileInput.files?.[0];
-        if (!file) return;
-        coverPreview.src = URL.createObjectURL(file);
+        if (file) {
+            coverPreview.src = URL.createObjectURL(file);
+            return;
+        }
+        coverPreview.src = initialCoverPreviewSrc;
+    }
+
+    function handleCoverPreview() {
+        syncCoverPreviewState();
     }
 
     document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => handleCommand(button.dataset.command)));
     document.querySelectorAll('.ll-editor-mode-button').forEach(button => button.addEventListener('click', () => updateMode(button.dataset.mode)));
+    editorSidebarToggle?.addEventListener('click', () => {
+        const nextState = editorStage.dataset.sidebarState === 'collapsed' ? 'expanded' : 'collapsed';
+        updateSidebarState(nextState);
+        localStorage.setItem(editorSidebarStateKey, nextState);
+    });
     restoreLocalDraftButton.addEventListener('click', () => {
         if (!pendingLocalDraft) return;
         applySavedDraft(pendingLocalDraft);
@@ -530,13 +824,19 @@
     textarea.addEventListener('scroll', () => syncScroll(textarea, preview));
     preview.addEventListener('scroll', () => syncScroll(preview, textarea));
     textarea.addEventListener('keydown', handleEditorShortcuts);
-    titleInput.addEventListener('input', scheduleDraftSave);
+    titleInput.addEventListener('input', () => { scheduleDraftSave(); updateMetrics(); });
     categorySelect.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
-    fontSelect.addEventListener('change', () => { scheduleDraftSave(); updateFontPreview(); });
+    fontSelect.addEventListener('change', () => { scheduleDraftSave(); updateFontPreview(); updateMetrics(); });
     scheduleInput.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
-    coverFileInput.addEventListener('change', handleCoverPreview);
+    [planSelection, existingPlanSelect, newPlanNameInput, newPlanAccessTypeSelect, planOrderInput]
+        .filter(Boolean)
+        .forEach(element => element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', () => { scheduleDraftSave(); updateMetrics(); }));
+    useDefaultCoverCheckbox?.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
+    coverFileInput.addEventListener('change', () => { handleCoverPreview(); scheduleDraftSave(); updateMetrics(); });
+    editorImageFileInput?.addEventListener('change', event => uploadEditorImage(event.target.files?.[0]));
 
     updateFontPreview();
+    updateSidebarState(localStorage.getItem(editorSidebarStateKey) === 'collapsed' ? 'collapsed' : 'expanded');
     restoreDraft();
     updateMetrics();
     requestPreview();
