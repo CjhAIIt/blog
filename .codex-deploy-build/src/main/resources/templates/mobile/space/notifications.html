@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('消息中心')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--notices">
+            <div class="mb-meta-ribbon">消息提醒</div>
+            <span class="mb-hero-kicker">通知</span>
+            <h1 class="mb-hero-title">消息中心</h1>
+            <p class="mb-hero-copy" th:text="${unreadNotificationCount + ' 条未读消息。有人评论你或回复你时，会在这里提醒。'}">0 条未读消息。有人评论你或回复你时，会在这里提醒。</p>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>未读</span>
+                    <strong th:text="${unreadNotificationCount}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>总消息</span>
+                    <strong th:text="${#lists.size(notifications)}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>打开后</span>
+                    <strong>直达原文</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>提醒方式</span>
+                    <strong>即时提醒</strong>
+                </article>
+            </div>
+            <div class="mb-actions">
+                <form action="/notifications/read-all" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="mb-btn" type="submit">全部标记已读</button>
+                </form>
+                <a class="mb-btn-secondary" href="/space">返回空间</a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--ink">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">这里会提醒什么</h2>
+                    <div class="mb-section-note">不用来回翻页面，有新互动时这里会统一显示。</div>
+                </div>
+            </div>
+            <div class="mb-quick-grid">
+                <div class="mb-quick-link">
+                    <strong>文章被评论</strong>
+                    <span>有人给你的文章留言时，会直接提醒你。</span>
+                </div>
+                <div class="mb-quick-link">
+                    <strong>评论被回复</strong>
+                    <span>别人接着你的评论往下聊，也会收到提醒。</span>
+                </div>
+                <div class="mb-quick-link mb-quick-link--wide">
+                    <strong>点开就能看到上下文</strong>
+                    <span>每条消息都可以直接跳到对应文章或评论位置，不用自己再找。</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">消息列表</h2>
+                    <div class="mb-section-note" th:text="${#lists.size(notifications) + ' 条，按时间倒序排列'}">0 条，按时间倒序排列</div>
+                </div>
+            </div>
+            <div class="mb-list" th:if="${!#lists.isEmpty(notifications)}">
+                <a class="mb-notice-card" th:each="notification : ${notifications}" th:href="@{/notifications/{id}(id=${notification.id})}" th:classappend="${notification.unread ? ' is-unread' : ''}">
+                    <div class="mb-inline-profile">
+                        <div class="mb-avatar"><img th:src="${notification.actor.displayAvatarUrl}" th:alt="${notification.actor.displayName}"></div>
+                        <div>
+                            <h3 class="mb-post-title" th:text="${notification.title}">消息标题</h3>
+                            <div class="mb-section-note" th:text="${notification.post.title}">文章标题</div>
+                        </div>
+                    </div>
+                    <div class="mb-post-meta">
+                        <span th:text="${notification.type.label}">评论提醒</span>
+                        <span th:text="${#temporals.format(notification.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                    </div>
+                    <p class="mb-post-excerpt" th:text="${notification.snippet}">消息摘要</p>
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:if="${notification.unread}">未读</span>
+                        <span class="mb-badge-pill" th:text="${'来自 ' + notification.actor.displayName}">来自某人</span>
+                    </div>
+                    <div class="mb-post-footer">
+                        <span class="mb-note">点开查看详情</span>
+                        <span class="mb-inline-note">立即查看</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(notifications)}">暂时没有新消息。</div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('space')}"></nav>
+</div>
+</body>
+</html>

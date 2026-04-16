@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="_csrf" content="g2fwJFFUAsSD3N_IQOhwO-5l1QPettNYymXpu-VDo0S8O9wFtwXIQGgyZ_Cuvr6tcsVECY1U-GLvh-p1qVCKiIFywXPYDOln">
+    <meta name="_csrf_header" content="X-CSRF-TOKEN">
+    <title>登录 - 博客手机版</title>
+    <link rel="stylesheet" href="/css/mobile.css">
+</head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header class="mb-topbar">
+    <a class="mb-brand" href="/">
+        <span class="mb-brand-mark">LK</span>
+        <span class="mb-brand-copy">
+            <strong>博客</strong>
+            <span>Mobile Edition <i class="mb-brand-pulse" aria-hidden="true"></i></span>
+        </span>
+    </a>
+    <div class="mb-topbar-actions">
+        
+        <a class="mb-topbar-link" href="?device=desktop">桌面版</a>
+    </div>
+</header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <section class="mb-hero">
+            <span class="mb-hero-kicker">Sign In</span>
+            <h1 class="mb-hero-title">登录后继续管理你的博客。</h1>
+            <p class="mb-hero-copy">手机端保留完整登录流程，审核状态、草稿箱、消息中心都可以直接访问。</p>
+        </section>
+
+        <section class="mb-card">
+            <div>
+    
+    
+    
+</div>
+            
+            
+            <form action="/login" method="post"><input type="hidden" name="_csrf" value="g2fwJFFUAsSD3N_IQOhwO-5l1QPettNYymXpu-VDo0S8O9wFtwXIQGgyZ_Cuvr6tcsVECY1U-GLvh-p1qVCKiIFywXPYDOln"/>
+                <input type="hidden" name="_csrf" value="g2fwJFFUAsSD3N_IQOhwO-5l1QPettNYymXpu-VDo0S8O9wFtwXIQGgyZ_Cuvr6tcsVECY1U-GLvh-p1qVCKiIFywXPYDOln">
+                <div class="mb-field">
+                    <label class="mb-label" for="username">用户名</label>
+                    <input class="mb-input" type="text" id="username" name="username" placeholder="请输入用户名" required>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="password">密码</label>
+                    <input class="mb-input" type="password" id="password" name="password" placeholder="请输入密码" required>
+                </div>
+                <div class="mb-form-actions">
+                    <button class="mb-btn" type="submit">登录</button>
+                    <a class="mb-btn-secondary" href="/register">去注册</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+</body>
+</html>
+

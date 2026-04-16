@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{mobile/fragments/layout :: head('实名认证审核')}"></head>
+<head th:replace="~{mobile/fragments/layout :: head('实名资料审核')}"></head>
 <body class="mb-body">
 <div class="mb-shell">
     <header th:replace="~{mobile/fragments/layout :: header}"></header>
@@ -10,11 +10,11 @@
     <div class="mb-shell mb-stack">
         <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
 
-        <section class="mb-hero mb-hero--admin">
+        <section class="mb-hero mb-hero--admin" id="adminTop">
             <div class="mb-meta-ribbon">审核台</div>
             <span class="mb-hero-kicker">管理</span>
-            <h1 class="mb-hero-title">实名认证审核</h1>
-            <p class="mb-hero-copy">这页像手机上的准入闸口。你可以先扫一眼队列压力，再决定是通过、驳回，还是先点进对方主页确认信息。</p>
+            <h1 class="mb-hero-title">实名资料审核</h1>
+            <p class="mb-hero-copy">这里只处理主动填写的实名资料。现在不实名也能正常写作，所以这页更偏向资料核验和认证展示，而不是发文闸口。</p>
             <div class="mb-actions">
                 <a class="mb-btn-secondary" href="/notifications">消息</a>
                 <a class="mb-btn" th:href="@{/users/{username}(username=${currentUser.username})}">我的主页</a>
@@ -33,9 +33,14 @@
                     <strong th:text="${#lists.isEmpty(pendingUsers) ? '队列已清空' : '先处理新提交'}">先处理新提交</strong>
                 </article>
                 <article class="mb-hero-stat">
-                    <span>准入结果</span>
-                    <strong>通过后可发文</strong>
+                    <span>处理结果</span>
+                    <strong>标记已认证</strong>
                 </article>
+            </div>
+            <div class="mb-chip-row mb-chip-row--anchors">
+                <a class="mb-chip" href="#pendingQueue">待审核</a>
+                <a class="mb-chip" href="#reviewHistory">最近处理</a>
+                <a class="mb-chip" href="/notifications">消息</a>
             </div>
         </section>
 
@@ -50,15 +55,15 @@
             <div class="mb-stat-grid">
                 <article class="mb-stat">
                     <strong th:text="${#lists.size(pendingUsers)}">0</strong>
-                    <span>还在队列里的申请数量，优先处理刚提交的通常最省心。</span>
+                    <span>这里只会出现主动提交实名资料的用户，优先处理刚提交的通常最省心。</span>
                 </article>
                 <article class="mb-stat">
                     <strong th:text="${#lists.size(reviewedUsers)}">0</strong>
                     <span>最近已经处理过的申请，会在下面继续留一份回看记录。</span>
                 </article>
                 <article class="mb-stat">
-                    <strong>实名认证</strong>
-                    <span>通过后会开放发文、导入 Markdown 和内容编辑权限。</span>
+                    <strong>实名资料</strong>
+                    <span>通过后会更新认证展示状态，不再影响发文、导入 Markdown 和内容编辑。</span>
                 </article>
                 <article class="mb-stat">
                     <strong th:text="${#lists.isEmpty(pendingUsers) ? '现在先巡检' : '先看姓名与邮箱'}">先看姓名与邮箱</strong>
@@ -85,12 +90,12 @@
                 </div>
                 <div class="mb-quick-link mb-quick-link--wide">
                     <strong>拿不准时别急着放行</strong>
-                    <span>通过会立即开放写作权限；如果信息还撑不起判断，先驳回让对方补资料更稳。</span>
+                    <span>通过意味着资料会被标记为已认证；如果信息还撑不起判断，先驳回让对方补资料更稳。</span>
                 </div>
             </div>
         </section>
 
-        <section class="mb-card mb-card--soft">
+        <section class="mb-card mb-card--soft" id="pendingQueue">
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">待审核队列</h2>
@@ -98,7 +103,7 @@
                 </div>
                 <span class="mb-inline-note" th:text="${#lists.isEmpty(pendingUsers) ? '当前清空' : '优先看最新提交'}">优先看最新提交</span>
             </div>
-            <div class="mb-admin-review-note">先看真实姓名是不是完整，再看邮箱和注册时间有没有明显异常；如果信息不够支撑判断，直接驳回重提会更省来回确认。</div>
+            <div class="mb-admin-review-note">先看真实姓名是不是完整，再看邮箱和注册时间有没有明显异常；如果信息不够支撑判断，直接驳回重提会更省来回确认。这一步主要是做资料核验，不再控制发文权限。</div>
             <div class="mb-admin-grid" th:if="${!#lists.isEmpty(pendingUsers)}">
                 <article class="mb-user-card mb-admin-review-card" th:each="user : ${pendingUsers}">
                     <div class="mb-admin-status-line">
@@ -131,7 +136,7 @@
                     </div>
                     <div class="mb-author-badges">
                         <span class="mb-badge-pill" th:text="${user.createdAt != null ? '注册于 ' + #temporals.format(user.createdAt, 'MM-dd') : '新用户'}">注册于 04-10</span>
-                        <span class="mb-badge-pill">通过后可发文</span>
+                        <span class="mb-badge-pill">通过后显示已认证</span>
                     </div>
                     <div class="mb-form-actions">
                         <a class="mb-btn-secondary" th:href="@{/users/{username}(username=${user.username})}">看主页</a>
@@ -146,10 +151,20 @@
                     </div>
                 </article>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(pendingUsers)}">当前没有待审核用户。</div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(pendingUsers)}">
+                当前没有待审核的实名资料。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="#reviewHistory">看最近处理</a>
+                    <a class="mb-btn-secondary" href="/notifications">去消息中心</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary" href="#reviewHistory">查看最近处理</a>
+                <a class="mb-btn" href="/notifications">去消息中心</a>
+            </div>
         </section>
 
-        <section class="mb-card">
+        <section class="mb-card" id="reviewHistory">
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">最近处理记录</h2>
@@ -188,7 +203,17 @@
                     </div>
                 </article>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(reviewedUsers)}">还没有审核记录。</div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(reviewedUsers)}">
+                还没有审核记录。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="#pendingQueue">回待审核队列</a>
+                    <a class="mb-btn-secondary" href="/notifications">去消息中心</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary" href="#pendingQueue">回待审核队列</a>
+                <a class="mb-btn" href="#adminTop">回到顶部</a>
+            </div>
         </section>
     </div>
 </main>

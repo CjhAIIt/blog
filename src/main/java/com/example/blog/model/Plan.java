@@ -1,22 +1,40 @@
 package com.example.blog.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import org.springframework.util.StringUtils;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "plans")
+@Table(name = "plans", indexes = {
+        @Index(name = "idx_plans_public_updated", columnList = "is_public, updated_at"),
+        @Index(name = "idx_plans_access_public_updated", columnList = "access_type, is_public, updated_at"),
+        @Index(name = "idx_plans_author_updated", columnList = "author_id, updated_at")
+})
 public class Plan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 80)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "cover_image_url")
+    @Column(name = "cover_image_url", length = 512)
     private String coverImageUrl;
 
     @Column(name = "is_public")
@@ -29,8 +47,9 @@ public class Plan {
     @Column(name = "expected_count")
     private int expectedCount;
 
-    @Column(name = "status")
-    private int status = 0; // 0: in progress, 1: completed, 2: shelved
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 16)
+    private PlanStatus status = PlanStatus.IN_PROGRESS;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
@@ -60,7 +79,7 @@ public class Plan {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.hasText(name) ? name.trim() : null;
     }
 
     public String getDescription() {
@@ -68,7 +87,7 @@ public class Plan {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = StringUtils.hasText(description) ? description.trim() : null;
     }
 
     public String getCoverImageUrl() {
@@ -76,7 +95,7 @@ public class Plan {
     }
 
     public void setCoverImageUrl(String coverImageUrl) {
-        this.coverImageUrl = coverImageUrl;
+        this.coverImageUrl = StringUtils.hasText(coverImageUrl) ? coverImageUrl.trim() : null;
     }
 
     public boolean isPublic() {
@@ -112,19 +131,31 @@ public class Plan {
     }
 
     public int getExpectedCount() {
-        return expectedCount;
+        return Math.max(0, expectedCount);
     }
 
     public void setExpectedCount(int expectedCount) {
-        this.expectedCount = expectedCount;
+        this.expectedCount = Math.max(0, expectedCount);
     }
 
-    public int getStatus() {
-        return status;
+    public PlanStatus getStatus() {
+        return status == null ? PlanStatus.IN_PROGRESS : status;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
+    public void setStatus(PlanStatus status) {
+        this.status = status == null ? PlanStatus.IN_PROGRESS : status;
+    }
+
+    public String getStatusDisplayName() {
+        return getStatus().getDisplayName();
+    }
+
+    public boolean isCompleted() {
+        return getStatus() == PlanStatus.COMPLETED;
+    }
+
+    public boolean isShelved() {
+        return getStatus() == PlanStatus.SHELVED;
     }
 
     public User getAuthor() {
@@ -149,5 +180,10 @@ public class Plan {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

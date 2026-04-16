@@ -43,12 +43,21 @@ class UserServiceTest {
     }
 
     @Test
-    void pendingUserCannotWritePosts() {
+    void pendingUserCanStillWritePosts() {
         User user = new User();
+        user.setRealName("张三");
         user.setRealNameVerificationStatus(RealNameVerificationStatus.PENDING);
 
-        assertFalse(userService.canWritePosts(user));
-        assertEquals("实名认证资料已提交管理员审核，审核通过后才能写博客", userService.getPostPermissionMessage(user));
+        assertTrue(userService.canWritePosts(user));
+        assertEquals("", userService.getPostPermissionMessage(user));
+    }
+
+    @Test
+    void blankRealNameShowsNotSubmittedStatus() {
+        User user = new User();
+
+        assertTrue(userService.canWritePosts(user));
+        assertEquals("未提交", user.getRealNameVerificationStatusDisplayName());
     }
 
     @Test

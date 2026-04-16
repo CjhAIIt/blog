@@ -6,7 +6,13 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "posts", indexes = {
+        @Index(name = "idx_posts_status_created", columnList = "status, created_at"),
+        @Index(name = "idx_posts_category_status_created", columnList = "category, status, created_at"),
+        @Index(name = "idx_posts_author_status_created", columnList = "author_id, status, created_at"),
+        @Index(name = "idx_posts_schedule_queue", columnList = "status, scheduled_publish_at"),
+        @Index(name = "idx_posts_plan_order", columnList = "plan_id, plan_order")
+})
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

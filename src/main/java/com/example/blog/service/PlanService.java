@@ -2,6 +2,7 @@ package com.example.blog.service;
 
 import com.example.blog.model.Plan;
 import com.example.blog.model.PlanAccessType;
+import com.example.blog.model.PlanStatus;
 import com.example.blog.model.PostStatus;
 import com.example.blog.model.User;
 import com.example.blog.repository.PlanRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -87,6 +89,18 @@ public class PlanService {
         if (plan == null) {
             return;
         }
+        if (!StringUtils.hasText(plan.getName())) {
+            throw new IllegalArgumentException("计划名称不能为空");
+        }
+        if (plan.getName().length() > 80) {
+            throw new IllegalArgumentException("计划名称不能超过 80 个字符");
+        }
+        if (plan.getExpectedCount() < 0) {
+            plan.setExpectedCount(0);
+        }
         plan.setAccessType(plan.getAccessType());
+        plan.setStatus(plan.getStatus() == null ? PlanStatus.IN_PROGRESS : plan.getStatus());
+        plan.setDescription(plan.getDescription());
+        plan.setCoverImageUrl(plan.getCoverImageUrl());
     }
 }

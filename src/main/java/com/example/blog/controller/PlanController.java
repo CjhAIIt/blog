@@ -2,6 +2,7 @@ package com.example.blog.controller;
 
 import com.example.blog.model.Plan;
 import com.example.blog.model.PlanAccessType;
+import com.example.blog.model.PlanStatus;
 import com.example.blog.model.Post;
 import com.example.blog.model.User;
 import com.example.blog.service.PlanService;
@@ -13,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +46,11 @@ public class PlanController {
     @ModelAttribute("planAccessTypes")
     public PlanAccessType[] planAccessTypes() {
         return PlanAccessType.values();
+    }
+
+    @ModelAttribute("planStatuses")
+    public PlanStatus[] planStatuses() {
+        return PlanStatus.values();
     }
 
     @GetMapping
@@ -85,15 +90,15 @@ public class PlanController {
         }
 
         User currentUser = userService.getByUsername(principal.getName());
-        if (!StringUtils.hasText(plan.getName())) {
-            redirectAttributes.addFlashAttribute("error", "计划名称不能为空");
+        try {
+            plan.setAuthor(currentUser);
+            Plan savedPlan = planService.save(plan);
+            redirectAttributes.addFlashAttribute("message", "计划已创建");
+            return "redirect:/plans/" + savedPlan.getId();
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/plans/new";
         }
-
-        plan.setAuthor(currentUser);
-        Plan savedPlan = planService.save(plan);
-        redirectAttributes.addFlashAttribute("message", "计划已创建");
-        return "redirect:/plans/" + savedPlan.getId();
     }
 
     @GetMapping("/{id}/edit")
@@ -143,20 +148,20 @@ public class PlanController {
             redirectAttributes.addFlashAttribute("error", "你没有权限编辑这个计划");
             return "redirect:/plans/" + id;
         }
-        if (!StringUtils.hasText(planForm.getName())) {
-            redirectAttributes.addFlashAttribute("error", "计划名称不能为空");
+        try {
+            plan.setName(planForm.getName());
+            plan.setDescription(planForm.getDescription());
+            plan.setExpectedCount(planForm.getExpectedCount());
+            plan.setStatus(planForm.getStatus());
+            plan.setAccessType(planForm.getAccessType());
+            planService.save(plan);
+
+            redirectAttributes.addFlashAttribute("message", "计划已更新");
+            return "redirect:/plans/" + id;
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/plans/" + id + "/edit";
         }
-
-        plan.setName(planForm.getName());
-        plan.setDescription(planForm.getDescription());
-        plan.setExpectedCount(planForm.getExpectedCount());
-        plan.setStatus(planForm.getStatus());
-        plan.setAccessType(planForm.getAccessType());
-        planService.save(plan);
-
-        redirectAttributes.addFlashAttribute("message", "计划已更新");
-        return "redirect:/plans/" + id;
     }
 
     @GetMapping("/{id}")
@@ -170,11 +175,7 @@ public class PlanController {
 
         boolean canManage = planService.canManage(plan, currentUser);
         List<Post> planPosts = canManage ? postService.findByPlanId(id) : postService.findPublishedByPlanId(id);
-
-        int publishedCount = 0;
-        for (Post post : postService.findPublishedByPlanId(id)) {
-            publishedCount++;
-        }
+        int publishedCount = planService.getPublishedPostCount(id);
 
         int progress = plan.getExpectedCount() > 0 ? (publishedCount * 100) / plan.getExpectedCount() : 0;
 

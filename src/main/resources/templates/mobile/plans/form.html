@@ -16,11 +16,11 @@
             <p class="mb-hero-copy">把这次准备写的内容先记下来，名称、篇数和说明都能在手机上直接填，不用再切回电脑。</p>
         </section>
 
-        <form class="mb-card" th:object="${plan}" th:action="${formAction}" method="post">
+        <form class="mb-card" th:object="${plan}" th:action="${formAction}" method="post" data-enhanced-form data-ready-text="计划名称和说明整理好后就能直接保存。">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="mb-field">
                 <label class="mb-label" for="name">计划名称</label>
-                <input class="mb-input" type="text" id="name" th:field="*{name}" maxlength="80" placeholder="比如：Spring 系列更新计划">
+                <input class="mb-input" type="text" id="name" th:field="*{name}" maxlength="80" placeholder="比如：Spring 系列更新计划" required>
             </div>
             <div class="mb-field">
                 <label class="mb-label" for="accessType">计划类型</label>
@@ -35,9 +35,7 @@
             <div class="mb-field">
                 <label class="mb-label" for="status">计划状态</label>
                 <select class="mb-select" id="status" th:field="*{status}">
-                    <option value="0">进行中</option>
-                    <option value="1">已完成</option>
-                    <option value="2">已搁置</option>
+                    <option th:each="planStatus : ${planStatuses}" th:value="${planStatus}" th:text="${planStatus.displayName}">进行中</option>
                 </select>
             </div>
             <div class="mb-field">
@@ -45,7 +43,7 @@
                 <textarea class="mb-textarea" id="description" th:field="*{description}" rows="8" placeholder="写一下这个计划准备做什么、面向谁，以及你打算怎么更新。"></textarea>
             </div>
             <div class="mb-form-actions">
-                <button class="mb-btn" type="submit">保存计划</button>
+                <button class="mb-btn" type="submit" data-submitting-text="正在保存计划...">保存计划</button>
                 <a class="mb-btn-secondary" href="/plans">返回计划页</a>
             </div>
         </form>
@@ -55,5 +53,6 @@
 <div class="mb-shell">
     <nav th:replace="~{mobile/fragments/layout :: tabbar('plans')}"></nav>
 </div>
+<script src="/js/form-feedback.js"></script>
 </body>
 </html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草稿箱 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link is-active" href="/space/drafts">草稿箱</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/plans">计划</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-link" href="/posts/new">新建草稿</a>
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/space/edit">编辑资料</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-page-head ll-browse-hero ll-browse-hero--drafts ll-fade">
+            <div>
+                <span class="ll-kicker ll-kicker--soft">写作工作台</span>
+                <h1 class="ll-page-title">草稿箱</h1>
+                <p class="ll-page-desc">这里保留的是服务端草稿，不会因为刷新浏览器、换设备或者清缓存而丢掉。想继续写的时候，回来点开就能接上。</p>
+                <div class="ll-link-group">
+                    <span class="ll-link-badge" th:text="${#lists.size(drafts) + ' 篇草稿'}">0 篇草稿</span>
+                    <span class="ll-link-badge" th:text="${#lists.isEmpty(drafts) ? '还没有写作记录' : '最近更新 ' + #temporals.format(drafts[0].updatedAt, 'yyyy-MM-dd HH:mm')}">最近更新</span>
+                    <span class="ll-link-badge">服务端保存</span>
+                </div>
+            </div>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">当前建议</span>
+                <strong th:text="${#lists.isEmpty(drafts) ? '先写第一篇草稿，后面再慢慢补封面、分类和计划归属' : '先把最近那篇接着写完，再决定要不要导入新的 Markdown'}">
+                    先把最近那篇接着写完，再决定要不要导入新的 Markdown
+                </strong>
+                <p>如果你手头已经有本地 Markdown，也可以直接从右侧导入，不需要手动新建空白稿子再复制粘贴。</p>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn" href="/posts/new">写新草稿</a>
+                    <a class="ll-btn-secondary" href="/space">回个人空间</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="ll-space-overview-card ll-draft-summary-card ll-fade">
+            <div class="ll-editor-panel-head">
+                <div>
+                    <h2 class="ll-side-title">草稿现状</h2>
+                    <p class="ll-side-text">先看数量和最近更新，再决定是继续写、整理旧稿，还是直接导入新的 Markdown。</p>
+                </div>
+            </div>
+            <div class="ll-space-overview-grid ll-draft-summary-grid">
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">草稿数量</span>
+                    <strong th:text="${#lists.size(drafts)}">0</strong>
+                    <span class="ll-space-overview-note">所有草稿都会留在服务端，换设备也能继续。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">最近更新</span>
+                    <strong th:text="${#lists.isEmpty(drafts) ? '空箱' : #temporals.format(drafts[0].updatedAt, 'MM-dd HH:mm')}">空箱</strong>
+                    <span class="ll-space-overview-note">一般从最近改过的那篇接着写，最省力。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">导入方式</span>
+                    <strong>Markdown</strong>
+                    <span class="ll-space-overview-note">本地现成内容可以直接导入成新草稿。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">推荐动作</span>
+                    <strong th:text="${#lists.isEmpty(drafts) ? '写第一篇' : '继续最近稿子'}">继续最近稿子</strong>
+                    <span class="ll-space-overview-note">这样最容易把写作节奏重新接回来。</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="ll-space-layout ll-fade">
+            <div class="ll-feed">
+                <section class="ll-space-posts-panel ll-draft-posts-panel">
+                    <div class="ll-editor-panel-head ll-space-feed-head">
+                        <div>
+                            <h2 class="ll-side-title">全部草稿</h2>
+                            <p class="ll-side-text">这里放的是还没发布的内容。点进去以后可以继续补正文、封面、分类和计划归属。</p>
+                        </div>
+                        <div class="ll-inline-actions">
+                            <a class="ll-btn-secondary" href="/posts/new">新建草稿</a>
+                        </div>
+                    </div>
+
+                    <div class="ll-draft-grid" th:if="${!#lists.isEmpty(drafts)}">
+                        <article class="ll-draft-card ll-draft-card--enhanced" th:each="draft : ${drafts}">
+                            <div class="ll-feed-cover ll-feed-cover--draft">
+                                <img th:src="${draft.displayCoverUrl}" th:alt="${draft.title}">
+                            </div>
+                            <div class="ll-draft-meta">
+                                <span class="ll-meta-pill">草稿</span>
+                                <span th:text="${#temporals.format(draft.updatedAt, 'yyyy-MM-dd HH:mm')}">2026-04-11 11:00</span>
+                            </div>
+                            <h2 class="ll-feed-title">
+                                <a th:href="@{/posts/edit/{id}(id=${draft.id})}" th:text="${draft.title}">未命名草稿</a>
+                            </h2>
+                            <p class="ll-feed-excerpt" th:text="${@markdownService.excerpt(draft.content, 160)}">草稿摘要</p>
+                            <div class="ll-link-group">
+                                <span class="ll-link-badge" th:text="${draft.categoryDisplayName}">分类</span>
+                                <span class="ll-link-badge" th:text="${draft.editorFont.label}">字体</span>
+                            </div>
+                            <div class="ll-feed-meta">
+                                <span th:text="${draft.categoryDisplayName}">分类</span>
+                                <span th:text="${draft.editorFont.label}">字体</span>
+                                <a class="ll-feed-action" th:href="@{/posts/edit/{id}(id=${draft.id})}">继续编辑</a>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(drafts)}" class="ll-empty ll-empty--browse">
+                        你还没有服务端草稿。<a href="/posts/new">现在创建第一篇草稿</a>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="ll-side-stack">
+                <section class="ll-side-card ll-draft-import-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">导入 Markdown</h2>
+                    <p class="ll-side-text">上传本地 Markdown 文件后，系统会直接生成一篇新草稿。标题会优先读取第一层标题，不用手动再建空白稿。</p>
+                    <form action="/posts/import" method="post" enctype="multipart/form-data" class="ll-stack-sm">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input class="ll-input" type="file" name="markdownFile" accept=".md,.markdown,.txt" required>
+                        <select class="ll-select" name="category">
+                            <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">分类</option>
+                        </select>
+                        <button class="ll-btn" type="submit">导入为草稿</button>
+                    </form>
+                </section>
+
+                <section class="ll-side-card ll-draft-guide-card ll-fade">
+                    <h2 class="ll-side-title">写作提醒</h2>
+                    <ul class="ll-side-list">
+                        <li>继续编辑时，可以顺手补封面、字体和计划归属，让后面发布更轻松。</li>
+                        <li>保存草稿只会进草稿箱，不会出现在首页、文章列表或个人主页。</li>
+                        <li>发布以后，文章会自动进入公开页面，再回来这里只会保留没发出去的部分。</li>
+                    </ul>
+                </section>
+            </aside>
+        </section>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>草稿箱</span>
+                    <span th:text="${#lists.size(drafts) + ' 篇草稿'}">0 篇草稿</span>
+                    <a href="/space">回个人空间</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

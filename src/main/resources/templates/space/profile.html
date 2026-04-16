@@ -21,7 +21,7 @@
                 <a class="ll-header-link" href="/about">关于</a>
             </nav>
             <div class="ll-header-actions">
-                <a class="ll-header-link" href="/admin/verifications" th:if="${currentUserAdmin}">实名审核</a>
+                <a class="ll-header-link" href="/admin/verifications" th:if="${currentUserAdmin}">实名资料审核</a>
                 <a class="ll-header-link" href="/space/drafts" th:if="${isOwner}">草稿箱</a>
                 <a class="ll-header-link" href="/space/edit" th:if="${isOwner}">编辑资料</a>
                 <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
@@ -63,10 +63,12 @@
 
                     <div class="ll-space-actions">
                         <a class="ll-btn" href="/posts/new" th:if="${isOwner and canWritePosts}">写新文章</a>
-                        <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner and !canWritePosts}">去完成实名审核</a>
                         <a class="ll-btn-secondary" href="/space/drafts" th:if="${isOwner}">管理草稿</a>
                         <a class="ll-btn-secondary" href="/space/export" th:if="${isOwner}">导出个人博客</a>
                         <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner}">编辑个人资料</a>
+                        <a class="ll-btn-secondary"
+                           href="/space/edit"
+                           th:if="${isOwner and (profileUser.realName == null or #strings.isEmpty(profileUser.realName))}">补充实名信息</a>
                         <a class="ll-btn-secondary" href="/admin/verifications" th:if="${currentUserAdmin}">管理员审核页</a>
                         <a class="ll-btn-secondary"
                            th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}"
@@ -79,22 +81,44 @@
                            target="_blank"
                            rel="noreferrer">访问个人博客</a>
                     </div>
+
+                    <div class="ll-hero-glance-grid" th:if="${isOwner}">
+                        <a class="ll-hero-glance-card" href="/space/drafts">
+                            <span>草稿续写</span>
+                            <strong th:text="${draftCount + ' 篇内容还在草稿箱里等你接上'}">0 篇内容还在草稿箱里等你接上</strong>
+                            <p>如果只是回来继续写，先从这里进去最省心，不需要重新找文章入口。</p>
+                        </a>
+                        <a class="ll-hero-glance-card" href="/notifications">
+                            <span>消息整理</span>
+                            <strong th:text="${notificationUnreadCount + ' 条提醒可以顺手清掉'}">0 条提醒可以顺手清掉</strong>
+                            <p>评论、回复和互动先集中看完，再决定今天要不要继续补文章或回访资料页。</p>
+                        </a>
+                        <a class="ll-hero-glance-card" href="/space/edit">
+                            <span>主页整理</span>
+                            <strong th:text="${profileUser.realName != null and !#strings.isEmpty(profileUser.realName) ? '头像、简介和实名资料都在这里继续整理' : '头像、简介和可选实名资料都能在这里慢慢补'}">头像、简介和可选实名资料都能在这里慢慢补</strong>
+                            <p>如果你想把别人点进来第一眼看到的内容收顺，这里会比在空间里来回切更直接。</p>
+                        </a>
+                    </div>
                 </div>
 
                 <section class="ll-space-hero-panel">
-                    <div class="ll-space-panel-label">实名状态</div>
+                    <div class="ll-space-panel-label">实名资料</div>
                     <div class="ll-space-panel-title"
                          th:text="${showVerificationStatus ? profileUser.realNameVerificationStatusDisplayName : '站内创作者'}">
                         已通过
                     </div>
+                    <p class="ll-space-panel-copy"
+                       th:if="${showVerificationStatus and (profileUser.realName == null or #strings.isEmpty(profileUser.realName))}">
+                        实名信息现在是选填项。不填写也能正常写博客、导入 Markdown 和编辑文章，后面如果需要认证再来补就行。
+                    </p>
                     <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerificationPending}">
-                        实名资料已提交管理员审核。审核通过前不能写博客、导入 Markdown 或编辑文章。
+                        实名资料已提交管理员审核。审核期间不影响继续写博客、导入 Markdown 或编辑文章。
                     </p>
                     <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerificationRejected}">
-                        实名认证审核未通过，请修改实名信息后重新提交。
+                        实名资料这次没有通过审核。你可以修改后重新提交，期间不影响继续发文。
                     </p>
                     <p class="ll-space-panel-copy" th:if="${showVerificationStatus and profileUser.realNameVerified}">
-                        实名认证已通过，当前账号已具备写博客权限。
+                        实名资料已通过审核，主页会继续展示认证后的状态与信息。
                     </p>
                     <p class="ll-space-panel-copy" th:if="${!showVerificationStatus}">
                         该主页已开启公开访问，可查看作者最新发布的文章和创作记录。
@@ -114,10 +138,6 @@
                 </section>
             </div>
         </section>
-
-        <div th:if="${isOwner and !canWritePosts}" class="ll-status ll-status--error">
-            <span th:text="${'当前实名认证状态：' + profileUser.realNameVerificationStatusDisplayName + '。审核通过后才能写博客。'}"></span>
-        </div>
 
         <section class="ll-space-layout ll-fade">
             <div class="ll-feed">
@@ -145,7 +165,7 @@
                         </a>
                         <a class="ll-space-workbench-link" href="/space/edit">
                             <span class="ll-space-workbench-kicker">资料整理</span>
-                            <strong th:text="${showVerificationStatus ? '头像、简介和实名认证都在这里' : '头像、简介和外链都在这里'}">头像、简介和外链都在这里</strong>
+                            <strong>头像、简介、外链和可选实名都在这里</strong>
                             <span>想顺手更新一下个人资料，或者补上外链，这里会比翻设置轻松得多。</span>
                         </a>
                     </div>
@@ -286,7 +306,9 @@
                     </p>
                     <div class="ll-link-group">
                         <span class="ll-link-badge" th:if="${profileUser.realName != null and !#strings.isEmpty(profileUser.realName)}" th:text="${'实名 ' + profileUser.realName}">实名 张三</span>
-                        <span class="ll-link-badge" th:if="${showVerificationStatus}" th:text="${profileUser.realNameVerificationStatusDisplayName}">已通过</span>
+                        <span class="ll-link-badge"
+                              th:if="${showVerificationStatus}"
+                              th:text="${(profileUser.realName == null or #strings.isEmpty(profileUser.realName)) ? '实名选填' : profileUser.realNameVerificationStatusDisplayName}">已通过</span>
                         <span class="ll-link-badge" th:if="${profileUser.qq != null and !#strings.isEmpty(profileUser.qq)}" th:text="${'QQ ' + profileUser.qq}">QQ 123456</span>
                         <a class="ll-link-badge" th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}" th:href="${profileUser.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
                         <a class="ll-link-badge" th:if="${profileUser.personalBlogUrl != null and !#strings.isEmpty(profileUser.personalBlogUrl)}" th:href="${profileUser.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>

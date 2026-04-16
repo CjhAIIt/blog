@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实名认证审核 - 博客</title>
+    <title>实名资料审核 - 博客</title>
     <link rel="stylesheet" href="/css/site.css">
 </head>
 <body class="ll-page">
@@ -18,7 +18,7 @@
                 <a class="ll-header-link" href="/">首页</a>
                 <a class="ll-header-link" href="/posts">文章</a>
                 <a class="ll-header-link" href="/space">个人空间</a>
-                <a class="ll-header-link is-active" href="/admin/verifications">实名审核</a>
+                <a class="ll-header-link is-active" href="/admin/verifications">实名资料审核</a>
             </nav>
             <div class="ll-header-actions">
                 <a class="ll-header-bell"
@@ -40,22 +40,45 @@
         <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
 
-        <section class="ll-space-hero-v2 ll-fade">
+        <section class="ll-space-hero-v2 ll-fade" id="adminTop">
             <div class="ll-space-hero-grid">
                 <div class="ll-space-hero-copy">
                     <span class="ll-kicker">Admin Panel</span>
-                    <h1 class="ll-space-title">实名认证审核</h1>
-                    <p class="ll-space-copy">这页更像站里的准入闸口。你在这里确认谁可以开始写、谁还需要回去补资料，也能顺手回看最近一批审核到底是怎么处理的。</p>
+                    <h1 class="ll-space-title">实名资料审核</h1>
+                    <p class="ll-space-copy">这里只处理主动填写的实名资料。现在不实名也能正常写作，所以这页更偏向资料核验和认证展示，而不是发文闸口。</p>
                     <div class="ll-space-statline">
                         <span class="ll-meta-pill" th:text="${pendingUsers.size() + ' 条待审核'}">0 条待审核</span>
                         <span class="ll-meta-pill" th:text="${reviewedUsers.size() + ' 条已处理'}">0 条已处理</span>
-                        <span class="ll-meta-pill">实名通过后开放写作</span>
+                        <span class="ll-meta-pill">实名现在是可选资料</span>
+                    </div>
+                    <div class="ll-link-group ll-page-jump-links">
+                        <a class="ll-link-badge" href="#pendingQueue">待审核队列</a>
+                        <a class="ll-link-badge" href="#reviewHistory">最近处理</a>
+                        <a class="ll-link-badge" href="/notifications">消息中心</a>
+                    </div>
+
+                    <div class="ll-hero-glance-grid">
+                        <a class="ll-hero-glance-card" href="#pendingQueue">
+                            <span>先看姓名</span>
+                            <strong>优先扫真实姓名是不是完整、自然且可判断</strong>
+                            <p>如果姓名字段本身就不成立，后面的判断通常没有必要继续拖长。</p>
+                        </a>
+                        <a class="ll-hero-glance-card" href="#pendingQueue">
+                            <span>再看账号</span>
+                            <strong>邮箱、提交时间和注册时间能帮你快速判断可信度</strong>
+                            <p>资料是否像正常的新申请，通常看这几项就足够做第一轮判断。</p>
+                        </a>
+                        <a class="ll-hero-glance-card" href="#reviewHistory">
+                            <span>拿不准就回看</span>
+                            <strong>对边界情况没把握时，先看最近处理记录更稳</strong>
+                            <p>这页现在更偏资料核验台，不必为了“快”而勉强给出不踏实的结果。</p>
+                        </a>
                     </div>
                 </div>
                 <section class="ll-space-hero-panel">
                     <div class="ll-space-panel-label">审核原则</div>
-                    <div class="ll-space-panel-title">先判断资料完整，再决定是否放行</div>
-                    <p class="ll-space-panel-copy">建议优先处理刚提交的新申请。姓名格式不完整、信息明显异常或者资料留空时，直接驳回通常会比来回等待更省心。</p>
+                    <div class="ll-space-panel-title">先判断资料是否可信，再决定是否标记已认证</div>
+                    <p class="ll-space-panel-copy">建议优先处理刚提交的新申请。姓名格式不完整、信息明显异常时，直接驳回通常会比来回等待更省心；这一步主要影响认证展示，不再拦截基础写作。</p>
                 </section>
             </div>
         </section>
@@ -72,7 +95,7 @@
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">待审核队列</span>
                     <strong th:text="${pendingUsers.size()}">0</strong>
-                    <span class="ll-space-overview-note">优先清掉刚提交的申请，避免用户一直卡在不能写的状态。</span>
+                    <span class="ll-space-overview-note">这里只会出现主动提交实名资料的用户，优先清掉最新申请通常最省心。</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">最近已处理</span>
@@ -80,9 +103,9 @@
                     <span class="ll-space-overview-note">这里记录最近一批处理结果，方便快速回看自己的审核节奏。</span>
                 </article>
                 <article class="ll-space-overview-metric">
-                    <span class="ll-space-overview-label">准入规则</span>
-                    <strong>实名通过</strong>
-                    <span class="ll-space-overview-note">审核通过后开放写文章、导入 Markdown 和编辑内容权限。</span>
+                    <span class="ll-space-overview-label">处理结果</span>
+                    <strong>标记为已认证</strong>
+                    <span class="ll-space-overview-note">审核通过后会更新资料认证状态，主要影响展示与标识，不再阻挡基础写作。</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">当前建议</span>
@@ -93,18 +116,18 @@
         </section>
 
         <div class="ll-content-grid ll-content-grid--admin">
-            <section class="ll-section-card ll-fade">
+            <section class="ll-section-card ll-fade" id="pendingQueue">
                 <div class="ll-editor-panel-head">
                     <div>
                         <h2 class="ll-side-title">待审核</h2>
-                        <p class="ll-side-text">这里只放仍处于待审核状态的申请，打开以后应该能很快做出“通过”还是“退回修改”的判断。</p>
+                        <p class="ll-side-text">这里只放仍处于待审核状态的实名资料申请，打开以后应该能很快做出“通过”还是“退回修改”的判断。</p>
                     </div>
                     <span class="ll-meta-pill" th:text="${pendingUsers.size() + ' 条待处理'}">0 条待处理</span>
                 </div>
 
-                <div class="ll-admin-note-strip">优先看真实姓名是否完整、账号信息是否正常；如果信息不够支撑判断，直接驳回让用户重新提交会更稳。</div>
+                <div class="ll-admin-note-strip">优先看真实姓名是否完整、账号信息是否正常；如果信息不够支撑判断，直接驳回让用户重新提交会更稳。这一步主要是做资料核验，不再控制发文权限。</div>
 
-                <div th:if="${#lists.isEmpty(pendingUsers)}" class="ll-empty">当前没有待审核的实名认证申请。</div>
+                <div th:if="${#lists.isEmpty(pendingUsers)}" class="ll-empty ll-empty--actionable">当前没有待审核的实名资料申请。</div>
 
                 <div class="ll-admin-queue-grid" th:if="${!#lists.isEmpty(pendingUsers)}">
                     <article class="ll-admin-queue-card" th:each="user : ${pendingUsers}">
@@ -148,6 +171,14 @@
                         </div>
                     </article>
                 </div>
+                <div class="ll-section-foot">
+                    <span class="ll-section-foot-note"
+                          th:text="${#lists.isEmpty(pendingUsers) ? '队列已经清空，可以去回看最近一批处理记录，或者回消息中心等新的提交。' : '如果这一轮已经处理完，顺手回看最近记录，能更快对齐自己的审核节奏。'}">如果这一轮已经处理完，顺手回看最近记录，能更快对齐自己的审核节奏。</span>
+                    <div class="ll-link-group">
+                        <a class="ll-btn-secondary" href="#reviewHistory">看最近处理</a>
+                        <a class="ll-btn-secondary" href="/notifications">去消息中心</a>
+                    </div>
+                </div>
             </section>
 
             <aside class="ll-side-stack">
@@ -156,22 +187,22 @@
                     <div class="ll-admin-note-list">
                         <article class="ll-admin-note">
                             <strong>先看实名字段</strong>
-                            <span>如果真实姓名为空、格式异常或者明显不是正常中文姓名，通常可以直接驳回。</span>
+                            <span>如果真实姓名为空、格式异常或者明显不是正常姓名，通常可以直接驳回。</span>
                         </article>
                         <article class="ll-admin-note">
                             <strong>再看账号信息</strong>
                             <span>邮箱和注册时间能帮助你判断这是不是一条正常的新注册申请。</span>
                         </article>
                         <article class="ll-admin-note">
-                            <strong>最后决定是否放行</strong>
-                            <span>通过意味着开放写作权限，所以信息拿不准时，退回修改会比勉强通过更稳。</span>
+                            <strong>最后决定是否认证通过</strong>
+                            <span>通过意味着资料会被标记为已认证，所以信息拿不准时，退回修改会比勉强通过更稳。</span>
                         </article>
                     </div>
                 </section>
 
-                <section class="ll-side-card ll-fade">
+                <section class="ll-side-card ll-fade" id="reviewHistory">
                     <h2 class="ll-side-title">最近处理记录</h2>
-                    <div th:if="${#lists.isEmpty(reviewedUsers)}" class="ll-empty">还没有处理过实名认证申请。</div>
+                    <div th:if="${#lists.isEmpty(reviewedUsers)}" class="ll-empty ll-empty--actionable">还没有处理过实名资料申请。</div>
                     <div class="ll-admin-record-list" th:if="${!#lists.isEmpty(reviewedUsers)}">
                         <article class="ll-admin-record-item" th:each="user : ${reviewedUsers}">
                             <div class="ll-draft-meta">
@@ -186,6 +217,13 @@
                                 </div>
                             </div>
                         </article>
+                    </div>
+                    <div class="ll-section-foot">
+                        <span class="ll-section-foot-note">看完最近记录后，可以回到待审核队列继续清单，或者直接打开消息中心等新的动作进来。</span>
+                        <div class="ll-link-group">
+                            <a class="ll-btn-secondary" href="#pendingQueue">回待审核队列</a>
+                            <a class="ll-btn-secondary" href="/notifications">消息中心</a>
+                        </div>
                     </div>
                 </section>
             </aside>

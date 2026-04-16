@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计划分区 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/leaderboards">排行榜</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link is-active" href="/plans">计划</a>
+                <a class="ll-header-link" href="/about">关于</a>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   sec:authorize="isAuthenticated()"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/plans/new" sec:authorize="isAuthenticated()">新建计划</a>
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-page-head ll-browse-hero ll-browse-hero--plans ll-fade">
+            <div>
+                <span class="ll-kicker ll-kicker--soft">专题计划</span>
+                <h1 class="ll-page-title"
+                    th:text="${activeFilter == 'public' ? '公开计划' : (activeFilter == 'collaborative' ? '共创计划' : '我的计划')}">
+                    公开计划
+                </h1>
+                <p class="ll-page-desc"
+                   th:text="${activeFilter == 'public' ? '想顺着主题一路往下看，就从这里开始。公开内容会按更新时间排在前面，适合先挑一个最近在动的系列。'
+                           : (activeFilter == 'collaborative' ? '这里更适合看多人一起维护的内容，能很快看出一个主题是怎么被慢慢补齐的。'
+                           : '这是你自己的计划清单。先看推进到哪，再决定是补文章、调顺序，还是新开一个主题。')}">
+                    想顺着主题一路往下看，就从这里开始。
+                </p>
+                <div class="ll-link-group">
+                    <span class="ll-link-badge" th:text="${plans.totalElements + ' 个计划'}">0 个计划</span>
+                    <span class="ll-link-badge" th:text="${'第 ' + (currentPage + 1) + ' / ' + (plans.totalPages == 0 ? 1 : plans.totalPages) + ' 页'}">第 1 / 1 页</span>
+                    <span class="ll-link-badge"
+                          th:text="${activeFilter == 'public' ? '默认公开视角' : (activeFilter == 'collaborative' ? '多人协作内容' : '只看自己')}">
+                        默认公开视角
+                    </span>
+                </div>
+            </div>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">当前范围</span>
+                <strong th:text="${activeFilter == 'mine' ? '先看自己的主题进度，再决定下一步写什么' : '计划会按最近更新时间排在前面，适合直接挑一条线读进去'}">
+                    计划会按最近更新时间排在前面，适合直接挑一条线读进去
+                </strong>
+                <p th:text="${activeFilter == 'mine' ? '如果你正在整理连载或专题，这里会比在文章列表里来回跳更清楚。' : '如果你还没决定看哪个系列，可以先扫一眼计划名和摘要，再进详情页看完整目录。'}">
+                    如果你还没决定看哪个系列，可以先扫一眼计划名和摘要，再进详情页看完整目录。
+                </p>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn" href="/plans/new" sec:authorize="isAuthenticated()">新建计划</a>
+                    <a class="ll-btn-secondary" href="/posts">先看文章</a>
+                    <a class="ll-btn-secondary" href="/search?keyword=">搜索主题</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="ll-category-row ll-fade">
+            <nav class="ll-category-links">
+                <a class="ll-category-link" th:classappend="${activeFilter == 'public' ? ' is-active' : ''}" href="/plans">公开计划</a>
+                <a class="ll-category-link" th:classappend="${activeFilter == 'collaborative' ? ' is-active' : ''}" th:href="@{/plans(filter='collaborative')}">共创计划</a>
+                <a class="ll-category-link" sec:authorize="isAuthenticated()" th:classappend="${activeFilter == 'mine' ? ' is-active' : ''}" th:href="@{/plans(filter='mine')}">我的计划</a>
+                <a class="ll-category-link" href="/posts">文章列表</a>
+            </nav>
+        </div>
+
+        <section class="ll-plan-list-grid" th:if="${!plans.empty}">
+            <article class="ll-plan-list-card ll-fade" th:each="plan : ${plans.content}">
+                <a class="ll-plan-list-cover" th:href="@{/plans/{id}(id=${plan.id})}">
+                    <img th:if="${plan.coverImageUrl != null and !#strings.isEmpty(plan.coverImageUrl)}" th:src="${plan.coverImageUrl}" th:alt="${plan.name}">
+                    <div class="ll-plan-list-cover-copy" th:if="${plan.coverImageUrl == null or #strings.isEmpty(plan.coverImageUrl)}">
+                        <span>计划目录</span>
+                        <strong th:text="${plan.name}">计划名称</strong>
+                    </div>
+                </a>
+                <div class="ll-plan-list-topline">
+                    <span class="ll-plan-list-status"
+                          th:classappend="${plan.status == 1 ? ' is-complete' : (plan.status == 2 ? ' is-paused' : '')}"
+                          th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">
+                        进行中
+                    </span>
+                    <span th:text="${plan.accessTypeDisplayName}">计划类型</span>
+                    <span th:text="${#temporals.format(plan.updatedAt, 'yyyy-MM-dd HH:mm')}">2026-04-11 11:00</span>
+                </div>
+                <h2 class="ll-plan-list-title">
+                    <a th:href="@{/plans/{id}(id=${plan.id})}" th:text="${plan.name}">计划名称</a>
+                </h2>
+                <p class="ll-plan-list-desc" th:text="${plan.description != null && !plan.description.isEmpty() ? plan.description : '这个计划暂时还没有简介，但你可以先进去看看目录和当前进度。'}">
+                    计划简介
+                </p>
+                <div class="ll-plan-list-meta">
+                    <span class="ll-link-badge" th:text="${'作者 ' + plan.author.displayName}">作者</span>
+                    <span class="ll-link-badge" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                    <span class="ll-link-badge" th:text="${plan.public ? '协作成员可见' : '仅作者与受邀成员可见'}">协作成员可见</span>
+                </div>
+                <div class="ll-plan-list-footer">
+                    <div class="ll-link-group">
+                        <span class="ll-meta-pill" th:text="${plan.author.displayName}">作者名</span>
+                        <span class="ll-meta-pill" th:text="${plan.accessTypeDisplayName}">计划类型</span>
+                    </div>
+                    <a class="ll-btn-secondary" th:href="@{/plans/{id}(id=${plan.id})}">查看详情</a>
+                </div>
+            </article>
+        </section>
+
+        <div th:if="${plans.empty}" class="ll-empty ll-empty--browse ll-fade">
+            <span th:if="${activeFilter == 'mine'}">你还没有计划，先建一个主题，把后面想写的内容串起来。</span>
+            <span th:if="${activeFilter != 'mine'}">当前筛选下还没有计划，换个视角看看，或者晚一点再回来。</span>
+            <a href="/plans/new" sec:authorize="isAuthenticated()" th:if="${activeFilter == 'mine'}">现在新建计划</a>
+        </div>
+
+        <nav class="ll-pagination" th:if="${plans.totalPages > 1}">
+            <a class="ll-page-link" th:if="${plans.hasPrevious()}" th:href="@{/plans(page=${currentPage - 1},filter=${activeFilter})}">上一页</a>
+            <span class="ll-page-link" th:if="${!plans.hasPrevious()}">上一页</span>
+            <th:block th:each="i : ${#numbers.sequence(0, plans.totalPages - 1)}">
+                <a class="ll-page-link" th:classappend="${i == currentPage ? ' is-active' : ''}" th:href="@{/plans(page=${i},filter=${activeFilter})}" th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="ll-page-link" th:if="${plans.hasNext()}" th:href="@{/plans(page=${currentPage + 1},filter=${activeFilter})}">下一页</a>
+            <span class="ll-page-link" th:if="${!plans.hasNext()}">下一页</span>
+        </nav>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>计划分区</span>
+                    <span th:text="${activeFilter == 'public' ? '公开计划' : (activeFilter == 'collaborative' ? '共创计划' : '我的计划')}">公开计划</span>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

@@ -8,9 +8,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class CommentService {
@@ -39,12 +41,14 @@ public class CommentService {
         }
 
         List<Comment> ordered = new ArrayList<>(comments.size());
+        Set<Long> appendedCommentIds = new HashSet<>(comments.size());
         for (Comment rootComment : rootComments) {
-            appendThread(rootComment, repliesByParentId, ordered);
+            appendThread(rootComment, repliesByParentId, ordered, appendedCommentIds);
         }
         for (Comment comment : comments) {
-            if (!ordered.contains(comment)) {
-                appendThread(comment, repliesByParentId, ordered);
+            Long commentId = comment.getId();
+            if (commentId == null || !appendedCommentIds.contains(commentId)) {
+                appendThread(comment, repliesByParentId, ordered, appendedCommentIds);
             }
         }
         return ordered;
@@ -110,13 +114,17 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
-    private void appendThread(Comment comment, Map<Long, List<Comment>> repliesByParentId, List<Comment> ordered) {
-        if (ordered.contains(comment)) {
+    private void appendThread(Comment comment,
+                              Map<Long, List<Comment>> repliesByParentId,
+                              List<Comment> ordered,
+                              Set<Long> appendedCommentIds) {
+        if (comment == null || comment.getId() == null || appendedCommentIds.contains(comment.getId())) {
             return;
         }
         ordered.add(comment);
+        appendedCommentIds.add(comment.getId());
         for (Comment reply : repliesByParentId.getOrDefault(comment.getId(), List.of())) {
-            appendThread(reply, repliesByParentId, ordered);
+            appendThread(reply, repliesByParentId, ordered, appendedCommentIds);
         }
     }
 }

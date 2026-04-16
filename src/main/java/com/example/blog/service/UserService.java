@@ -47,14 +47,18 @@ public class UserService implements UserDetailsService {
 
     public List<User> findPendingRealNameVerifications() {
         return userRepository.findByRealNameVerificationStatusOrderByRealNameVerificationSubmittedAtAscCreatedAtAsc(
-                RealNameVerificationStatus.PENDING
-        );
+                        RealNameVerificationStatus.PENDING
+                ).stream()
+                .filter(User::hasRealName)
+                .toList();
     }
 
     public List<User> findReviewedRealNameVerifications() {
         return userRepository.findByRealNameVerificationStatusInOrderByRealNameVerificationReviewedAtDescCreatedAtDesc(
                 List.of(RealNameVerificationStatus.APPROVED, RealNameVerificationStatus.REJECTED)
-        );
+        ).stream()
+                .filter(User::hasRealName)
+                .toList();
     }
 
     public User save(User user) {
@@ -97,7 +101,11 @@ public class UserService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(password));
         user.setEmailVerified(true);
         user.setRealName(normalizedRealName);
-        markVerificationSubmitted(user);
+        if (user.hasRealName()) {
+            markVerificationSubmitted(user);
+        } else {
+            clearVerification(user);
+        }
         return userRepository.save(user);
     }
 
@@ -188,21 +196,14 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean canWritePosts(User user) {
-        return user != null && user.canPublishPosts();
+        return user != null;
     }
 
     public String getPostPermissionMessage(User user) {
         if (user == null) {
             return "请先登录后再写博客";
         }
-        if (user.isAdmin()) {
-            return "";
-        }
-        return switch (user.getRealNameVerificationStatus()) {
-            case APPROVED -> "";
-            case PENDING -> "实名认证资料已提交管理员审核，审核通过后才能写博客";
-            case REJECTED -> "实名认证审核未通过，请到个人资料页修改实名信息后重新提交";
-        };
+        return "";
     }
 
     public boolean matchesPassword(String rawPassword, String encodedPassword) {
@@ -273,6 +274,11 @@ public class UserService implements UserDetailsService {
             return;
         }
 
+        if (!user.hasRealName()) {
+            clearVerification(user);
+            return;
+        }
+
         RealNameVerificationStatus currentStatus = user.getRealNameVerificationStatus();
         if (realNameChanged
                 || currentStatus == RealNameVerificationStatus.REJECTED
@@ -285,6 +291,12 @@ public class UserService implements UserDetailsService {
     private void markVerificationSubmitted(User user) {
         user.setRealNameVerificationStatus(RealNameVerificationStatus.PENDING);
         user.setRealNameVerificationSubmittedAt(LocalDateTime.now());
+        user.setRealNameVerificationReviewedAt(null);
+    }
+
+    private void clearVerification(User user) {
+        user.setRealNameVerificationStatus(RealNameVerificationStatus.PENDING);
+        user.setRealNameVerificationSubmittedAt(null);
         user.setRealNameVerificationReviewedAt(null);
     }
 

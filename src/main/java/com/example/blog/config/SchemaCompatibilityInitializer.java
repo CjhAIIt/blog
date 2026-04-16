@@ -42,6 +42,8 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
             ensurePostsCategorySupportsNewValues(connection, metaData);
             ensureUsersRoleColumn(connection, metaData);
             ensureUsersVerificationColumns(connection, metaData);
+            ensurePlansStatusSupportsNamedValues(connection, metaData);
+            ensureCommonIndexes(connection, metaData);
         } catch (SQLException e) {
             log.warn("Failed to apply schema compatibility upgrades", e);
         }
@@ -145,6 +147,71 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
         }
     }
 
+    private void ensurePlansStatusSupportsNamedValues(Connection connection, DatabaseMetaData metaData) throws SQLException {
+        String statusType = findColumnType(metaData, connection.getCatalog(), "plans", "status");
+        if (statusType == null) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("""
+                        ALTER TABLE plans
+                        ADD COLUMN status VARCHAR(16) NOT NULL DEFAULT 'IN_PROGRESS'
+                        """);
+            }
+            log.info("Added plans.status column with default IN_PROGRESS");
+            return;
+        }
+
+        String normalized = statusType.trim().toUpperCase(Locale.ROOT);
+        if (!normalized.startsWith("VARCHAR")) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("""
+                        ALTER TABLE plans
+                        MODIFY COLUMN status VARCHAR(16) NOT NULL DEFAULT 'IN_PROGRESS'
+                        """);
+            }
+            log.info("Upgraded plans.status from {} to VARCHAR(16)", statusType);
+        }
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    UPDATE plans
+                    SET status = CASE UPPER(TRIM(status))
+                        WHEN '1' THEN 'COMPLETED'
+                        WHEN 'COMPLETED' THEN 'COMPLETED'
+                        WHEN '2' THEN 'SHELVED'
+                        WHEN 'SHELVED' THEN 'SHELVED'
+                        ELSE 'IN_PROGRESS'
+                    END
+                    """);
+        }
+    }
+
+    private void ensureCommonIndexes(Connection connection, DatabaseMetaData metaData) throws SQLException {
+        ensureNamedIndex(connection, metaData, "users", "idx_users_verification_queue",
+                "CREATE INDEX idx_users_verification_queue ON users (real_name_verification_status, real_name_verification_submitted_at, created_at)");
+        ensureNamedIndex(connection, metaData, "users", "idx_users_role_created",
+                "CREATE INDEX idx_users_role_created ON users (role, created_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_status_created",
+                "CREATE INDEX idx_posts_status_created ON posts (status, created_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_category_status_created",
+                "CREATE INDEX idx_posts_category_status_created ON posts (category, status, created_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_author_status_created",
+                "CREATE INDEX idx_posts_author_status_created ON posts (author_id, status, created_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_schedule_queue",
+                "CREATE INDEX idx_posts_schedule_queue ON posts (status, scheduled_publish_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_plan_order",
+                "CREATE INDEX idx_posts_plan_order ON posts (plan_id, plan_order)");
+        ensureNamedIndex(connection, metaData, "plans", "idx_plans_public_updated",
+                "CREATE INDEX idx_plans_public_updated ON plans (is_public, updated_at)");
+        ensureNamedIndex(connection, metaData, "plans", "idx_plans_access_public_updated",
+                "CREATE INDEX idx_plans_access_public_updated ON plans (access_type, is_public, updated_at)");
+        ensureNamedIndex(connection, metaData, "plans", "idx_plans_author_updated",
+                "CREATE INDEX idx_plans_author_updated ON plans (author_id, updated_at)");
+        ensureNamedIndex(connection, metaData, "comments", "idx_comments_post_created",
+                "CREATE INDEX idx_comments_post_created ON comments (post_id, created_at)");
+        ensureNamedIndex(connection, metaData, "comments", "idx_comments_parent_created",
+                "CREATE INDEX idx_comments_parent_created ON comments (parent_comment_id, created_at)");
+    }
+
     static boolean isMySqlFamily(String productName) {
         if (productName == null || productName.isBlank()) {
             return false;
@@ -161,6 +228,13 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
         return normalized.startsWith("VARCHAR") || LEGACY_CONTENT_TYPES.contains(normalized);
     }
 
+    static boolean requiresPlanStatusUpgrade(String typeName) {
+        if (typeName == null || typeName.isBlank()) {
+            return false;
+        }
+        return !typeName.trim().toUpperCase(Locale.ROOT).startsWith("VARCHAR");
+    }
+
     private String findColumnType(DatabaseMetaData metaData, String catalog, String tableName, String columnName) throws SQLException {
         String type = readColumnType(metaData, catalog, tableName, columnName);
         if (type != null) {
@@ -175,6 +249,39 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
                 return columns.getString("TYPE_NAME");
             }
             return null;
+        }
+    }
+
+    private void ensureNamedIndex(Connection connection,
+                                  DatabaseMetaData metaData,
+                                  String tableName,
+                                  String indexName,
+                                  String createSql) throws SQLException {
+        if (hasIndex(metaData, connection.getCatalog(), tableName, indexName)) {
+            return;
+        }
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(createSql);
+        }
+        log.info("Created index {} on {}", indexName, tableName);
+    }
+
+    private boolean hasIndex(DatabaseMetaData metaData, String catalog, String tableName, String indexName) throws SQLException {
+        if (matchesIndex(metaData, catalog, tableName, indexName)) {
+            return true;
+        }
+        return matchesIndex(metaData, catalog, tableName.toUpperCase(Locale.ROOT), indexName.toUpperCase(Locale.ROOT));
+    }
+
+    private boolean matchesIndex(DatabaseMetaData metaData, String catalog, String tableName, String indexName) throws SQLException {
+        try (ResultSet indexes = metaData.getIndexInfo(catalog, null, tableName, false, false)) {
+            while (indexes.next()) {
+                String currentIndexName = indexes.getString("INDEX_NAME");
+                if (currentIndexName != null && currentIndexName.equalsIgnoreCase(indexName)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

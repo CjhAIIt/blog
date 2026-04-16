@@ -14,15 +14,15 @@
             <div class="mb-meta-ribbon">资料设置</div>
             <span class="mb-hero-kicker">个人资料</span>
             <h1 class="mb-hero-title">编辑个人资料</h1>
-            <p class="mb-hero-copy">头像、简介、实名信息和密码都可以在这里修改。</p>
+            <p class="mb-hero-copy">头像、简介、外链、可选实名信息和密码都可以在这里修改。</p>
             <div class="mb-hero-stats">
                 <article class="mb-hero-stat">
                     <span>实名状态</span>
                     <strong th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</strong>
                 </article>
                 <article class="mb-hero-stat">
-                    <span>发文权限</span>
-                    <strong th:text="${currentUser.canPublishPosts() ? '已开启' : '待审核'}">待审核</strong>
+                    <span>写作状态</span>
+                    <strong>可直接发文</strong>
                 </article>
                 <article class="mb-hero-stat">
                     <span>未读消息</span>
@@ -49,14 +49,14 @@
                     <div class="mb-section-note" th:text="${'@' + currentUser.username}">@username</div>
                     <div class="mb-author-badges">
                         <span class="mb-badge-pill" th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>
-                        <span class="mb-badge-pill" th:text="${currentUser.canPublishPosts() ? '可发文' : '暂不可发文'}">可发文</span>
+                        <span class="mb-badge-pill">可发文</span>
                         <span class="mb-badge-pill" th:if="${currentUser.admin}">管理员</span>
                     </div>
                 </div>
             </div>
             <div class="mb-key-list">
                 <div class="mb-key-item">
-                    <strong>实名审核</strong>
+                    <strong>实名资料</strong>
                     <span th:text="${currentUser.realNameVerificationStatusDisplayName}">待审核</span>
                 </div>
                 <div class="mb-key-item">
@@ -70,6 +70,24 @@
             </div>
         </section>
 
+        <section class="mb-anchor-grid">
+            <a class="mb-anchor-card" href="#identitySection">
+                <span>先看</span>
+                <strong>头像与实名</strong>
+                <p>适合先处理会直接出现在个人页和评论区里的内容。</p>
+            </a>
+            <a class="mb-anchor-card" href="#publicSection">
+                <span>再补</span>
+                <strong>公开资料</strong>
+                <p>简介、博客和 GitHub 整理完，主页看起来会完整很多。</p>
+            </a>
+            <a class="mb-anchor-card mb-anchor-card--wide" href="#securitySection">
+                <span>最后确认</span>
+                <strong>密码与安全项</strong>
+                <p>如果这次不改密码，可以最后扫一眼就走，不用在前面反复切换注意力。</p>
+            </a>
+        </section>
+
         <section class="mb-card mb-card--ink">
             <div class="mb-section-head">
                 <div>
@@ -79,8 +97,8 @@
             </div>
             <div class="mb-quick-grid">
                 <div class="mb-quick-link">
-                    <strong>真实姓名改动会重新审核</strong>
-                    <span>如果你修改了真实姓名，系统会重新走实名审核流程。</span>
+                    <strong>真实姓名现在是选填</strong>
+                    <span>不填也能发文；如果你填写或修改了真实姓名，系统才会重新走实名审核流程。</span>
                 </div>
                 <div class="mb-quick-link">
                     <strong>主页链接可以公开展示</strong>
@@ -89,10 +107,10 @@
             </div>
         </section>
 
-        <form class="mb-form-shell" th:object="${profileForm}" action="/space/edit" method="post" enctype="multipart/form-data">
+        <form class="mb-form-shell" th:object="${profileForm}" action="/space/edit" method="post" enctype="multipart/form-data" data-enhanced-form data-ready-text="资料整理好了就可以保存，提交时会自动锁定按钮。">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-            <section class="mb-card mb-card--soft">
+            <section class="mb-card mb-card--soft" id="identitySection">
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">头像与身份</h2>
@@ -111,16 +129,16 @@
                     <label class="mb-label"><input type="checkbox" name="useDefaultAvatar" value="true"> 恢复默认头像</label>
                 </div>
                 <div class="mb-field">
-                    <label class="mb-label" for="realName">真实姓名</label>
-                    <input class="mb-input" type="text" id="realName" th:field="*{realName}" maxlength="5" pattern="[\u4E00-\u9FFF]{1,5}" required>
+                    <label class="mb-label" for="realName">真实姓名（选填）</label>
+                    <input class="mb-input" type="text" id="realName" th:field="*{realName}" maxlength="5" pattern="[\u4E00-\u9FFF]{1,5}" autocapitalize="off" spellcheck="false" data-trim-input="true" data-pattern-mismatch-message="真实姓名需要 1 到 5 个中文字符。" placeholder="可留空，填写后进入审核">
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="username">用户名</label>
-                    <input class="mb-input" type="text" id="username" th:field="*{username}" required>
+                    <input class="mb-input" type="text" id="username" th:field="*{username}" minlength="3" maxlength="20" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" data-too-short-message="用户名至少 3 个字符。" required>
                 </div>
             </section>
 
-            <section class="mb-card">
+            <section class="mb-card" id="publicSection">
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">公开资料</h2>
@@ -129,15 +147,17 @@
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="qq">QQ</label>
-                    <input class="mb-input" type="text" id="qq" th:field="*{qq}">
+                    <input class="mb-input" type="text" id="qq" th:field="*{qq}" inputmode="numeric" spellcheck="false" data-trim-input="true">
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="personalBlogUrl">个人博客地址</label>
-                    <input class="mb-input" type="text" id="personalBlogUrl" th:field="*{personalBlogUrl}">
+                    <input class="mb-input" type="text" id="personalBlogUrl" th:field="*{personalBlogUrl}" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" data-normalize-url="true" data-normalize-url-message="已自动补成 https:// 开头。">
+                    <p class="mb-note">直接填域名也可以，离开输入框时会自动补上 `https://`。</p>
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="githubUrl">GitHub 主页</label>
-                    <input class="mb-input" type="text" id="githubUrl" th:field="*{githubUrl}">
+                    <input class="mb-input" type="text" id="githubUrl" th:field="*{githubUrl}" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" data-normalize-url="true" data-normalize-url-message="已自动补成 https:// 开头。">
+                    <p class="mb-note">像 `github.com/yourname` 这样直接填就行。</p>
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="bio">自我介绍</label>
@@ -145,7 +165,7 @@
                 </div>
             </section>
 
-            <section class="mb-card mb-card--accent">
+            <section class="mb-card mb-card--accent" id="securitySection">
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">密码修改</h2>
@@ -154,20 +174,20 @@
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="currentPassword">当前密码</label>
-                    <input class="mb-input" type="password" id="currentPassword" th:field="*{currentPassword}" autocomplete="current-password">
+                    <input class="mb-input" type="password" id="currentPassword" th:field="*{currentPassword}" data-password-current="true" data-password-toggle="true" autocapitalize="off" spellcheck="false" autocomplete="current-password">
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="newPassword">新密码</label>
-                    <input class="mb-input" type="password" id="newPassword" th:field="*{newPassword}" autocomplete="new-password">
+                    <input class="mb-input" type="password" id="newPassword" th:field="*{newPassword}" minlength="8" data-too-short-message="新密码至少 8 位。" data-password-primary="true" data-password-toggle="true" autocapitalize="off" spellcheck="false" autocomplete="new-password">
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="confirmPassword">确认新密码</label>
-                    <input class="mb-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
+                    <input class="mb-input" type="password" id="confirmPassword" th:field="*{confirmPassword}" data-password-confirm="true" data-password-toggle="true" autocapitalize="off" spellcheck="false" autocomplete="new-password">
                 </div>
             </section>
 
             <div class="mb-form-actions">
-                <button class="mb-btn" type="submit">保存资料</button>
+                <button class="mb-btn" type="submit" data-submitting-text="正在保存资料...">保存资料</button>
                 <a class="mb-btn-secondary" href="/space">返回空间</a>
             </div>
         </form>
@@ -188,5 +208,6 @@
         }
     });
 </script>
+<script src="/js/form-feedback.js"></script>
 </body>
 </html>

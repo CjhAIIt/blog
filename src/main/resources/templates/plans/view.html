@@ -57,7 +57,7 @@
                 <div class="ll-link-group">
                     <span class="ll-link-badge" th:text="${'作者 ' + plan.author.displayName}">作者</span>
                     <span class="ll-link-badge" th:text="${plan.accessTypeDisplayName}">计划类型</span>
-                    <span class="ll-link-badge" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
+                    <span class="ll-link-badge" th:text="${plan.statusDisplayName}">进行中</span>
                     <span class="ll-link-badge" th:text="${plan.public ? '可协作' : '私密计划'}">可协作</span>
                     <span class="ll-link-badge" th:if="${canJoinPlan and !isAuthor}">当前可参与</span>
                 </div>
@@ -86,8 +86,8 @@
             <div class="ll-space-overview-grid ll-plan-detail-metrics">
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">目标篇数</span>
-                    <strong th:text="${plan.expectedCount}">0</strong>
-                    <span class="ll-space-overview-note">计划最初给自己定下的总目标。</span>
+                    <strong th:text="${plan.expectedCount > 0 ? plan.expectedCount : '待定'}">待定</strong>
+                    <span class="ll-space-overview-note">目标还没定死也没关系，先把路线搭出来比强行填数字更重要。</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">已发布</span>
@@ -102,7 +102,8 @@
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">目录条目</span>
                     <strong th:text="${#lists.size(posts)}">0</strong>
-                    <span class="ll-space-overview-note">包括未发布或仍在整理中的目录项。</span>
+                    <span class="ll-space-overview-note"
+                          th:text="${isAuthor ? '包括未发布或仍在整理中的目录项。' : '这里展示当前对外可读、可以直接顺着看的目录条目。'}">这里展示当前对外可读、可以直接顺着看的目录条目。</span>
                 </article>
             </div>
             <div class="ll-plan-progress-track">

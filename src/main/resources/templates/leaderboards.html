@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,29 +43,52 @@
 
 <main class="ll-main">
     <div class="ll-shell">
-        <section class="ll-rank-page-hero ll-fade">
+        <section class="ll-rank-page-hero ll-fade" id="rankTop">
             <div>
                 <div class="ll-feed-top">
                     <span class="ll-kicker">站内排行榜</span>
-                    <span class="ll-link-badge" th:text="${selectedRankingPeriod.label}">周榜</span>
+                    <span class="ll-link-badge" th:text="${selectedRankingPeriod.label}">本周</span>
                     <span class="ll-link-badge">默认展示前 10 名</span>
                 </div>
                 <h1 class="ll-page-title">最近谁更活跃</h1>
-                <p class="ll-page-desc">这页更像站内的内容温度计。你能一眼看到最近谁在持续写、哪篇文章正被大家反复点开，以及这段时间站里的创作节奏往哪边走。</p>
+                <p class="ll-page-desc">这页更像站内的内容温度计。你可以一眼看到最近谁在稳定写、哪篇文章正在被反复点开，以及这段时间站里的创作节奏往哪边走。</p>
                 <div class="ll-rank-tabs">
                     <a class="ll-rank-tab"
                        th:each="period : ${rankingPeriods}"
                        th:classappend="${period == selectedRankingPeriod ? ' is-active' : ''}"
                        th:href="@{/leaderboards(rankPeriod=${period.slug})}"
-                       th:text="${period.label}">周榜</a>
+                       th:text="${period.label}">本周</a>
+                </div>
+                <div class="ll-link-group ll-page-jump-links">
+                    <a class="ll-link-badge" href="#contributionRank">先看创作榜</a>
+                    <a class="ll-link-badge" href="#likeRank">再看点赞榜</a>
+                    <a class="ll-link-badge" href="/posts">去最新文章</a>
                 </div>
             </div>
             <section class="ll-space-hero-panel ll-rank-page-panel">
                 <div class="ll-space-panel-label">当前观察窗口</div>
-                <div class="ll-space-panel-title" th:text="${selectedRankingPeriod.label + ' · 创作与热度双榜'}">周榜 · 创作与热度双榜</div>
-                <p class="ll-space-panel-copy" th:text="${selectedRankingPeriod.description + '。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。'}">按本周发布文章数量和点赞数实时统计。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。</p>
+                <div class="ll-space-panel-title" th:text="${selectedRankingPeriod.label + ' · 创作与热度双榜'}">本周 · 创作与热度双榜</div>
+                <p class="ll-space-panel-copy" th:text="${selectedRankingPeriod.description + '。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。'}">按当前周期内发布文章数量和点赞数统计。如果你只是想快速看看最近站里有没有新的内容势头，从这里扫一眼会比慢慢翻列表快很多。</p>
             </section>
         </section>
+
+        <div class="ll-glance-grid ll-glance-grid--browse ll-fade">
+            <article class="ll-glance-card">
+                <span>创作榜怎么用</span>
+                <strong>更适合先找作者，再顺着主页继续追更新</strong>
+                <p>如果你想看谁最近一直在稳定写，创作榜会比翻文章列表更快给出方向。</p>
+            </article>
+            <article class="ll-glance-card">
+                <span>点赞榜怎么用</span>
+                <strong>更适合直接点进单篇，看看这期大家在关注什么</strong>
+                <p>热度高的文章通常代表一个阶段内的共同关注点，先读榜首通常最有信息量。</p>
+            </article>
+            <article class="ll-glance-card">
+                <span>观察窗口</span>
+                <strong th:text="${selectedRankingPeriod.label + ' 视角会决定你看到的是短期热度还是更长节奏'}">本周视角会决定你看到的是短期热度还是更长节奏</strong>
+                <p>如果你想看阶段性变化，切换时间窗口比在同一页里反复比较数字更直接。</p>
+            </article>
+        </div>
 
         <section class="ll-space-overview-card ll-rank-overview-card ll-fade">
             <div class="ll-editor-panel-head">
@@ -74,40 +96,40 @@
                     <h2 class="ll-side-title">榜单速览</h2>
                     <p class="ll-editor-caption">先看一眼这一期榜单的大致气氛，再决定是去追作者还是直接点进文章。</p>
                 </div>
-                <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+                <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">本周</span>
             </div>
             <div class="ll-space-overview-grid">
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">统计周期</span>
-                    <strong th:text="${selectedRankingPeriod.label}">周榜</strong>
+                    <strong th:text="${selectedRankingPeriod.label}">本周</strong>
                     <span class="ll-space-overview-note" th:text="${selectedRankingPeriod.description}">按当前周期内发布的文章数量统计</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">创作榜领跑</span>
                     <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '待更新' : contributionLeaderboard[0].postCount + ' 篇'}">待更新</strong>
-                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(contributionLeaderboard) ? '这个周期里还没有新的创作记录。' : '@' + contributionLeaderboard[0].username + ' 暂时写得最多'}">这个周期里还没有新的创作记录。</span>
+                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(contributionLeaderboard) ? '这个周期里还没有新的创作记录。' : '@' + contributionLeaderboard[0].username + ' 暂时写得最稳。'}">这个周期里还没有新的创作记录。</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">点赞榜领跑</span>
                     <strong th:text="${#lists.isEmpty(likeLeaderboard) ? '待更新' : likeLeaderboard[0].likeCount + ' 赞'}">待更新</strong>
-                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(likeLeaderboard) ? '这个周期里还没有文章进入热度榜。' : '当前最热内容来自《' + likeLeaderboard[0].title + '》'}">这个周期里还没有文章进入热度榜。</span>
+                    <span class="ll-space-overview-note" th:text="${#lists.isEmpty(likeLeaderboard) ? '这个周期里还没有文章进入热度榜。' : '当前最热内容来自《' + likeLeaderboard[0].title + '》。'}">这个周期里还没有文章进入热度榜。</span>
                 </article>
                 <article class="ll-space-overview-metric">
                     <span class="ll-space-overview-label">展示范围</span>
                     <strong>前 10 名</strong>
-                    <span class="ll-space-overview-note">创作榜看谁持续输出，点赞榜看哪篇内容正在被集中阅读。</span>
+                    <span class="ll-space-overview-note">创作榜更适合看谁在持续输出，点赞榜更适合看哪篇内容正在被集中阅读。</span>
                 </article>
             </div>
         </section>
 
         <section class="ll-rank-grid ll-rank-grid--page">
-            <article class="ll-rank-card ll-fade">
+            <article class="ll-rank-card ll-fade" id="contributionRank">
                 <div class="ll-rank-card-head">
                     <div>
                         <h2 class="ll-side-title">发文贡献榜</h2>
                         <p class="ll-side-text" th:text="${selectedRankingPeriod.description + '，更适合看这段时间谁一直在稳定更新。'}">按当前周期发文数实时统计，更适合看这段时间谁一直在稳定更新。</p>
                     </div>
-                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">本周</span>
                 </div>
 
                 <section class="ll-rank-lead" th:if="${!#lists.isEmpty(contributionLeaderboard)}">
@@ -141,18 +163,28 @@
                     </a>
                 </div>
 
-                <div class="ll-empty ll-rank-empty" th:if="${#lists.isEmpty(contributionLeaderboard)}">
+                <div class="ll-empty ll-empty--actionable ll-rank-empty" th:if="${#lists.isEmpty(contributionLeaderboard)}">
                     当前周期还没有新的发文记录。
+                </div>
+                <div class="ll-section-foot">
+                    <span class="ll-section-foot-note"
+                          th:text="${#lists.isEmpty(contributionLeaderboard) ? '可以先去文章区转一圈，等下一轮更新回来再看谁开始稳定发文。' : '看完创作榜后，点进作者主页通常比继续翻列表更快找到同系列内容。'}">看完创作榜后，点进作者主页通常比继续翻列表更快找到同系列内容。</span>
+                    <div class="ll-link-group">
+                        <a class="ll-btn-secondary"
+                           th:if="${!#lists.isEmpty(contributionLeaderboard)}"
+                           th:href="@{/users/{username}(username=${contributionLeaderboard[0].username})}">打开榜首主页</a>
+                        <a class="ll-btn-secondary" href="/posts">看最新文章</a>
+                    </div>
                 </div>
             </article>
 
-            <article class="ll-rank-card ll-fade">
+            <article class="ll-rank-card ll-fade" id="likeRank">
                 <div class="ll-rank-card-head">
                     <div>
                         <h2 class="ll-side-title">点赞热度榜</h2>
-                        <p class="ll-side-text">统计本周期内文章获得的点赞数，更适合发现哪些内容正在被集中阅读和收藏。</p>
+                        <p class="ll-side-text">统计当前周期内文章获得的点赞数，更适合发现哪些内容正在被集中阅读和收藏。</p>
                     </div>
-                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">周榜</span>
+                    <span class="ll-meta-pill" th:text="${selectedRankingPeriod.label}">本周</span>
                 </div>
 
                 <section class="ll-rank-lead ll-rank-lead--likes" th:if="${!#lists.isEmpty(likeLeaderboard)}">
@@ -179,15 +211,25 @@
                             <div>
                                 <div class="ll-rank-title" th:text="${rankPost.title}">文章标题</div>
                                 <div class="ll-rank-subtitle" th:text="${'作者：' + rankPost.author.username}">作者：用户名</div>
-                                <div class="ll-rank-item-note" th:text="${rankPost.categoryDisplayName + ' · 继续读这篇就能看到它为什么会被点进来'}">分类 · 继续读这篇就能看到它为什么会被点进来</div>
+                                <div class="ll-rank-item-note" th:text="${rankPost.categoryDisplayName + ' · 继续读这篇就能看出它为什么会被点进来'}">分类 · 继续读这篇就能看出它为什么会被点进来</div>
                             </div>
                         </div>
                         <strong class="ll-rank-value" th:text="${rankPost.likeCount + ' 赞'}">0 赞</strong>
                     </a>
                 </div>
 
-                <div class="ll-empty ll-rank-empty" th:if="${#lists.isEmpty(likeLeaderboard)}">
+                <div class="ll-empty ll-empty--actionable ll-rank-empty" th:if="${#lists.isEmpty(likeLeaderboard)}">
                     当前周期还没有文章进入点赞榜。
+                </div>
+                <div class="ll-section-foot">
+                    <span class="ll-section-foot-note"
+                          th:text="${#lists.isEmpty(likeLeaderboard) ? '如果这期热度榜还空着，先去最新文章或搜索页逛逛，通常更容易碰到新内容。' : '点赞榜更适合直接点进单篇文章，先读榜首通常就能看出这期大家在关注什么。'}">点赞榜更适合直接点进单篇文章，先读榜首通常就能看出这期大家在关注什么。</span>
+                    <div class="ll-link-group">
+                        <a class="ll-btn-secondary"
+                           th:if="${!#lists.isEmpty(likeLeaderboard)}"
+                           th:href="@{/posts/{id}(id=${likeLeaderboard[0].id})}">直达榜首文章</a>
+                        <a class="ll-btn-secondary" href="/search?keyword=">去搜索更多</a>
+                    </div>
                 </div>
             </article>
         </section>
@@ -197,7 +239,7 @@
                 <span class="ll-footer-brand">© 2026 博客</span>
                 <div class="ll-footer-tags">
                     <span>排行榜</span>
-                    <span th:text="${selectedRankingPeriod.label + ' 观察窗口'}">周榜观察窗口</span>
+                    <span th:text="${selectedRankingPeriod.label + ' 观察窗口'}">本周观察窗口</span>
                     <a href="/posts">去看最新文章</a>
                 </div>
             </div>

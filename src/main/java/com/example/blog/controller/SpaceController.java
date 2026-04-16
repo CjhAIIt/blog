@@ -149,13 +149,12 @@ public class SpaceController {
         if (!StringUtils.hasText(normalizedUsername) || normalizedUsername.length() < 3 || normalizedUsername.length() > 20) {
             return redirectWithError("用户名长度应在 3 到 20 个字符之间", profileForm, redirectAttributes);
         }
-        if (!StringUtils.hasText(profileForm.getRealName())) {
-            return redirectWithError("真实姓名不能为空", profileForm, redirectAttributes);
-        }
-        try {
-            userService.normalizeRealName(profileForm.getRealName());
-        } catch (IllegalArgumentException e) {
-            return redirectWithError(e.getMessage(), profileForm, redirectAttributes);
+        if (StringUtils.hasText(profileForm.getRealName())) {
+            try {
+                userService.normalizeRealName(profileForm.getRealName());
+            } catch (IllegalArgumentException e) {
+                return redirectWithError(e.getMessage(), profileForm, redirectAttributes);
+            }
         }
         if (StringUtils.hasText(profileForm.getQq()) && !profileForm.getQq().trim().matches("\\d{5,12}")) {
             return redirectWithError("QQ 号格式不正确", profileForm, redirectAttributes);
@@ -230,11 +229,17 @@ public class SpaceController {
     private String buildProfileUpdatedMessage(RealNameVerificationStatus previousStatus,
                                               String previousRealName,
                                               User updatedUser) {
-        boolean verificationResubmitted = updatedUser.getRealNameVerificationStatus() == RealNameVerificationStatus.PENDING
+        boolean hadRealName = StringUtils.hasText(previousRealName);
+        boolean hasRealName = StringUtils.hasText(updatedUser.getRealName());
+        boolean verificationResubmitted = hasRealName
+                && updatedUser.getRealNameVerificationStatus() == RealNameVerificationStatus.PENDING
                 && (!Objects.equals(previousRealName, updatedUser.getRealName())
                 || previousStatus == RealNameVerificationStatus.REJECTED);
+        if (!hasRealName && hadRealName) {
+            return "个人资料已更新，实名信息已清空；后续如果需要认证，可以随时再补。";
+        }
         if (verificationResubmitted) {
-            return "个人资料已更新，实名认证资料已重新提交管理员审核。审核通过前不能写博客。";
+            return "个人资料已更新，实名信息已提交管理员审核；审核期间不影响正常写作。";
         }
         return "个人资料已更新";
     }

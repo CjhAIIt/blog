@@ -93,7 +93,7 @@ public class MainController {
             userService.registerUser(user.getUsername(), user.getEmail(), user.getPassword(), user.getRealName());
             redirectAttributes.addFlashAttribute(
                     "successMessage",
-                    "注册成功，实名认证资料已提交管理员审核。审核通过后才能写博客，请先登录查看状态。"
+                    "注册成功。真实姓名现在是选填项，不填写也可以直接发文；如果你填写了实名信息，后台会继续审核。"
             );
             return "redirect:/login";
         } catch (RuntimeException e) {
@@ -126,15 +126,13 @@ public class MainController {
             model.addAttribute("error", "用户名长度应在 3 到 20 个字符之间");
             return;
         }
-        if (!StringUtils.hasText(user.getRealName())) {
-            model.addAttribute("error", "注册时必须填写真实姓名");
-            return;
-        }
-        try {
-            userService.normalizeRealName(user.getRealName());
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return;
+        if (StringUtils.hasText(user.getRealName())) {
+            try {
+                userService.normalizeRealName(user.getRealName());
+            } catch (IllegalArgumentException e) {
+                model.addAttribute("error", e.getMessage());
+                return;
+            }
         }
         if (!StringUtils.hasText(user.getPassword()) || user.getPassword().length() < 8) {
             model.addAttribute("error", "密码长度至少 8 位");

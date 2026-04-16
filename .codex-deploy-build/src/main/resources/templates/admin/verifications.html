@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实名认证审核 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link is-active" href="/admin/verifications">实名审核</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                </a>
+                <a class="ll-header-link" th:href="@{/users/{username}(username=${currentUser.username})}">我的主页</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-space-hero-v2 ll-fade" id="adminTop">
+            <div class="ll-space-hero-grid">
+                <div class="ll-space-hero-copy">
+                    <span class="ll-kicker">Admin Panel</span>
+                    <h1 class="ll-space-title">实名认证审核</h1>
+                    <p class="ll-space-copy">这页更像站里的准入闸口。你在这里确认谁可以开始写、谁还需要回去补资料，也能顺手回看最近一批审核到底是怎么处理的。</p>
+                    <div class="ll-space-statline">
+                        <span class="ll-meta-pill" th:text="${pendingUsers.size() + ' 条待审核'}">0 条待审核</span>
+                        <span class="ll-meta-pill" th:text="${reviewedUsers.size() + ' 条已处理'}">0 条已处理</span>
+                        <span class="ll-meta-pill">实名认证通过后开放写作</span>
+                    </div>
+                    <div class="ll-link-group ll-page-jump-links">
+                        <a class="ll-link-badge" href="#pendingQueue">待审核队列</a>
+                        <a class="ll-link-badge" href="#reviewHistory">最近处理</a>
+                        <a class="ll-link-badge" href="/notifications">消息中心</a>
+                    </div>
+                </div>
+                <section class="ll-space-hero-panel">
+                    <div class="ll-space-panel-label">审核原则</div>
+                    <div class="ll-space-panel-title">先判断资料完整，再决定是否放行</div>
+                    <p class="ll-space-panel-copy">建议优先处理刚提交的新申请。姓名格式不完整、信息明显异常或者资料留空时，直接驳回通常会比来回等待更省心。</p>
+                </section>
+            </div>
+        </section>
+
+        <section class="ll-space-overview-card ll-admin-summary-card ll-fade">
+            <div class="ll-editor-panel-head">
+                <div>
+                    <h2 class="ll-side-title">审核概览</h2>
+                    <p class="ll-editor-caption">先看队列压力和最近处理节奏，再决定这一轮应该优先清哪一批。</p>
+                </div>
+                <span class="ll-meta-pill" th:text="${'管理员：' + currentUser.displayName}">管理员：当前管理员</span>
+            </div>
+            <div class="ll-space-overview-grid">
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">待审核队列</span>
+                    <strong th:text="${pendingUsers.size()}">0</strong>
+                    <span class="ll-space-overview-note">优先清掉刚提交的申请，避免用户一直卡在不能写作的状态。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">最近已处理</span>
+                    <strong th:text="${reviewedUsers.size()}">0</strong>
+                    <span class="ll-space-overview-note">这里记录最近一批处理结果，方便快速回看自己的审核节奏。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">准入规则</span>
+                    <strong>实名认证通过</strong>
+                    <span class="ll-space-overview-note">审核通过后开放写文章、导入 Markdown 和编辑内容权限。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">当前建议</span>
+                    <strong th:text="${#lists.isEmpty(pendingUsers) ? '队列已清空' : '先处理新提交'}">先处理新提交</strong>
+                    <span class="ll-space-overview-note">如果资料明显不完整，直接驳回让对方修改，通常会更高效。</span>
+                </article>
+            </div>
+        </section>
+
+        <div class="ll-content-grid ll-content-grid--admin">
+            <section class="ll-section-card ll-fade" id="pendingQueue">
+                <div class="ll-editor-panel-head">
+                    <div>
+                        <h2 class="ll-side-title">待审核</h2>
+                        <p class="ll-side-text">这里只放仍处于待审核状态的申请，打开以后应该能很快做出“通过”还是“退回修改”的判断。</p>
+                    </div>
+                    <span class="ll-meta-pill" th:text="${pendingUsers.size() + ' 条待处理'}">0 条待处理</span>
+                </div>
+
+                <div class="ll-admin-note-strip">优先看真实姓名是否完整、账号信息是否正常；如果信息不够支撑判断，直接驳回让用户重新提交会更稳。</div>
+
+                <div th:if="${#lists.isEmpty(pendingUsers)}" class="ll-empty ll-empty--actionable">当前没有待审核的实名认证申请。</div>
+
+                <div class="ll-admin-queue-grid" th:if="${!#lists.isEmpty(pendingUsers)}">
+                    <article class="ll-admin-queue-card" th:each="user : ${pendingUsers}">
+                        <div class="ll-admin-queue-head">
+                            <div class="ll-profile-inline">
+                                <img class="ll-avatar-photo ll-avatar-photo--lg" th:src="${user.displayAvatarUrl}" th:alt="${user.username}">
+                                <div>
+                                    <h3 class="ll-feed-title" th:text="${user.displayName}">张三</h3>
+                                    <div class="ll-draft-meta">
+                                        <span class="ll-meta-pill" th:text="${user.realNameVerificationStatusDisplayName}">待审核</span>
+                                        <span th:text="${'@' + user.username}">@zhangsan</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="ll-link-badge" th:text="${user.realNameVerificationSubmittedAt != null ? #temporals.format(user.realNameVerificationSubmittedAt, 'yyyy-MM-dd HH:mm') : '刚刚提交'}">2026-04-02 20:00</span>
+                        </div>
+                        <div class="ll-admin-meta-list">
+                            <div class="ll-admin-meta-row">
+                                <span>真实姓名</span>
+                                <strong th:text="${user.realName != null ? user.realName : '未填写'}">张三</strong>
+                            </div>
+                            <div class="ll-admin-meta-row">
+                                <span>邮箱</span>
+                                <strong th:text="${user.email}">demo@example.com</strong>
+                            </div>
+                            <div class="ll-admin-meta-row">
+                                <span>注册时间</span>
+                                <strong th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : '未记录'}">2026-04-02 20:00</strong>
+                            </div>
+                        </div>
+                        <div class="ll-form-actions">
+                            <a class="ll-btn-secondary" th:href="@{/users/{username}(username=${user.username})}">查看主页</a>
+                            <form th:action="@{/admin/verifications/{id}/approve(id=${user.id})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="ll-btn" type="submit">审核通过</button>
+                            </form>
+                            <form th:action="@{/admin/verifications/{id}/reject(id=${user.id})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="ll-btn-secondary" type="submit">驳回</button>
+                            </form>
+                        </div>
+                    </article>
+                </div>
+                <div class="ll-section-foot">
+                    <span class="ll-section-foot-note"
+                          th:text="${#lists.isEmpty(pendingUsers) ? '队列已经清空，可以去回看最近一批处理记录，或者回消息中心等新的提交。' : '如果这一轮已经处理完，顺手回看最近记录，能更快对齐自己的审核节奏。'}">如果这一轮已经处理完，顺手回看最近记录，能更快对齐自己的审核节奏。</span>
+                    <div class="ll-link-group">
+                        <a class="ll-btn-secondary" href="#reviewHistory">看最近处理</a>
+                        <a class="ll-btn-secondary" href="/notifications">去消息中心</a>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="ll-side-stack">
+                <section class="ll-side-card is-sticky ll-fade">
+                    <h2 class="ll-side-title">审核时先看什么</h2>
+                    <div class="ll-admin-note-list">
+                        <article class="ll-admin-note">
+                            <strong>先看实名字段</strong>
+                            <span>如果真实姓名为空、格式异常或者明显不是正常姓名，通常可以直接驳回。</span>
+                        </article>
+                        <article class="ll-admin-note">
+                            <strong>再看账号信息</strong>
+                            <span>邮箱和注册时间能帮助你判断这是不是一条正常的新注册申请。</span>
+                        </article>
+                        <article class="ll-admin-note">
+                            <strong>最后决定是否放行</strong>
+                            <span>通过意味着开放写作权限，所以信息拿不准时，退回修改会比勉强通过更稳。</span>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="ll-side-card ll-fade" id="reviewHistory">
+                    <h2 class="ll-side-title">最近处理记录</h2>
+                    <div th:if="${#lists.isEmpty(reviewedUsers)}" class="ll-empty ll-empty--actionable">还没有处理过实名认证申请。</div>
+                    <div class="ll-admin-record-list" th:if="${!#lists.isEmpty(reviewedUsers)}">
+                        <article class="ll-admin-record-item" th:each="user : ${reviewedUsers}">
+                            <div class="ll-draft-meta">
+                                <span class="ll-meta-pill" th:text="${user.realNameVerificationStatusDisplayName}">已通过</span>
+                                <span th:text="${user.realNameVerificationReviewedAt != null ? #temporals.format(user.realNameVerificationReviewedAt, 'yyyy-MM-dd HH:mm') : '刚刚处理'}">2026-04-02 20:10</span>
+                            </div>
+                            <div class="ll-profile-inline">
+                                <img class="ll-avatar-photo ll-avatar-photo--sm" th:src="${user.displayAvatarUrl}" th:alt="${user.username}">
+                                <div>
+                                    <div class="ll-side-title" th:text="${user.displayName}">张三</div>
+                                    <p class="ll-side-text" th:text="${'@' + user.username + ' · 真实姓名：' + (user.realName != null ? user.realName : '未填写')}">@zhangsan · 真实姓名：张三</p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="ll-section-foot">
+                        <span class="ll-section-foot-note">看完最近记录后，可以回到待审核队列继续清单，或者直接打开消息中心等新的动作进来。</span>
+                        <div class="ll-link-group">
+                            <a class="ll-btn-secondary" href="#pendingQueue">回待审核队列</a>
+                            <a class="ll-btn-secondary" href="/notifications">消息中心</a>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>管理员审核台</span>
+                    <span th:text="${pendingUsers.size() + ' 条待审核'}">0 条待审核</span>
+                    <a href="/notifications">消息中心</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

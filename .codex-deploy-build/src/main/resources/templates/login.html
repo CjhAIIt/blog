@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/about">关于</a>
+                <a class="ll-header-link" href="/register">注册</a>
+            </nav>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div class="ll-auth-layout ll-auth-layout--entry">
+            <section class="ll-auth-side ll-auth-side--entry ll-fade">
+                <span class="ll-auth-kicker">Login</span>
+                <h1 class="ll-auth-title">回来看看，下一篇就从这里接上</h1>
+                <p class="ll-auth-copy">
+                    登录之后先看草稿、消息和审核状态就够了。实名还没通过也没关系，资料、头像和个人页都可以先慢慢整理。
+                </p>
+
+                <div class="ll-auth-badges">
+                    <span class="ll-link-badge">草稿箱</span>
+                    <span class="ll-link-badge">消息提醒</span>
+                    <span class="ll-link-badge">审核状态</span>
+                </div>
+
+                <div class="ll-auth-highlight-grid">
+                    <article class="ll-auth-highlight">
+                        <strong>先看审核进度</strong>
+                        <p>刚注册的话，先确认实名有没有通过，后面能不能发文就看这里。</p>
+                    </article>
+                    <article class="ll-auth-highlight">
+                        <strong>再回到草稿箱</strong>
+                        <p>审核通过后最顺手的入口还是草稿箱，能直接接着写，不用重新找。</p>
+                    </article>
+                    <article class="ll-auth-highlight">
+                        <strong>顺手把资料补齐</strong>
+                        <p>头像、简介和公开展示名都可以之后再慢慢收，不必一开始全填满。</p>
+                    </article>
+                </div>
+
+                <section class="ll-side-card ll-auth-guide-card">
+                    <h2 class="ll-side-title">登录后先看这三件事</h2>
+                    <div class="ll-auth-step-list">
+                        <div class="ll-auth-step">
+                            <strong>01</strong>
+                            <span>看看审核状态有没有更新，避免一直卡在“还不能发文”。</span>
+                        </div>
+                        <div class="ll-auth-step">
+                            <strong>02</strong>
+                            <span>去草稿箱接着写最近那篇，不用重新开一篇空稿子。</span>
+                        </div>
+                        <div class="ll-auth-step">
+                            <strong>03</strong>
+                            <span>有空再整理个人页，把别人点进来第一眼看到的内容收顺。</span>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <section class="ll-auth-card ll-auth-card--entry ll-fade">
+                <div class="ll-auth-card-head">
+                    <span class="ll-auth-kicker">Sign In</span>
+                    <span class="ll-meta-pill">实名通过后开放发文</span>
+                </div>
+                <h2 class="ll-side-title">欢迎回来</h2>
+                <p class="ll-side-text">还是用注册时的用户名登录，主页地址和登录名都不会因为补资料而变化。</p>
+
+                <div th:if="${successMessage}" class="ll-status ll-status--success"><span th:text="${successMessage}"></span></div>
+                <div th:if="${param.error}" class="ll-status ll-status--error">登录失败，请确认用户名和密码是否正确。</div>
+                <div th:if="${param.logout}" class="ll-status ll-status--success">你已退出登录。</div>
+
+                <form class="ll-auth-form" th:action="@{/login}" method="post" data-enhanced-form data-ready-text="账号信息填好后就能直接登录。">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                    <div class="ll-form-field">
+                        <label class="ll-form-label" for="username">用户名</label>
+                        <input class="ll-input" type="text" id="username" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" placeholder="请输入注册时使用的用户名" required>
+                    </div>
+
+                    <div class="ll-form-field">
+                        <label class="ll-form-label" for="password">密码</label>
+                        <input class="ll-input" type="password" id="password" name="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" data-password-toggle="true" placeholder="请输入密码" required>
+                    </div>
+
+                    <div class="ll-auth-card-note">
+                        刚注册完也可以先登录完善资料。只是实名认证通过之前，写作、导入 Markdown 和发布入口还不会开放。
+                    </div>
+
+                    <div class="ll-form-actions">
+                        <button class="ll-btn" type="submit" data-submitting-text="正在登录...">登录</button>
+                        <a class="ll-btn-secondary" href="/register">去注册</a>
+                    </div>
+                </form>
+
+                <div class="ll-auth-mini-links">
+                    <a href="/register">还没有账号</a>
+                    <a href="/about">先看看这个站在写什么</a>
+                    <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
+                </div>
+            </section>
+        </div>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>登录入口</span>
+                    <span>草稿与资料管理</span>
+                    <a href="/register">创建账号</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+<script src="/js/form-feedback.js"></script>
+</body>
+</html>

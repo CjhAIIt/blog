@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('登录')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <section class="mb-hero mb-hero--auth">
+            <span class="mb-hero-kicker">登录</span>
+            <h1 class="mb-hero-title">回来看看，下一篇从哪接着写</h1>
+            <p class="mb-hero-copy">登录之后先看审核状态、草稿和消息就够了。实名还没通过也没关系，资料和个人页都可以先慢慢整理。</p>
+            <div class="mb-grid-two mb-auth-glance">
+                <article class="mb-stat">
+                    <strong>草稿箱</strong>
+                    <span>回到最近那篇，直接续写。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong>消息</strong>
+                    <span>评论提醒和站内通知都会在这里汇总。</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+            <div th:if="${param.error}" class="mb-alert mb-alert--error">登录失败，请检查用户名和密码。</div>
+            <div th:if="${param.logout}" class="mb-alert mb-alert--success">你已退出登录。</div>
+            <form class="mb-form-shell" th:action="@{/login}" method="post" data-enhanced-form data-ready-text="用户名和密码填好后就能直接登录。">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-field">
+                    <label class="mb-label" for="username">用户名</label>
+                    <input class="mb-input" type="text" id="username" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" placeholder="请输入注册时使用的用户名" required>
+                </div>
+                <div class="mb-field">
+                    <label class="mb-label" for="password">密码</label>
+                    <input class="mb-input" type="password" id="password" name="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" data-password-toggle="true" placeholder="请输入密码" required>
+                </div>
+                <div class="mb-note">刚注册完也能先登录改资料，只是实名审核通过前还不能发文。</div>
+                <div class="mb-form-actions">
+                    <button class="mb-btn" type="submit" data-submitting-text="正在登录...">登录</button>
+                    <a class="mb-btn-secondary" href="/register">去注册</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="mb-card">
+            <div class="mb-section-head">
+                <h2 class="mb-section-title">登录后先看这三件事</h2>
+                <div class="mb-section-note">别急着乱点，先把入口认熟。</div>
+            </div>
+            <div class="mb-list mb-auth-flow">
+                <article class="mb-key-item">
+                    <strong>先看审核状态</strong>
+                    <span>如果还在审核中，先别急着找发布入口，先确认实名有没有通过。</span>
+                </article>
+                <article class="mb-key-item">
+                    <strong>再回草稿箱</strong>
+                    <span>最近那篇通常就在最上面，直接接着写比重新新建一篇更顺。</span>
+                </article>
+                <article class="mb-key-item">
+                    <strong>最后补资料</strong>
+                    <span>头像、简介、公开展示名都可以之后慢慢收，不需要一次填满。</span>
+                </article>
+            </div>
+        </section>
+    </div>
+</main>
+<script src="/js/form-feedback.js"></script>
+</body>
+</html>

@@ -11,15 +11,32 @@
         <section class="mb-hero mb-hero--auth">
             <span class="mb-hero-kicker">登录</span>
             <h1 class="mb-hero-title">回来看看，下一篇从哪接着写</h1>
-            <p class="mb-hero-copy">登录之后先看审核状态、草稿和消息就够了。实名还没通过也没关系，资料和个人页都可以先慢慢整理。</p>
+            <p class="mb-hero-copy">登录之后先回草稿、消息和个人页就够了。真实姓名现在不影响发文，想补认证时再去资料页处理也来得及。</p>
             <div class="mb-grid-two mb-auth-glance">
                 <article class="mb-stat">
                     <strong>草稿箱</strong>
                     <span>回到最近那篇，直接续写。</span>
                 </article>
                 <article class="mb-stat">
-                    <strong>消息</strong>
-                    <span>评论提醒和站内通知都会在这里汇总。</span>
+                    <strong>资料页</strong>
+                    <span>想补简介、外链或实名信息，都能从这里继续整理。</span>
+                </article>
+            </div>
+            <div class="mb-glance-grid">
+                <article class="mb-glance-card">
+                    <span>回草稿续写</span>
+                    <strong>最近那篇通常就在最上面，先从这里接上</strong>
+                    <p>如果只是回来继续写，先看草稿会比重新开文章更顺。</p>
+                </article>
+                <article class="mb-glance-card">
+                    <span>去消息中心</span>
+                    <strong>互动集中处理，脑子会更清爽</strong>
+                    <p>评论、回复和提醒都在同一个入口里，处理完再继续创作更省心。</p>
+                </article>
+                <article class="mb-glance-card mb-glance-card--wide">
+                    <span>资料页随时补</span>
+                    <strong>实名、简介和外链都能登录后再慢慢整理</strong>
+                    <p>现在先回来使用账号，不需要为了资料是否填满而在登录前停住。</p>
                 </article>
             </div>
         </section>
@@ -28,19 +45,19 @@
             <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
             <div th:if="${param.error}" class="mb-alert mb-alert--error">登录失败，请检查用户名和密码。</div>
             <div th:if="${param.logout}" class="mb-alert mb-alert--success">你已退出登录。</div>
-            <form class="mb-form-shell" th:action="@{/login}" method="post">
+            <form class="mb-form-shell" th:action="@{/login}" method="post" data-enhanced-form data-ready-text="用户名和密码填好后就能直接登录。">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-field">
                     <label class="mb-label" for="username">用户名</label>
-                    <input class="mb-input" type="text" id="username" name="username" autocomplete="username" placeholder="请输入注册时使用的用户名" required>
+                    <input class="mb-input" type="text" id="username" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" placeholder="请输入注册时使用的用户名" required>
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="password">密码</label>
-                    <input class="mb-input" type="password" id="password" name="password" autocomplete="current-password" placeholder="请输入密码" required>
+                    <input class="mb-input" type="password" id="password" name="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" data-password-toggle="true" placeholder="请输入密码" required>
                 </div>
-                <div class="mb-note">刚注册完也能先登录改资料，只是实名审核通过前还不能发文。</div>
+                <div class="mb-note">刚注册完也能先登录开写。真实姓名不再挡住发文；如果后面需要认证，再去资料页补就可以。</div>
                 <div class="mb-form-actions">
-                    <button class="mb-btn" type="submit">登录</button>
+                    <button class="mb-btn" type="submit" data-submitting-text="正在登录...">登录</button>
                     <a class="mb-btn-secondary" href="/register">去注册</a>
                 </div>
             </form>
@@ -53,20 +70,21 @@
             </div>
             <div class="mb-list mb-auth-flow">
                 <article class="mb-key-item">
-                    <strong>先看审核状态</strong>
-                    <span>如果还在审核中，先别急着找发布入口，先确认实名有没有通过。</span>
+                    <strong>先回草稿箱</strong>
+                    <span>最近那篇通常就在最上面，直接接着写会比重新新建一篇更顺。</span>
                 </article>
                 <article class="mb-key-item">
-                    <strong>再回草稿箱</strong>
-                    <span>最近那篇通常就在最上面，直接接着写比重新新建一篇更顺。</span>
+                    <strong>需要认证再补实名</strong>
+                    <span>真实姓名改成了选填项，想补认证时再去资料页提交，不会影响当前写作。</span>
                 </article>
                 <article class="mb-key-item">
                     <strong>最后补资料</strong>
-                    <span>头像、简介、公开展示名都可以之后慢慢收，不需要一次填满。</span>
+                    <span>头像、简介、公开展示名和外链都可以之后慢慢收，不需要一次填满。</span>
                 </article>
             </div>
         </section>
     </div>
 </main>
+<script src="/js/form-feedback.js"></script>
 </body>
 </html>

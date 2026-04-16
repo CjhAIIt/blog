@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${plan.name + ' - 计划详情'}">计划详情 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link is-active" href="/plans">计划</a>
+                <a class="ll-header-link" href="/about">关于</a>
+                <a class="ll-header-link" href="/space" sec:authorize="isAuthenticated()">个人空间</a>
+            </nav>
+            <div class="ll-header-actions">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   sec:authorize="isAuthenticated()"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/posts/new" sec:authorize="isAuthenticated()">写文章</a>
+            </div>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-page-head ll-browse-hero ll-browse-hero--plans ll-fade">
+            <div>
+                <span class="ll-kicker ll-kicker--soft">专题计划</span>
+                <h1 class="ll-page-title" th:text="${plan.name}">计划名称</h1>
+                <p class="ll-page-desc"
+                   th:text="${plan.description != null && !plan.description.isEmpty() ? plan.description : '这个计划还没有写简介，但你可以先看进度和目录，快速判断它正在往哪条线推进。'}">
+                    计划简介
+                </p>
+                <div class="ll-link-group">
+                    <span class="ll-link-badge" th:text="${'作者 ' + plan.author.displayName}">作者</span>
+                    <span class="ll-link-badge" th:text="${plan.accessTypeDisplayName}">计划类型</span>
+                    <span class="ll-link-badge" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
+                    <span class="ll-link-badge" th:text="${plan.public ? '可协作' : '私密计划'}">可协作</span>
+                    <span class="ll-link-badge" th:if="${canJoinPlan and !isAuthor}">当前可参与</span>
+                </div>
+            </div>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">当前进度</span>
+                <strong th:text="${progress >= 100 ? '这条计划已经收尾，适合从头顺着读一遍' : '这条计划还在持续推进，目录会比单篇文章更适合快速了解上下文'}">
+                    这条计划还在持续推进，目录会比单篇文章更适合快速了解上下文
+                </strong>
+                <p th:text="${'目前已发布 ' + publishedCount + ' 篇，目录里一共能看到 ' + #lists.size(posts) + ' 篇内容。'}">目前已发布 0 篇，目录里一共能看到 0 篇内容。</p>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn" th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">在计划里写文章</a>
+                    <a class="ll-btn-secondary" th:if="${isAuthor}" th:href="@{/plans/{id}/edit(id=${plan.id})}">编辑计划</a>
+                    <a class="ll-btn-secondary" href="/plans">返回计划列表</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="ll-space-overview-card ll-plan-detail-overview ll-fade">
+            <div class="ll-editor-panel-head">
+                <div>
+                    <h2 class="ll-side-title">计划概览</h2>
+                    <p class="ll-side-text">先看一下目标、已发布数量和当前进度，再决定从哪一篇开始读或者继续补哪一段。</p>
+                </div>
+            </div>
+            <div class="ll-space-overview-grid ll-plan-detail-metrics">
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">目标篇数</span>
+                    <strong th:text="${plan.expectedCount}">0</strong>
+                    <span class="ll-space-overview-note">计划最初给自己定下的总目标。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">已发布</span>
+                    <strong th:text="${publishedCount}">0</strong>
+                    <span class="ll-space-overview-note">已经公开可读、可以直接顺着看下去的部分。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">当前进度</span>
+                    <strong th:text="${progress + '%'}">0%</strong>
+                    <span class="ll-space-overview-note">根据已发布文章和目标篇数换算出的整体推进情况。</span>
+                </article>
+                <article class="ll-space-overview-metric">
+                    <span class="ll-space-overview-label">目录条目</span>
+                    <strong th:text="${#lists.size(posts)}">0</strong>
+                    <span class="ll-space-overview-note">包括未发布或仍在整理中的目录项。</span>
+                </article>
+            </div>
+            <div class="ll-plan-progress-track">
+                <span class="ll-plan-progress-bar" th:style="${'width:' + progress + '%'}"></span>
+            </div>
+        </section>
+
+        <section class="ll-plan-detail-roadmap ll-fade" th:if="${!posts.empty}">
+            <div class="ll-editor-panel-head">
+                <div>
+                    <h2 class="ll-side-title">阅读路线</h2>
+                    <p class="ll-side-text">如果你还没决定从哪篇开始，可以先顺着前几篇扫一眼，快速感受这条计划的展开方式。</p>
+                </div>
+                <a class="ll-btn-secondary" href="#planDirectory">直接看完整目录</a>
+            </div>
+            <div class="ll-plan-detail-rail">
+                <a class="ll-plan-detail-step"
+                   th:each="post, iterStat : ${posts}"
+                   th:if="${iterStat.index < 4}"
+                   th:href="@{/posts/{id}(id=${post.id})}">
+                    <span class="ll-plan-detail-step-order" th:text="${post.planOrder != null ? post.planOrder : iterStat.index + 1}">1</span>
+                    <div class="ll-plan-detail-step-copy">
+                        <strong th:text="${post.title}">文章标题</strong>
+                        <span th:text="${post.statusDisplayName + ' · ' + post.categoryDisplayName}">已发布 · 分类</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="ll-space-posts-panel ll-fade" id="planDirectory">
+            <div class="ll-editor-panel-head ll-space-feed-head">
+                <div>
+                    <h2 class="ll-side-title">完整目录</h2>
+                    <p class="ll-side-text" th:text="${posts.empty ? '这个计划还没有文章，等第一篇落下来以后，这里会开始变得很清楚。' : '按计划顺序展示，适合从头读，也适合回来找某一篇继续。'}">
+                        按计划顺序展示，适合从头读，也适合回来找某一篇继续。
+                    </p>
+                </div>
+                <div class="ll-inline-actions">
+                    <a class="ll-btn-secondary" th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">写下一篇</a>
+                    <a class="ll-btn-secondary" href="/plans">回计划列表</a>
+                </div>
+            </div>
+
+            <div th:if="${posts.empty}" class="ll-empty ll-empty--browse">
+                这个计划暂时还没有文章。<a th:if="${canCreatePostInPlan}" th:href="@{/posts/new(planId=${plan.id})}">去写第一篇</a>
+            </div>
+
+            <div class="ll-plan-detail-list" th:if="${!posts.empty}">
+                <article class="ll-plan-detail-item" th:each="post, stat : ${posts}">
+                    <div class="ll-plan-detail-item-main">
+                        <span class="ll-plan-detail-item-order" th:text="${post.planOrder != null ? post.planOrder : stat.count}">1</span>
+                        <div class="ll-plan-detail-item-copy">
+                            <h3 class="ll-plan-detail-item-title">
+                                <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a>
+                            </h3>
+                            <div class="ll-link-group">
+                                <span class="ll-link-badge" th:text="${post.statusDisplayName}">已发布</span>
+                                <span class="ll-link-badge" th:if="${post.isHiddenFromPublic()}">未公开</span>
+                                <span class="ll-link-badge" th:text="${post.categoryDisplayName}">分类</span>
+                                <span class="ll-link-badge" th:text="${'作者 ' + post.author.displayName}">作者</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ll-plan-detail-item-meta">
+                        <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">2026-04-11</span>
+                        <a class="ll-btn-secondary" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <footer class="ll-footer">
+            <div class="ll-footer-shell">
+                <span class="ll-footer-brand">© 2026 博客</span>
+                <div class="ll-footer-tags">
+                    <span>计划详情</span>
+                    <span th:text="${plan.name}">计划名称</span>
+                    <a href="/plans">返回计划列表</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

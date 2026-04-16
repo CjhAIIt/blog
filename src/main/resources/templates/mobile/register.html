@@ -11,46 +11,63 @@
         <section class="mb-hero mb-hero--auth">
             <span class="mb-hero-kicker">注册</span>
             <h1 class="mb-hero-title">先开个账号，把之后写作的入口留好</h1>
-            <p class="mb-hero-copy">先把用户名、邮箱和实名信息留完整。审核通过后，你就能发文、导入 Markdown，也能把内容挂进计划里。</p>
+            <p class="mb-hero-copy">先把用户名、邮箱和密码留完整就能开始。真实姓名现在是选填项，不填也能发文，后面需要认证时再补就行。</p>
             <div class="mb-grid-two mb-auth-glance">
                 <article class="mb-stat">
                     <strong>用户名</strong>
                     <span>它会留在你的主页地址里，尽量稳定一点。</span>
                 </article>
                 <article class="mb-stat">
-                    <strong>实名审核</strong>
-                    <span>只用于站内审核，不会替代登录名。</span>
+                    <strong>真实姓名选填</strong>
+                    <span>只用于站内审核和认证展示，不会替代登录名。</span>
+                </article>
+            </div>
+            <div class="mb-glance-grid">
+                <article class="mb-glance-card">
+                    <span>现在可做</span>
+                    <strong>注册后就能直接写文章、导入 Markdown</strong>
+                    <p>不用再被实名流程卡住，先把账号开好就能开始用。</p>
+                </article>
+                <article class="mb-glance-card">
+                    <span>稍后再补</span>
+                    <strong>头像、简介、外链和实名资料都能慢慢加</strong>
+                    <p>先把必须项填完整，资料面的细节完全可以留到登录后再处理。</p>
+                </article>
+                <article class="mb-glance-card mb-glance-card--wide">
+                    <span>会保留</span>
+                    <strong>用户名和主页地址会继续作为你的站内身份</strong>
+                    <p>真实姓名只做认证展示，不会替代你的登录名，也不会改掉你已有的主页链接。</p>
                 </article>
             </div>
         </section>
 
         <section class="mb-card mb-card--accent">
             <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
-            <form class="mb-form-shell" th:action="@{/register}" th:object="${user}" method="post">
+            <form class="mb-form-shell" th:action="@{/register}" th:object="${user}" method="post" data-enhanced-form data-ready-text="信息填完整后就能创建账号。">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-field">
                     <label class="mb-label" for="username">用户名</label>
-                    <input class="mb-input" type="text" id="username" th:field="*{username}" autocomplete="username" placeholder="3 到 20 个字符，建议长期使用" required>
+                    <input class="mb-input" type="text" id="username" th:field="*{username}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" minlength="3" maxlength="20" data-too-short-message="用户名至少 3 个字符。" placeholder="3 到 20 个字符，建议长期使用" required>
                 </div>
                 <div class="mb-field">
-                    <label class="mb-label" for="realName">真实姓名</label>
-                    <input class="mb-input" type="text" id="realName" th:field="*{realName}" maxlength="5" pattern="[\u4E00-\u9FFF]{1,5}" autocomplete="name" placeholder="1 到 5 个中文字符" required>
+                    <label class="mb-label" for="realName">真实姓名（选填）</label>
+                    <input class="mb-input" type="text" id="realName" th:field="*{realName}" maxlength="5" pattern="[\u4E00-\u9FFF]{1,5}" autocomplete="name" autocapitalize="off" spellcheck="false" data-trim-input="true" data-pattern-mismatch-message="真实姓名需要 1 到 5 个中文字符。" placeholder="可留空，填写后进入审核">
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="email">邮箱</label>
-                    <input class="mb-input" type="email" id="email" th:field="*{email}" autocomplete="email" placeholder="name@example.com" required>
+                    <input class="mb-input" type="email" id="email" th:field="*{email}" autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" data-trim-input="true" data-type-mismatch-message="邮箱格式像 name@example.com 这样就可以。" placeholder="name@example.com" required>
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="password">密码</label>
-                    <input class="mb-input" type="password" id="password" th:field="*{password}" autocomplete="new-password" placeholder="至少 8 位" required>
+                    <input class="mb-input" type="password" id="password" th:field="*{password}" autocomplete="new-password" autocapitalize="off" spellcheck="false" minlength="8" data-too-short-message="密码至少 8 位。" data-password-primary="true" data-password-toggle="true" placeholder="至少 8 位" required>
                 </div>
                 <div class="mb-field">
                     <label class="mb-label" for="confirmPassword">确认密码</label>
-                    <input class="mb-input" type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="再次输入密码" required>
+                    <input class="mb-input" type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-password-confirm="true" data-password-toggle="true" placeholder="再次输入密码" required>
                 </div>
-                <div class="mb-note">真实姓名只用于站内审核，不会替代你的用户名、登录名和主页地址。</div>
+                <div class="mb-note">真实姓名只用于站内审核和认证展示，不会替代你的用户名、登录名和主页地址。不填写也不影响发文。</div>
                 <div class="mb-form-actions">
-                    <button class="mb-btn" type="submit">创建账号</button>
+                    <button class="mb-btn" type="submit" data-submitting-text="正在创建账号...">创建账号</button>
                     <a class="mb-btn-secondary" href="/login">已有账号</a>
                 </div>
             </form>
@@ -63,20 +80,21 @@
             </div>
             <div class="mb-list mb-auth-flow">
                 <article class="mb-key-item">
-                    <strong>提交后进入审核</strong>
-                    <span>实名资料会自动进入管理员审核列表，不需要你再单独操作一次。</span>
+                    <strong>提交后先登录</strong>
+                    <span>账号创建完成后就能直接进个人空间，把写作、草稿和资料入口先用起来。</span>
                 </article>
                 <article class="mb-key-item">
-                    <strong>审核前先完善资料</strong>
-                    <span>这段时间可以登录、改头像、写简介，把个人页先收顺。</span>
+                    <strong>需要认证时再补实名</strong>
+                    <span>只有你主动填写真实姓名时，系统才会把那部分资料送去管理员审核。</span>
                 </article>
                 <article class="mb-key-item">
-                    <strong>通过后开放写作</strong>
-                    <span>审核通过以后，发文、导入 Markdown 和加入计划这些入口都会开放。</span>
+                    <strong>写作不再被卡住</strong>
+                    <span>实名审核主要用于认证展示，不会再挡住发文、导入 Markdown 和加入计划。</span>
                 </article>
             </div>
         </section>
     </div>
 </main>
+<script src="/js/form-feedback.js"></script>
 </body>
 </html>

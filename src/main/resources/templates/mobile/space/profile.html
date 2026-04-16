@@ -22,7 +22,9 @@
             </div>
             <p class="mb-hero-copy" th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : (isOwner ? '这里就是你的移动工作台，写作、草稿、消息和资料整理都能从手机上接着来。' : '这个人还没有写简介。')}">个人简介</p>
             <div class="mb-author-badges">
-                <span class="mb-badge-pill" th:text="${profileUser.realNameVerificationStatusDisplayName}">待审核</span>
+                <span class="mb-badge-pill"
+                      th:if="${showVerificationStatus}"
+                      th:text="${(profileUser.realName == null or #strings.isEmpty(profileUser.realName)) ? '实名选填' : profileUser.realNameVerificationStatusDisplayName}">待审核</span>
                 <span class="mb-badge-pill" th:if="${profileUser.admin}">管理员</span>
                 <a class="mb-badge-pill" th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}" th:href="${profileUser.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
                 <a class="mb-badge-pill" th:if="${profileUser.personalBlogUrl != null and !#strings.isEmpty(profileUser.personalBlogUrl)}" th:href="${profileUser.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>
@@ -30,6 +32,9 @@
             <div class="mb-actions">
                 <a class="mb-btn" th:if="${canWritePosts}" href="/posts/new">写文章</a>
                 <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/edit">编辑资料</a>
+                <a class="mb-btn-secondary"
+                   th:if="${isOwner and (profileUser.realName == null or #strings.isEmpty(profileUser.realName))}"
+                   href="/space/edit">补充实名</a>
                 <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/drafts">草稿箱</a>
             </div>
             <div class="mb-stat-grid">
@@ -71,7 +76,7 @@
                 </a>
                 <a class="mb-key-item mb-key-item--link" href="/space/edit">
                     <strong>整理资料</strong>
-                    <span th:text="${showVerificationStatus ? '头像、简介和实名认证状态都可以顺手更新' : '头像、简介和外链都可以顺手更新'}">头像、简介和外链都可以顺手更新</span>
+                    <span>头像、简介、外链和可选实名信息都可以顺手更新</span>
                 </a>
             </div>
         </section>
@@ -109,7 +114,7 @@
             <div class="mb-quick-grid">
                 <a class="mb-quick-link" href="/space/edit">
                     <strong>资料设置</strong>
-                    <span>修改头像、简介、实名信息和密码。</span>
+                    <span>修改头像、简介、外链、可选实名信息和密码。</span>
                 </a>
                 <a class="mb-quick-link" href="/notifications">
                     <strong>消息中心</strong>
@@ -124,8 +129,8 @@
                     <span th:text="${draftCount + ' 篇内容还没发'}">0 篇内容还没发</span>
                 </a>
                 <a class="mb-quick-link mb-quick-link--wide" th:if="${showVerificationStatus}" href="/space/edit">
-                    <strong>实名认证状态</strong>
-                    <span th:text="${profileUser.realNameVerificationStatusDisplayName + '，有变化时也会在资料设置里处理'}">待审核，有变化时也会在资料设置里处理</span>
+                    <strong>实名资料状态</strong>
+                    <span th:text="${((profileUser.realName == null or #strings.isEmpty(profileUser.realName)) ? '未提交，可随时补充' : profileUser.realNameVerificationStatusDisplayName) + '，有变化时也会在资料设置里处理'}">待审核，有变化时也会在资料设置里处理</span>
                 </a>
             </div>
         </section>
@@ -133,14 +138,15 @@
         <section class="mb-card" th:if="${showVerificationStatus}">
             <div class="mb-section-head">
                 <div>
-                    <h2 class="mb-section-title">实名认证状态</h2>
+                    <h2 class="mb-section-title">实名资料状态</h2>
                     <div class="mb-section-note" th:text="${profileUser.realNameVerificationStatusDisplayName}">待审核</div>
                 </div>
             </div>
             <div class="mb-panel">
-                <p class="mb-copy" th:if="${profileUser.realNameVerificationPending}">实名信息已经提交，审核通过后就可以正常写博客。</p>
-                <p class="mb-copy" th:if="${profileUser.realNameVerificationRejected}">这次实名审核没有通过，修改真实姓名后可以重新提交。</p>
-                <p class="mb-copy" th:if="${profileUser.realNameVerified}">实名认证已经通过，可以继续写博客、导入 Markdown 和编辑文章。</p>
+                <p class="mb-copy" th:if="${profileUser.realName == null or #strings.isEmpty(profileUser.realName)}">实名信息现在是选填项。不填写也能正常发文，后面如果需要认证再补就行。</p>
+                <p class="mb-copy" th:if="${profileUser.realNameVerificationPending}">实名信息已经提交审核，期间不影响继续写博客、导入 Markdown 和编辑文章。</p>
+                <p class="mb-copy" th:if="${profileUser.realNameVerificationRejected}">这次实名审核没有通过，修改真实姓名后可以重新提交，期间不影响继续发文。</p>
+                <p class="mb-copy" th:if="${profileUser.realNameVerified}">实名资料已经通过审核，主页会继续展示认证后的状态与信息。</p>
             </div>
         </section>
 

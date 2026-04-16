@@ -43,6 +43,24 @@
             </div>
         </section>
 
+        <section class="mb-glance-grid mb-glance-grid--browse">
+            <article class="mb-glance-card">
+                <span>先扫一圈</span>
+                <strong>标题和摘要先看一遍，再决定要不要点进去</strong>
+                <p>列表页更适合先找方向，不必一上来就逐篇深读。</p>
+            </article>
+            <article class="mb-glance-card">
+                <span>换个方式</span>
+                <strong>如果想按主题连续看，去计划页会更顺</strong>
+                <p>单篇入口适合散看，专题入口更适合一路往下读。</p>
+            </article>
+            <article class="mb-glance-card mb-glance-card--wide">
+                <span>当前状态</span>
+                <strong th:text="${selectedCategory == 'latest' ? '现在是全部文章视角，适合先看最近更新' : '现在已经切到分类浏览，下面会更聚焦'}">现在是全部文章视角，适合先看最近更新</strong>
+                <p>如果你已经大致知道方向，分类页会比搜索更适合直接滑着看。</p>
+            </article>
+        </section>
+
         <section class="mb-card mb-card--accent mb-browse-panel">
             <div class="mb-section-head">
                 <div>
@@ -72,11 +90,16 @@
                 <a class="mb-section-link" href="/search?keyword=">搜索内容</a>
             </div>
             <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(posts)}">
-                <a class="mb-post-card mb-post-card--browse" th:each="post : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
+                <a class="mb-post-card mb-post-card--browse" th:each="post, stat : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
                     <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
-                    <div class="mb-post-meta">
+                    <div class="mb-post-glance">
+                        <span class="mb-inline-note">分类浏览</span>
+                        <span class="mb-note" th:text="${'本页第 ' + (stat.count < 10 ? '0' + stat.count : stat.count) + ' 篇'}">本页第 01 篇</span>
+                    </div>
+                    <div class="mb-post-meta mb-post-meta--browse">
                         <span th:text="${post.categoryDisplayName}">分类</span>
                         <span th:text="${post.author.displayName}">作者</span>
+                        <span th:text="${post.editorFont.label}">字体</span>
                         <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
                     </div>
                     <h3 class="mb-post-title" th:text="${post.title}">文章标题</h3>

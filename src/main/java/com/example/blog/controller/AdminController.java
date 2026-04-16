@@ -46,7 +46,7 @@ public class AdminController {
         }
 
         User approvedUser = userService.approveRealNameVerification(id);
-        redirectAttributes.addFlashAttribute("message", approvedUser.getDisplayName() + " 的实名认证已审核通过");
+        redirectAttributes.addFlashAttribute("message", approvedUser.getDisplayName() + " 的实名资料已审核通过");
         return "redirect:/admin/verifications";
     }
 
@@ -58,7 +58,7 @@ public class AdminController {
         }
 
         User rejectedUser = userService.rejectRealNameVerification(id);
-        redirectAttributes.addFlashAttribute("message", rejectedUser.getDisplayName() + " 的实名认证已驳回");
+        redirectAttributes.addFlashAttribute("message", rejectedUser.getDisplayName() + " 的实名资料已驳回");
         return "redirect:/admin/verifications";
     }
 

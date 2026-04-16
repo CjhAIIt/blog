@@ -38,13 +38,15 @@ public class DataInitializer implements CommandLineRunner {
                 existingUser.setRole(UserRole.ADMIN);
                 changed = true;
             }
-            if (existingUser.isAdmin() && !existingUser.isRealNameVerified()) {
+            if (existingUser.isAdmin()
+                    && existingUser.getRealNameVerificationStatus() != RealNameVerificationStatus.APPROVED) {
                 approveLegacyVerification(existingUser);
                 changed = true;
             }
-            if (existingUser.getRealNameVerificationStatus() == null
+            if (shouldInitializeLegacyVerification(existingUser)
+                    && (existingUser.getRealNameVerificationStatus() == null
                     || (existingUser.getRealNameVerificationStatus() == RealNameVerificationStatus.PENDING
-                    && existingUser.getRealNameVerificationSubmittedAt() == null)) {
+                    && existingUser.getRealNameVerificationSubmittedAt() == null))) {
                 approveLegacyVerification(existingUser);
                 changed = true;
             }
@@ -75,7 +77,7 @@ public class DataInitializer implements CommandLineRunner {
                         existing.setRole(UserRole.ADMIN);
                         changed = true;
                     }
-                    if (!existing.isRealNameVerified()) {
+                    if (existing.getRealNameVerificationStatus() != RealNameVerificationStatus.APPROVED) {
                         approveLegacyVerification(existing);
                         changed = true;
                     }
@@ -162,5 +164,9 @@ public class DataInitializer implements CommandLineRunner {
         if (user.getRealNameVerificationReviewedAt() == null) {
             user.setRealNameVerificationReviewedAt(referenceTime);
         }
+    }
+
+    private boolean shouldInitializeLegacyVerification(User user) {
+        return user != null && (user.isAdmin() || user.hasRealName());
     }
 }

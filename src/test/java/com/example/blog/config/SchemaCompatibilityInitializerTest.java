@@ -21,4 +21,11 @@ class SchemaCompatibilityInitializerTest {
         assertTrue(SchemaCompatibilityInitializer.requiresLongTextUpgrade("VARCHAR"));
         assertFalse(SchemaCompatibilityInitializer.requiresLongTextUpgrade("LONGTEXT"));
     }
+
+    @Test
+    void recognizesLegacyPlanStatusColumnTypes() {
+        assertTrue(SchemaCompatibilityInitializer.requiresPlanStatusUpgrade("INT"));
+        assertTrue(SchemaCompatibilityInitializer.requiresPlanStatusUpgrade("TINYINT"));
+        assertFalse(SchemaCompatibilityInitializer.requiresPlanStatusUpgrade("VARCHAR"));
+    }
 }

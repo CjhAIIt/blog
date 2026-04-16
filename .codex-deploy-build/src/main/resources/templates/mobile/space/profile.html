@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head(${profileUser.displayName})}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--profile">
+            <div class="mb-meta-ribbon">个人主页</div>
+            <div class="mb-profile-head">
+                <div class="mb-avatar-lg"><img th:src="${profileUser.displayAvatarUrl}" th:alt="${profileUser.username}"></div>
+                <div>
+                    <span class="mb-hero-kicker" th:text="${isOwner ? '我的空间' : '用户主页'}">用户主页</span>
+                    <h1 class="mb-hero-title" th:text="${profileUser.displayName}">用户名</h1>
+                    <div class="mb-section-note" th:text="${'@' + profileUser.username}">@username</div>
+                </div>
+            </div>
+            <p class="mb-hero-copy" th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : (isOwner ? '这里就是你的移动工作台，写作、草稿、消息和资料整理都能从手机上接着来。' : '这个人还没有写简介。')}">个人简介</p>
+            <div class="mb-author-badges">
+                <span class="mb-badge-pill" th:text="${profileUser.realNameVerificationStatusDisplayName}">待审核</span>
+                <span class="mb-badge-pill" th:if="${profileUser.admin}">管理员</span>
+                <a class="mb-badge-pill" th:if="${profileUser.githubUrl != null and !#strings.isEmpty(profileUser.githubUrl)}" th:href="${profileUser.githubUrl}" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="mb-badge-pill" th:if="${profileUser.personalBlogUrl != null and !#strings.isEmpty(profileUser.personalBlogUrl)}" th:href="${profileUser.personalBlogUrl}" target="_blank" rel="noreferrer">个人博客</a>
+            </div>
+            <div class="mb-actions">
+                <a class="mb-btn" th:if="${canWritePosts}" href="/posts/new">写文章</a>
+                <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/edit">编辑资料</a>
+                <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/drafts">草稿箱</a>
+            </div>
+            <div class="mb-stat-grid">
+                <div class="mb-stat">
+                    <strong th:text="${publishedCount}">0</strong>
+                    <span>已发布文章</span>
+                </div>
+                <div class="mb-stat">
+                    <strong th:text="${draftCount}">0</strong>
+                    <span>草稿数量</span>
+                </div>
+                <div class="mb-stat">
+                    <strong th:text="${totalLikeCount}">0</strong>
+                    <span>累计获赞</span>
+                </div>
+                <div class="mb-stat">
+                    <strong th:text="${receivedCommentCount}">0</strong>
+                    <span>收到评论</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent mb-space-dashboard" th:if="${isOwner}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">现在最适合做什么</h2>
+                    <div class="mb-section-note">把今天最常点的入口收在一块，手机上少翻几层。</div>
+                </div>
+                <a class="mb-section-link" href="/notifications">消息中心</a>
+            </div>
+            <div class="mb-key-list">
+                <a class="mb-key-item mb-key-item--link" href="/space/drafts">
+                    <strong>继续处理草稿</strong>
+                    <span th:text="${draftCount + ' 篇内容还没发，点进去就能接着写'}">0 篇内容还没发，点进去就能接着写</span>
+                </a>
+                <a class="mb-key-item mb-key-item--link" href="/notifications">
+                    <strong>看看消息</strong>
+                    <span th:text="${notificationUnreadCount + ' 条未读提醒，评论和回复都在这里'}">0 条未读提醒，评论和回复都在这里</span>
+                </a>
+                <a class="mb-key-item mb-key-item--link" href="/space/edit">
+                    <strong>整理资料</strong>
+                    <span th:text="${showVerificationStatus ? '头像、简介和实名认证状态都可以顺手更新' : '头像、简介和外链都可以顺手更新'}">头像、简介和外链都可以顺手更新</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent" th:if="${latestPost != null}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">最近发布</h2>
+                    <div class="mb-section-note">最新发出来的一篇文章，通常最能代表现在在写什么。</div>
+                </div>
+                <a class="mb-section-link" th:if="${canWritePosts}" href="/posts/new">再写一篇</a>
+            </div>
+            <a class="mb-spotlight" th:href="@{/posts/{id}(id=${latestPost.id})}">
+                <div class="mb-post-meta">
+                    <span th:text="${latestPost.categoryDisplayName}">分类</span>
+                    <span th:text="${#temporals.format(latestPost.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                </div>
+                <h3 class="mb-post-title" th:text="${latestPost.title}">文章标题</h3>
+                <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(latestPost.content, 90)}">摘要</p>
+                <div class="mb-post-footer">
+                    <span class="mb-note" th:text="${latestPost.likeCount + ' 次点赞'}">0 次点赞</span>
+                    <span class="mb-inline-note">打开看看</span>
+                </div>
+            </a>
+        </section>
+
+        <section class="mb-card mb-card--soft" th:if="${isOwner}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">工作台入口</h2>
+                    <div class="mb-section-note">写作、消息、导出和资料整理都在这边，适合随时切一下。</div>
+                </div>
+                <a class="mb-section-link" href="/space/export">导出</a>
+            </div>
+            <div class="mb-quick-grid">
+                <a class="mb-quick-link" href="/space/edit">
+                    <strong>资料设置</strong>
+                    <span>修改头像、简介、实名信息和密码。</span>
+                </a>
+                <a class="mb-quick-link" href="/notifications">
+                    <strong>消息中心</strong>
+                    <span th:text="${notificationUnreadCount + ' 条未读消息'}">0 条未读消息</span>
+                </a>
+                <a class="mb-quick-link" href="/space/export">
+                    <strong>导出博客</strong>
+                    <span>把公开文章和 Markdown 一起打包下来。</span>
+                </a>
+                <a class="mb-quick-link" href="/space/drafts">
+                    <strong>草稿箱</strong>
+                    <span th:text="${draftCount + ' 篇内容还没发'}">0 篇内容还没发</span>
+                </a>
+                <a class="mb-quick-link mb-quick-link--wide" th:if="${showVerificationStatus}" href="/space/edit">
+                    <strong>实名认证状态</strong>
+                    <span th:text="${profileUser.realNameVerificationStatusDisplayName + '，有变化时也会在资料设置里处理'}">待审核，有变化时也会在资料设置里处理</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-card" th:if="${showVerificationStatus}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">实名认证状态</h2>
+                    <div class="mb-section-note" th:text="${profileUser.realNameVerificationStatusDisplayName}">待审核</div>
+                </div>
+            </div>
+            <div class="mb-panel">
+                <p class="mb-copy" th:if="${profileUser.realNameVerificationPending}">实名信息已经提交，审核通过后就可以正常写博客。</p>
+                <p class="mb-copy" th:if="${profileUser.realNameVerificationRejected}">这次实名审核没有通过，修改真实姓名后可以重新提交。</p>
+                <p class="mb-copy" th:if="${profileUser.realNameVerified}">实名认证已经通过，可以继续写博客、导入 Markdown 和编辑文章。</p>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">最新文章</h2>
+                    <div class="mb-section-note" th:text="${publishedCount + ' 篇已发布内容'}">0 篇</div>
+                </div>
+                <a class="mb-section-link" th:if="${canWritePosts}" href="/posts/new">写新文章</a>
+            </div>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(posts)}">
+                <a class="mb-post-card mb-post-card--browse" th:each="post : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
+                    <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
+                    <div class="mb-post-meta">
+                        <span th:text="${post.categoryDisplayName}">分类</span>
+                        <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
+                    </div>
+                    <h3 class="mb-post-title" th:text="${post.title}">文章标题</h3>
+                    <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 96)}">摘要</p>
+                    <div class="mb-post-footer">
+                        <span class="mb-note" th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                        <span class="mb-inline-note">继续阅读</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}">这个用户还没有公开文章。</div>
+        </section>
+
+        <section class="mb-card mb-card--accent" th:if="${canManageUserPosts}">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">草稿预览</h2>
+                    <div class="mb-section-note" th:text="${draftCount + ' 篇草稿'}">0 篇</div>
+                </div>
+                <a class="mb-section-link" href="/space/drafts">全部草稿</a>
+            </div>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(drafts)}">
+                <a class="mb-post-card mb-post-card--browse mb-post-card--draft" th:each="draft : ${drafts}" th:href="@{/posts/edit/{id}(id=${draft.id})}">
+                    <div class="mb-post-meta">
+                        <span th:text="${draft.statusDisplayName}">草稿</span>
+                        <span th:text="${#temporals.format(draft.updatedAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                    </div>
+                    <h3 class="mb-post-title" th:text="${draft.title}">草稿标题</h3>
+                    <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(draft.content, 80)}">草稿摘要</p>
+                    <div class="mb-post-footer">
+                        <span class="mb-note">还没发布</span>
+                        <span class="mb-inline-note">继续编辑</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(drafts)}">还没有草稿。<a href="/posts/new">去写第一篇</a></div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('space')}"></nav>
+</div>
+</body>
+</html>

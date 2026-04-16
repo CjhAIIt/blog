@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,7 +23,10 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_users_verification_queue", columnList = "real_name_verification_status, real_name_verification_submitted_at, created_at"),
+        @Index(name = "idx_users_role_created", columnList = "role, created_at")
+})
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -145,8 +149,12 @@ public class User implements UserDetails {
         this.realName = StringUtils.hasText(realName) ? realName.trim() : null;
     }
 
+    public boolean hasRealName() {
+        return StringUtils.hasText(realName);
+    }
+
     public String getDisplayName() {
-        return StringUtils.hasText(realName) ? realName : username;
+        return hasRealName() ? realName : username;
     }
 
     public String getBio() {
@@ -259,22 +267,25 @@ public class User implements UserDetails {
     }
 
     public boolean isRealNameVerified() {
-        return getRealNameVerificationStatus() == RealNameVerificationStatus.APPROVED;
+        return hasRealName() && getRealNameVerificationStatus() == RealNameVerificationStatus.APPROVED;
     }
 
     public boolean isRealNameVerificationPending() {
-        return getRealNameVerificationStatus() == RealNameVerificationStatus.PENDING;
+        return hasRealName() && getRealNameVerificationStatus() == RealNameVerificationStatus.PENDING;
     }
 
     public boolean isRealNameVerificationRejected() {
-        return getRealNameVerificationStatus() == RealNameVerificationStatus.REJECTED;
+        return hasRealName() && getRealNameVerificationStatus() == RealNameVerificationStatus.REJECTED;
     }
 
     public boolean canPublishPosts() {
-        return isAdmin() || isRealNameVerified();
+        return true;
     }
 
     public String getRealNameVerificationStatusDisplayName() {
+        if (!hasRealName() && !isAdmin()) {
+            return "未提交";
+        }
         return getRealNameVerificationStatus().getDisplayName();
     }
 

@@ -96,6 +96,24 @@
             </nav>
         </div>
 
+        <div class="ll-glance-grid ll-glance-grid--browse ll-fade">
+            <article class="ll-glance-card">
+                <span>公开计划</span>
+                <strong>适合先看最近在持续推进的专题线</strong>
+                <p>如果你想从主题切入，而不是从单篇文章切入，这里通常是最省事的入口。</p>
+            </article>
+            <article class="ll-glance-card">
+                <span>共创计划</span>
+                <strong>更适合观察多人怎么一起把一条线慢慢补齐</strong>
+                <p>这类内容通常更有路线感，适合快速理解一个主题的整体结构。</p>
+            </article>
+            <article class="ll-glance-card">
+                <span>我的计划</span>
+                <strong th:text="${activeFilter == 'mine' ? '现在正处在管理视角，更适合决定下一步补哪条线' : '登录后切到我的计划，会更适合管理自己正在写的主题'}">登录后切到我的计划，会更适合管理自己正在写的主题</strong>
+                <p>如果你不是纯阅读，而是回来整理系列内容，自己的计划页会比文章列表更清楚。</p>
+            </article>
+        </div>
+
         <section class="ll-plan-list-grid" th:if="${!plans.empty}">
             <article class="ll-plan-list-card ll-fade" th:each="plan : ${plans.content}">
                 <a class="ll-plan-list-cover" th:href="@{/plans/{id}(id=${plan.id})}">
@@ -107,8 +125,8 @@
                 </a>
                 <div class="ll-plan-list-topline">
                     <span class="ll-plan-list-status"
-                          th:classappend="${plan.status == 1 ? ' is-complete' : (plan.status == 2 ? ' is-paused' : '')}"
-                          th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">
+                          th:classappend="${plan.completed ? ' is-complete' : (plan.shelved ? ' is-paused' : '')}"
+                          th:text="${plan.statusDisplayName}">
                         进行中
                     </span>
                     <span th:text="${plan.accessTypeDisplayName}">计划类型</span>
@@ -122,7 +140,7 @@
                 </p>
                 <div class="ll-plan-list-meta">
                     <span class="ll-link-badge" th:text="${'作者 ' + plan.author.displayName}">作者</span>
-                    <span class="ll-link-badge" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                    <span class="ll-link-badge" th:text="${plan.expectedCount > 0 ? '目标 ' + plan.expectedCount + ' 篇' : '目标待定'}">目标待定</span>
                     <span class="ll-link-badge" th:text="${plan.public ? '协作成员可见' : '仅作者与受邀成员可见'}">协作成员可见</span>
                 </div>
                 <div class="ll-plan-list-footer">

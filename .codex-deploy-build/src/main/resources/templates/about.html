@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link" href="/about">关于</a>
+            </nav>
+            <div class="ll-header-actions" sec:authorize="isAuthenticated()">
+                <a class="ll-header-bell"
+                   href="/notifications"
+                   th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}"
+                   aria-label="消息中心">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
+                    </svg>
+                    <span class="ll-header-bell-text">消息</span>
+                    <span class="ll-header-bell-badge"
+                          th:if="${notificationUnreadCount > 0}"
+                          th:text="${notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}">3</span>
+                </a>
+                <a class="ll-header-link" href="/space">个人空间</a>
+            </div>
+        </header>
+        <div class="ll-category-row">
+            <nav class="ll-category-links">
+                <a class="ll-category-link" href="/">最新</a>
+                <a class="ll-category-link"
+                   th:each="category : ${postCategories}"
+                   th:href="@{/(category=${category.slug})}"
+                   th:text="${category.displayName}">分类</a>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <section class="ll-page-head ll-page-head--about ll-fade">
+            <div>
+                <span class="ll-kicker">关于这个站</span>
+                <h1 class="ll-page-title">给愿意长期写点东西的人，一个顺手的小站</h1>
+                <p class="ll-page-desc">它不是想把“功能很多”挂在嘴边，而是尽量把写作这件事做得自然一点：先写草稿，慢慢修改，按自己的节奏发布；真想搬家时，也能把内容带走。</p>
+            </div>
+            <div class="ll-page-head-note">
+                <span>写作节奏</span>
+                <strong>先记下来，再改顺，再发出去</strong>
+                <p>工具尽量往后站一点，让内容本身往前站。</p>
+            </div>
+        </section>
+
+        <div class="ll-content-grid">
+            <div class="ll-stack">
+                <section class="ll-section-card ll-section-card--feature ll-fade">
+                    <h2 class="ll-section-title">当前能力</h2>
+                    <ul class="ll-side-list">
+                        <li>写文章时，可以一边敲 Markdown，一边看实时预览和大纲，草稿也会顺手存下来。</li>
+                        <li>首页按固定分类整理内容，常看的主题能更快找到。</li>
+                        <li>注册后就有自己的个人空间，可以集中管理文章、草稿和资料。</li>
+                        <li>每个人都能把自己的内容导出成静态博客包，之后迁到 GitHub Pages 也轻松。</li>
+                        <li>账号注册完成后就能直接开始写，不需要再走一堆额外流程。</li>
+                    </ul>
+                </section>
+
+                <section class="ll-section-card ll-fade">
+                    <h2 class="ll-section-title">安全处理</h2>
+                    <ul class="ll-side-list">
+                        <li>密码只保存加密结果，站点不会明文留存。</li>
+                        <li>QQ 和 GitHub 主页这类敏感资料会加密后再写入数据库。</li>
+                        <li>文章、评论和个人资料的改动都带权限控制，尽量避免误改和误删。</li>
+                    </ul>
+                </section>
+            </div>
+
+            <aside class="ll-stack">
+                <section class="ll-side-card ll-side-card--about ll-fade">
+                    <h2 class="ll-side-title">开源与迁移</h2>
+                    <p class="ll-side-text">源码仓库一直保留着。如果以后想把这里写下的内容带去别处，也不用担心被平台绑住。</p>
+                    <div class="ll-inline-actions">
+                        <a class="ll-side-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">源码仓库</a>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -45,6 +45,24 @@
             </div>
         </section>
 
+        <section class="mb-glance-grid mb-glance-grid--browse">
+            <article class="mb-glance-card">
+                <span>公开计划</span>
+                <strong>适合先挑一条最近在更新的专题线</strong>
+                <p>如果你想从主题切进去，而不是从单篇切进去，这里会更顺。</p>
+            </article>
+            <article class="mb-glance-card">
+                <span>共创计划</span>
+                <strong>更适合看多人一起补一条内容线</strong>
+                <p>这种内容通常更能看出一个主题是怎么被慢慢搭完整的。</p>
+            </article>
+            <article class="mb-glance-card mb-glance-card--wide">
+                <span>我的计划</span>
+                <strong th:text="${currentUser != null ? '登录后切到我的计划，会更适合管理自己在写的路线' : '登录后就能看到并管理自己的计划列表'}">登录后就能看到并管理自己的计划列表</strong>
+                <p>如果你是回来整理系列内容，这里会比文章列表更像一个真正的工作台。</p>
+            </article>
+        </section>
+
         <section class="mb-card mb-card--accent mb-browse-panel">
             <div class="mb-section-head">
                 <div>
@@ -116,8 +134,8 @@
                     <h3 class="mb-post-title" th:text="${plan.name}">计划名称</h3>
                     <p class="mb-post-excerpt" th:text="${plan.description != null and !#strings.isEmpty(plan.description) ? plan.description : '这个计划暂时还没有简介。'}">计划简介</p>
                     <div class="mb-author-badges">
-                        <span class="mb-badge-pill" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
-                        <span class="mb-badge-pill" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                        <span class="mb-badge-pill" th:text="${plan.statusDisplayName}">进行中</span>
+                        <span class="mb-badge-pill" th:text="${plan.expectedCount > 0 ? '目标 ' + plan.expectedCount + ' 篇' : '目标待定'}">目标待定</span>
                         <span class="mb-badge-pill" th:text="${plan.author.displayName}">作者</span>
                     </div>
                     <div class="mb-post-footer">

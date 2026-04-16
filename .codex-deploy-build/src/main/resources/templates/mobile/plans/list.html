@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('计划分区')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--plans">
+            <div class="mb-meta-ribbon">专题计划</div>
+            <span class="mb-hero-kicker">计划</span>
+            <h1 class="mb-hero-title" th:text="${activeFilter == 'public' ? '公开计划' : (activeFilter == 'collaborative' ? '共创计划' : '我的计划')}">计划分区</h1>
+            <p class="mb-hero-copy" th:text="${activeFilter == 'public' ? '这里适合顺着主题慢慢翻，想找站内公开连载或专题，就从这里开始。' : (activeFilter == 'collaborative' ? '这里会集中展示多人一起维护的内容，适合看一整个主题怎么被慢慢补齐。' : '自己在写、在整理、还在推进的计划，都放在这里，手机上看进度会更直观。')}">如果你想按主题连续阅读，直接从这里进。公开、共创和我的计划分开看，会更清楚。</p>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>当前筛选</span>
+                    <strong th:text="${activeFilter == 'public' ? '公开' : (activeFilter == 'collaborative' ? '共创' : '我的')}">公开</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>计划总数</span>
+                    <strong th:text="${plans.totalElements}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>当前页</span>
+                    <strong th:text="${currentPage + 1}">1</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>总页数</span>
+                    <strong th:text="${plans.totalPages == 0 ? 1 : plans.totalPages}">1</strong>
+                </article>
+            </div>
+            <div class="mb-chip-row">
+                <a class="mb-chip" th:classappend="${activeFilter == 'public' ? ' is-active' : ''}" href="/plans?filter=public">公开计划</a>
+                <a class="mb-chip" th:classappend="${activeFilter == 'collaborative' ? ' is-active' : ''}" href="/plans?filter=collaborative">共创计划</a>
+                <a class="mb-chip" th:if="${currentUser != null}" th:classappend="${activeFilter == 'mine' ? ' is-active' : ''}" href="/plans?filter=mine">我的计划</a>
+            </div>
+            <div class="mb-actions">
+                <a class="mb-btn" th:if="${currentUser != null}" href="/plans/new">新建计划</a>
+                <a class="mb-btn-secondary" href="/posts">看文章</a>
+                <a class="mb-btn-secondary" href="/search?keyword=">搜主题</a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent mb-browse-panel">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">这组计划怎么逛</h2>
+                    <div class="mb-section-note" th:text="${activeFilter == 'public' ? '适合先看最近更新的专题，挑一个顺着读进去。' : (activeFilter == 'collaborative' ? '更适合看多人一起维护的内容结构，先挑感兴趣的主题。' : '先看自己手上的主题进到哪一步，再决定是补文章还是整理计划。')}">适合先看最近更新的专题，挑一个顺着读进去。</div>
+                </div>
+                <span class="mb-inline-note" th:text="${activeFilter == 'mine' ? '偏管理视角' : '偏阅读视角'}">偏阅读视角</span>
+            </div>
+            <div class="mb-quick-grid">
+                <a class="mb-quick-link" href="/posts">
+                    <strong>先看文章列表</strong>
+                    <span>如果你还没决定要看哪个系列，先从文章页扫一圈也很快。</span>
+                </a>
+                <a class="mb-quick-link" href="/search?keyword=">
+                    <strong>直接搜主题名</strong>
+                    <span>记得一点关键词就够了，计划名和文章内容都能帮你定位。</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--ink">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">从这里开始</h2>
+                    <div class="mb-section-note">常用入口集中放在这里，手机上切换更省事。</div>
+                </div>
+            </div>
+            <div class="mb-quick-grid">
+                <a class="mb-quick-link" href="/plans?filter=public">
+                    <strong>公开计划</strong>
+                    <span>先看看站内正在公开更新的专题。</span>
+                </a>
+                <a class="mb-quick-link" href="/plans?filter=collaborative">
+                    <strong>共创计划</strong>
+                    <span>想看多人一起维护的内容，可以从这里进。</span>
+                </a>
+                <a class="mb-quick-link" th:if="${currentUser != null}" href="/plans?filter=mine">
+                    <strong>我的计划</strong>
+                    <span>自己在写的、在整理的都放在这里。</span>
+                </a>
+                <a class="mb-quick-link" th:if="${currentUser != null}" href="/plans/new">
+                    <strong>新建计划</strong>
+                    <span>先把主题和目标篇数定下来，后面写起来更顺。</span>
+                </a>
+                <div class="mb-quick-link mb-quick-link--wide" th:if="${currentUser == null}">
+                    <strong>登录后可以管理自己的计划</strong>
+                    <span>未登录时也能看公开内容，登录后会多出创建和管理入口。</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">计划列表</h2>
+                    <div class="mb-section-note" th:text="${plans.totalElements + ' 个计划，按最近更新时间排序'}">0 个计划，按最近更新时间排序</div>
+                </div>
+                <a class="mb-section-link" th:if="${currentUser != null}" href="/plans/new">新建计划</a>
+            </div>
+            <div class="mb-list mb-list--browse" th:if="${!plans.empty}">
+                <a class="mb-plan-card mb-plan-card--browse" th:each="plan : ${plans.content}" th:href="@{/plans/{id}(id=${plan.id})}">
+                    <div class="mb-post-cover" th:if="${plan.coverImageUrl != null and !#strings.isEmpty(plan.coverImageUrl)}">
+                        <img th:src="${plan.coverImageUrl}" th:alt="${plan.name}">
+                    </div>
+                    <div class="mb-post-meta">
+                        <span th:text="${plan.accessTypeDisplayName}">计划类型</span>
+                        <span th:text="${#temporals.format(plan.updatedAt, 'MM-dd HH:mm')}">04-10 11:00</span>
+                    </div>
+                    <h3 class="mb-post-title" th:text="${plan.name}">计划名称</h3>
+                    <p class="mb-post-excerpt" th:text="${plan.description != null and !#strings.isEmpty(plan.description) ? plan.description : '这个计划暂时还没有简介。'}">计划简介</p>
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
+                        <span class="mb-badge-pill" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                        <span class="mb-badge-pill" th:text="${plan.author.displayName}">作者</span>
+                    </div>
+                    <div class="mb-post-footer">
+                        <span class="mb-note" th:text="${plan.public ? '协作成员可见' : '仅作者与受邀成员可见'}">协作成员可见</span>
+                        <span class="mb-inline-note">查看详情</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty" th:if="${plans.empty}">
+                当前筛选下还没有计划。<a th:if="${currentUser != null and activeFilter == 'mine'}" href="/plans/new">去建一个新的</a>
+            </div>
+            <div class="mb-pagination" th:if="${plans.totalPages > 1}">
+                <a class="mb-page-button" th:classappend="${plans.first ? ' is-disabled' : ''}" th:href="@{/plans(page=${currentPage - 1},filter=${activeFilter})}">上一页</a>
+                <a class="mb-page-button" th:classappend="${plans.last ? ' is-disabled' : ''}" th:href="@{/plans(page=${currentPage + 1},filter=${activeFilter})}">下一页</a>
+            </div>
+            <div class="mb-page-indicator" th:if="${plans.totalPages > 1}" th:text="${'第 ' + (currentPage + 1) + ' / ' + plans.totalPages + ' 页'}">第 1 / 1 页</div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('plans')}"></nav>
+</div>
+</body>
+</html>

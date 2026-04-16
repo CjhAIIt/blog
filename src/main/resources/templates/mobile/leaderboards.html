@@ -8,7 +8,7 @@
 
 <main class="mb-main">
     <div class="mb-shell mb-stack">
-        <section class="mb-hero mb-hero--browse">
+        <section class="mb-hero mb-hero--browse" id="rankTop">
             <div class="mb-meta-ribbon">内容热度</div>
             <span class="mb-hero-kicker">排行榜</span>
             <h1 class="mb-hero-title">最近谁更活跃</h1>
@@ -42,6 +42,29 @@
                    th:href="@{/leaderboards(rankPeriod=${period.slug})}"
                    th:text="${period.label}">本周</a>
             </div>
+            <div class="mb-chip-row mb-chip-row--anchors">
+                <a class="mb-chip" href="#contributionRank">创作榜</a>
+                <a class="mb-chip" href="#likeRank">点赞榜</a>
+                <a class="mb-chip" href="/posts">最新文章</a>
+            </div>
+        </section>
+
+        <section class="mb-glance-grid mb-glance-grid--browse">
+            <article class="mb-glance-card">
+                <span>创作榜</span>
+                <strong>适合先找作者，再顺着主页看这一期在写什么</strong>
+                <p>如果你想知道谁最近更新最稳，这一列会比文章区更直接。</p>
+            </article>
+            <article class="mb-glance-card">
+                <span>点赞榜</span>
+                <strong>适合直接点进单篇，看这期最热的内容是什么</strong>
+                <p>热度榜更像一张站内兴趣快照，先读榜首通常最有代表性。</p>
+            </article>
+            <article class="mb-glance-card mb-glance-card--wide">
+                <span>时间窗口</span>
+                <strong th:text="${selectedRankingPeriod.label + ' 会决定你看到的是短期热度还是更长节奏'}">本周会决定你看到的是短期热度还是更长节奏</strong>
+                <p>切换周期以后，再看同一组榜单，通常能更快感受到站内创作节奏的变化。</p>
+            </article>
         </section>
 
         <section class="mb-card mb-card--accent mb-browse-panel">
@@ -72,7 +95,7 @@
             </div>
         </section>
 
-        <section class="mb-card mb-card--soft">
+        <section class="mb-card mb-card--soft" id="contributionRank">
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">创作榜</h2>
@@ -117,10 +140,22 @@
                     </div>
                 </a>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(contributionLeaderboard)}">这个时间段里还没有新的创作数据。</div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(contributionLeaderboard)}">
+                这个时间段里还没有新的创作数据。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="/posts">去文章区看看</a>
+                    <a class="mb-btn-secondary" href="/plans">换个计划逛</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary"
+                   th:if="${!#lists.isEmpty(contributionLeaderboard)}"
+                   th:href="@{/users/{username}(username=${contributionLeaderboard[0].username})}">打开榜首主页</a>
+                <a class="mb-btn" href="#likeRank">接着看点赞榜</a>
+            </div>
         </section>
 
-        <section class="mb-card">
+        <section class="mb-card" id="likeRank">
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">点赞榜</h2>
@@ -171,7 +206,19 @@
                     </div>
                 </a>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(likeLeaderboard)}">这个时间段里还没有上榜文章。</div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(likeLeaderboard)}">
+                这个时间段里还没有上榜文章。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="/posts">先去最新文章</a>
+                    <a class="mb-btn-secondary" href="/search?keyword=">直接搜内容</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary"
+                   th:if="${!#lists.isEmpty(likeLeaderboard)}"
+                   th:href="@{/posts/{id}(id=${likeLeaderboard[0].id})}">直达榜首文章</a>
+                <a class="mb-btn" href="/search?keyword=">去搜索更多</a>
+            </div>
         </section>
     </div>
 </main>

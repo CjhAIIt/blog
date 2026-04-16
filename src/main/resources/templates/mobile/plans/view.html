@@ -34,7 +34,7 @@
                 </article>
             </div>
             <div class="mb-chip-row">
-                <span class="mb-chip" th:text="${plan.status == 1 ? '已完成' : (plan.status == 2 ? '已搁置' : '进行中')}">进行中</span>
+                <span class="mb-chip" th:text="${plan.statusDisplayName}">进行中</span>
                 <span class="mb-chip" th:text="${plan.public ? '可协作' : '私密计划'}">可协作</span>
                 <span class="mb-chip" th:text="${'作者 ' + plan.author.displayName}">作者</span>
             </div>
@@ -56,7 +56,7 @@
             <div class="mb-progress"><div class="mb-progress-bar" th:style="${'width:' + progress + '%'}"></div></div>
             <div class="mb-author-badges">
                 <span class="mb-badge-pill" th:text="${'已发布 ' + publishedCount + ' 篇'}">已发布 0 篇</span>
-                <span class="mb-badge-pill" th:text="${'目标 ' + plan.expectedCount + ' 篇'}">目标 0 篇</span>
+                <span class="mb-badge-pill" th:text="${plan.expectedCount > 0 ? '目标 ' + plan.expectedCount + ' 篇' : '目标待定'}">目标待定</span>
                 <span class="mb-badge-pill" th:text="${plan.accessTypeDisplayName}">计划类型</span>
             </div>
             <div class="mb-quick-grid" style="margin-top: 16px;">
@@ -70,7 +70,7 @@
                 </a>
                 <div class="mb-quick-link mb-quick-link--wide" th:if="${!canCreatePostInPlan}">
                     <strong>现在先看内容</strong>
-                    <span>如果要继续写，需要先满足当前计划的加入条件，并拥有发文权限。</span>
+                    <span>如果要继续写，需要先登录并满足当前计划的加入条件。</span>
                 </div>
             </div>
         </section>

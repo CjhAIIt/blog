@@ -1,0 +1,212 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('排行榜')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <section class="mb-hero mb-hero--browse" id="rankTop">
+            <div class="mb-meta-ribbon">内容热度</div>
+            <span class="mb-hero-kicker">排行榜</span>
+            <h1 class="mb-hero-title">最近谁更活跃</h1>
+            <p class="mb-hero-copy">这页像手机上的一张站内温度卡。先看谁在稳定写、哪篇文章被反复点开，再决定是去追作者还是直接点进内容。</p>
+            <div class="mb-actions">
+                <a class="mb-btn-secondary" href="/posts">去文章区</a>
+                <a class="mb-btn" href="/plans">按计划逛</a>
+            </div>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>观察窗口</span>
+                    <strong th:text="${selectedRankingPeriod.label}">本周</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>创作榜首</span>
+                    <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '待更新' : contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>点赞榜首</span>
+                    <strong th:text="${#lists.isEmpty(likeLeaderboard) ? '待更新' : likeLeaderboard[0].likeCount + ' 赞'}">0 赞</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>展示范围</span>
+                    <strong>Top 10</strong>
+                </article>
+            </div>
+            <div class="mb-chip-row">
+                <a class="mb-chip"
+                   th:each="period : ${rankingPeriods}"
+                   th:classappend="${selectedRankingPeriod.slug == period.slug ? ' is-active' : ''}"
+                   th:href="@{/leaderboards(rankPeriod=${period.slug})}"
+                   th:text="${period.label}">本周</a>
+            </div>
+            <div class="mb-chip-row mb-chip-row--anchors">
+                <a class="mb-chip" href="#contributionRank">创作榜</a>
+                <a class="mb-chip" href="#likeRank">点赞榜</a>
+                <a class="mb-chip" href="/posts">最新文章</a>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--accent mb-browse-panel">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">榜单速览</h2>
+                    <div class="mb-section-note" th:text="${selectedRankingPeriod.description}">按当前周期内发布的文章数量和点赞情况统计</div>
+                </div>
+                <span class="mb-inline-note" th:text="${selectedRankingPeriod.label}">本周</span>
+            </div>
+            <div class="mb-stat-grid">
+                <article class="mb-stat">
+                    <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '待更新' : '@' + contributionLeaderboard[0].username}">@username</strong>
+                    <span th:text="${#lists.isEmpty(contributionLeaderboard) ? '这段时间还没人进入创作榜。' : '当前发文最稳定，适合顺着主页继续往下看。'}">当前发文最稳定。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '0 篇' : contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
+                    <span>创作榜首的发文数量会显示在这里。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong th:text="${#lists.isEmpty(likeLeaderboard) ? '待更新' : likeLeaderboard[0].likeCount + ' 赞'}">0 赞</strong>
+                    <span th:text="${#lists.isEmpty(likeLeaderboard) ? '这段时间还没有文章进入热度榜。' : '当前最热内容：' + likeLeaderboard[0].title}">当前最热内容。</span>
+                </article>
+                <article class="mb-stat">
+                    <strong>继续逛</strong>
+                    <span>创作榜更适合找作者，点赞榜更适合直接点进单篇文章。</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft" id="contributionRank">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">创作榜</h2>
+                    <div class="mb-section-note" th:text="${selectedRankingPeriod.description + '，更适合看谁在稳定更新。'}">按当前周期内发布的文章数量统计，更适合看谁在稳定更新。</div>
+                </div>
+                <a class="mb-section-link" href="/posts">去看最新文章</a>
+            </div>
+            <a class="mb-spotlight mb-rank-spotlight"
+               th:if="${!#lists.isEmpty(contributionLeaderboard)}"
+               th:href="@{/users/{username}(username=${contributionLeaderboard[0].username})}">
+                <div class="mb-post-meta">
+                    <span>Top 1</span>
+                    <span th:text="${'@' + contributionLeaderboard[0].username}">@username</span>
+                </div>
+                <div class="mb-rank-row">
+                    <div class="mb-rank-copy">
+                        <h3 class="mb-post-title" th:text="${contributionLeaderboard[0].username}">用户名</h3>
+                        <p class="mb-post-excerpt">这段时间发文最稳定，适合顺着这位作者的主页继续看最近公开内容。</p>
+                    </div>
+                    <strong class="mb-rank-value" th:text="${contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
+                </div>
+                <div class="mb-post-footer">
+                    <span class="mb-note" th:text="${selectedRankingPeriod.label + ' 创作榜首'}">本周创作榜首</span>
+                    <span class="mb-inline-note">去主页继续看</span>
+                </div>
+            </a>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(contributionLeaderboard)}">
+                <a class="mb-post-card mb-rank-item"
+                   th:each="item, state : ${contributionLeaderboard}"
+                   th:if="${state.index > 0}"
+                   th:href="@{/users/{username}(username=${item.username})}">
+                    <div class="mb-post-meta">
+                        <span th:text="${'#' + (state.index + 1)}">#2</span>
+                        <span th:text="${'@' + item.username}">@username</span>
+                    </div>
+                    <div class="mb-rank-row">
+                        <div class="mb-rank-copy">
+                            <h3 class="mb-post-title" th:text="${item.username}">用户名</h3>
+                            <p class="mb-post-excerpt" th:text="${'本周期发文 ' + item.postCount + ' 篇，点进去就能顺着看这位作者最近在写什么。'}">本周期发文 0 篇。</p>
+                        </div>
+                        <strong class="mb-rank-value" th:text="${item.postCount + ' 篇'}">0 篇</strong>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(contributionLeaderboard)}">
+                这个时间段里还没有新的创作数据。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="/posts">去文章区看看</a>
+                    <a class="mb-btn-secondary" href="/plans">换个计划逛</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary"
+                   th:if="${!#lists.isEmpty(contributionLeaderboard)}"
+                   th:href="@{/users/{username}(username=${contributionLeaderboard[0].username})}">打开榜首主页</a>
+                <a class="mb-btn" href="#likeRank">接着看点赞榜</a>
+            </div>
+        </section>
+
+        <section class="mb-card" id="likeRank">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">点赞榜</h2>
+                    <div class="mb-section-note">按当前周期内获得的点赞数排序，更适合直接发现正在被反复点开的内容。</div>
+                </div>
+                <a class="mb-section-link" href="/search?keyword=">去搜索</a>
+            </div>
+            <a class="mb-spotlight mb-rank-spotlight"
+               th:if="${!#lists.isEmpty(likeLeaderboard)}"
+               th:href="@{/posts/{id}(id=${likeLeaderboard[0].id})}">
+                <div class="mb-post-cover"><img th:src="${likeLeaderboard[0].displayCoverUrl}" th:alt="${likeLeaderboard[0].title}"></div>
+                <div class="mb-post-meta">
+                    <span>Top 1</span>
+                    <span th:text="${likeLeaderboard[0].categoryDisplayName}">分类</span>
+                </div>
+                <div class="mb-rank-row">
+                    <div class="mb-rank-copy">
+                        <h3 class="mb-post-title" th:text="${likeLeaderboard[0].title}">文章标题</h3>
+                        <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(likeLeaderboard[0].content, 84)}">文章摘要</p>
+                    </div>
+                    <strong class="mb-rank-value" th:text="${likeLeaderboard[0].likeCount + ' 赞'}">0 赞</strong>
+                </div>
+                <div class="mb-post-footer">
+                    <span class="mb-note" th:text="${'作者 @' + likeLeaderboard[0].author.username}">作者 @username</span>
+                    <span class="mb-inline-note">直接去读</span>
+                </div>
+            </a>
+            <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(likeLeaderboard)}">
+                <a class="mb-post-card mb-post-card--browse mb-rank-item"
+                   th:each="post, state : ${likeLeaderboard}"
+                   th:if="${state.index > 0}"
+                   th:href="@{/posts/{id}(id=${post.id})}">
+                    <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
+                    <div class="mb-post-meta">
+                        <span th:text="${'#' + (state.index + 1)}">#2</span>
+                        <span th:text="${post.categoryDisplayName}">分类</span>
+                    </div>
+                    <div class="mb-rank-row">
+                        <div class="mb-rank-copy">
+                            <h3 class="mb-post-title" th:text="${post.title}">文章标题</h3>
+                            <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 80)}">文章摘要</p>
+                        </div>
+                        <strong class="mb-rank-value" th:text="${post.likeCount + ' 赞'}">0 赞</strong>
+                    </div>
+                    <div class="mb-post-footer">
+                        <span class="mb-note" th:text="${'作者 @' + post.author.username}">作者 @username</span>
+                        <span class="mb-inline-note">继续阅读</span>
+                    </div>
+                </a>
+            </div>
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(likeLeaderboard)}">
+                这个时间段里还没有上榜文章。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="/posts">先去最新文章</a>
+                    <a class="mb-btn-secondary" href="/search?keyword=">直接搜内容</a>
+                </div>
+            </div>
+            <div class="mb-card-actions">
+                <a class="mb-btn-secondary"
+                   th:if="${!#lists.isEmpty(likeLeaderboard)}"
+                   th:href="@{/posts/{id}(id=${likeLeaderboard[0].id})}">直达榜首文章</a>
+                <a class="mb-btn" href="/search?keyword=">去搜索更多</a>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('posts')}"></nav>
+</div>
+</body>
+</html>
