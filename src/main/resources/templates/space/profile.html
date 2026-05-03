@@ -30,7 +30,7 @@
     </div>
 </div>
 
-<main class="ll-main">
+<main class="ll-main ll-custom-space" th:style="${spaceStyle.pageStyle}">
     <div class="ll-shell">
         <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
         <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
@@ -48,9 +48,13 @@
                     </div>
                     <h1 class="ll-space-title" th:text="${profileUser.displayName + ' 的创作主页'}">个人创作主页</h1>
                     <p class="ll-space-copy"
-                       th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里展示该用户公开发布的文章与站内数据。'}">
+                       th:text="${spaceStyle.hasCustomProfile() ? spaceStyle.profile : (profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : '这里展示该用户公开发布的文章与站内数据。')}">
                         个人简介
                     </p>
+                    <p class="ll-space-signature" th:if="${spaceStyle.hasSignature()}" th:text="${spaceStyle.signature}">签名</p>
+                    <div class="ll-space-interest-tags" th:if="${spaceStyle.hasTags()}">
+                        <span th:each="tag : ${spaceStyle.tags}" th:text="${tag}">标签</span>
+                    </div>
 
                     <div class="ll-space-statline">
                         <span class="ll-meta-pill" th:text="${publishedCount + ' 篇已发布'}">0 篇已发布</span>
@@ -66,6 +70,7 @@
                         <a class="ll-btn-secondary" href="/space/drafts" th:if="${isOwner}">管理草稿</a>
                         <a class="ll-btn-secondary" href="/space/export" th:if="${isOwner}">导出个人博客</a>
                         <a class="ll-btn-secondary" href="/space/edit" th:if="${isOwner}">编辑个人资料</a>
+                        <a class="ll-btn-secondary" href="/space/style" th:if="${isOwner}">自定义风格</a>
                         <a class="ll-btn-secondary"
                            href="/space/edit"
                            th:if="${isOwner and (profileUser.realName == null or #strings.isEmpty(profileUser.realName))}">补充实名信息</a>

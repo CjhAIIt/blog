@@ -49,6 +49,10 @@ public class FileStorageService {
         return storeImage(file, "covers");
     }
 
+    public String storeSpaceBackground(MultipartFile file) {
+        return storeImage(file, "space-backgrounds");
+    }
+
     public String storePostImage(MultipartFile file) {
         return storeImage(file, "posts");
     }

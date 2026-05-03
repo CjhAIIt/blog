@@ -1,6 +1,8 @@
 package com.example.blog.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -14,6 +16,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_posts_plan_order", columnList = "plan_id, plan_order")
 })
 public class Post {
+    public static final String DEFAULT_COVER_URL = "/images/default-covers/cover-writing-desk.jpg";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,6 +26,7 @@ public class Post {
     private String title;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 32)
     private PostCategory category = PostCategory.PROJECT;
 
@@ -30,6 +35,7 @@ public class Post {
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "status", length = 32)
     private PostStatus status = PostStatus.PUBLISHED;
 
@@ -61,6 +67,15 @@ public class Post {
 
     @Column(name = "plan_order")
     private Integer planOrder;
+
+    @Column(name = "is_featured")
+    private boolean featured = false;
+
+    @Column(name = "is_pinned")
+    private boolean pinned = false;
+
+    @Column(name = "pinned_at")
+    private LocalDateTime pinnedAt;
 
     public Post() {
         this.createdAt = LocalDateTime.now();
@@ -149,7 +164,7 @@ public class Post {
     }
 
     public String getDisplayCoverUrl() {
-        return StringUtils.hasText(coverImageUrl) ? coverImageUrl : "/images/default-cover.svg";
+        return StringUtils.hasText(coverImageUrl) ? coverImageUrl : DEFAULT_COVER_URL;
     }
 
     public String getFontKey() {
@@ -226,6 +241,30 @@ public class Post {
 
     public boolean isHiddenFromPublic() {
         return !isPublished();
+    }
+
+    public boolean isFeatured() {
+        return featured;
+    }
+
+    public void setFeatured(boolean featured) {
+        this.featured = featured;
+    }
+
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
+    }
+
+    public LocalDateTime getPinnedAt() {
+        return pinnedAt;
+    }
+
+    public void setPinnedAt(LocalDateTime pinnedAt) {
+        this.pinnedAt = pinnedAt;
     }
 
     @PreUpdate

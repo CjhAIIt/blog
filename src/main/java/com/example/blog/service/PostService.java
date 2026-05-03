@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -49,22 +50,22 @@ public class PostService {
 
     public List<Post> findAll() {
         publishScheduledPosts();
-        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED);
+        return postRepository.findByStatusOrderByPinnedDescPinnedAtDescCreatedAtDesc(PostStatus.PUBLISHED);
     }
 
     public Page<Post> findAll(Pageable pageable) {
         publishScheduledPosts();
-        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED, pageable);
+        return postRepository.findByStatus(PostStatus.PUBLISHED, withDefaultPostSort(pageable));
     }
 
     public List<Post> findByCategory(PostCategory category) {
         publishScheduledPosts();
-        return postRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, PostStatus.PUBLISHED);
+        return postRepository.findByCategoryAndStatusOrderByPinnedDescPinnedAtDescCreatedAtDesc(category, PostStatus.PUBLISHED);
     }
 
     public Page<Post> findByCategory(PostCategory category, Pageable pageable) {
         publishScheduledPosts();
-        return postRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, PostStatus.PUBLISHED, pageable);
+        return postRepository.findByCategoryAndStatus(category, PostStatus.PUBLISHED, withDefaultPostSort(pageable));
     }
 
     public List<Post> findByPlanId(Long planId) {
@@ -101,6 +102,10 @@ public class PostService {
 
     public long countDraftsByAuthorId(Long authorId) {
         return findDraftsByAuthorId(authorId).size();
+    }
+
+    public long countPublishedByAuthorId(Long authorId) {
+        return postRepository.countByAuthorIdAndStatus(authorId, PostStatus.PUBLISHED);
     }
 
     public List<Post> findByKeyword(String keyword) {
@@ -177,7 +182,9 @@ public class PostService {
 
         postLikeRepository.save(new PostLike(user, post));
         post.setLikeCount(Math.toIntExact(postLikeRepository.countByPostId(id)));
-        return postRepository.save(post);
+        Post saved = postRepository.save(post);
+        postRepository.autoFeatureIfThreshold(id, 5);
+        return saved;
     }
 
     public boolean hasUserLikedPost(Long postId, User user) {
@@ -190,7 +197,8 @@ public class PostService {
     public List<ContributionLeaderboardEntry> findContributionLeaderboard(RankingPeriod period, int limit) {
         publishScheduledPosts();
         Pageable pageable = PageRequest.of(0, Math.max(1, limit));
-        return postRepository.findContributionLeaderboard(period.startAt(), pageable);
+        // Use the all-users query so that even users with 0 posts appear on the leaderboard
+        return postRepository.findContributionLeaderboardAllUsers(period.startAt(), pageable);
     }
 
     public List<Post> findLikeLeaderboard(RankingPeriod period, int limit) {
@@ -205,6 +213,32 @@ public class PostService {
         commentService.deleteByPostId(id);
         postLikeRepository.deleteByPostId(id);
         postRepository.deleteById(id);
+    }
+
+    public List<Post> findPinnedPosts() {
+        return postRepository.findByPinnedTrueAndStatusOrderByPinnedAtDesc(PostStatus.PUBLISHED);
+    }
+
+    public List<Post> findFeaturedPosts(int limit) {
+        Pageable pageable = PageRequest.of(0, Math.max(1, limit));
+        return postRepository.findByFeaturedTrueAndStatusOrderByLikeCountDesc(PostStatus.PUBLISHED, pageable);
+    }
+
+    @Transactional
+    public Post setPinned(Long id, boolean pinned) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("文章不存在"));
+        post.setPinned(pinned);
+        post.setPinnedAt(pinned ? LocalDateTime.now() : null);
+        return postRepository.save(post);
+    }
+
+    @Transactional
+    public Post setFeatured(Long id, boolean featured) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("文章不存在"));
+        post.setFeatured(featured);
+        return postRepository.save(post);
     }
 
     public boolean canManage(Post post, User user) {
@@ -225,6 +259,18 @@ public class PostService {
 
     public String excerpt(Post post, int maxLength) {
         return markdownService.excerpt(post == null ? null : post.getContent(), maxLength);
+    }
+
+    private Pageable withDefaultPostSort(Pageable pageable) {
+        if (pageable.getSort().isSorted()) {
+            return pageable;
+        }
+        Sort sort = Sort.by(
+                Sort.Order.desc("pinned"),
+                Sort.Order.desc("pinnedAt").nullsLast(),
+                Sort.Order.desc("createdAt")
+        );
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     }
 
     public Post createImportedDraft(User author, PostCategory category, String originalFileName, String markdownContent) {

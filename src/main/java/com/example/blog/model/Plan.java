@@ -13,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -41,6 +43,7 @@ public class Plan {
     private boolean isPublic = true;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "access_type", nullable = false, length = 32)
     private PlanAccessType accessType = PlanAccessType.PRIVATE;
 
@@ -48,6 +51,7 @@ public class Plan {
     private int expectedCount;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "status", nullable = false, length = 16)
     private PlanStatus status = PlanStatus.IN_PROGRESS;
 

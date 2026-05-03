@@ -55,19 +55,24 @@ public class SecurityConfig {
                                 "/posts",
                                 "/posts/update/**",
                                 "/posts/delete/**",
+                                "/posts/format",
                                 "/posts/preview",
                                 "/posts/*/comments",
                                 "/posts/*/comments/delete/**",
                                 "/posts/*/like",
                                 "/posts/import",
-                                "/space/edit"
+                                "/posts/import/content",
+                                "/space/edit",
+                                "/api/me/space-style/**"
                         ).authenticated()
                         .requestMatchers(
                                 "/space",
                                 "/space/edit",
+                                "/space/style",
                                 "/space/drafts",
                                 "/space/export",
                                 "/space/export/download",
+                                "/api/me/space-style/**",
                                 "/posts/new",
                                 "/posts/edit/**"
                         ).authenticated()

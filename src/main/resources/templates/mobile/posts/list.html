@@ -11,10 +11,10 @@
         <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
 
         <section class="mb-hero mb-hero--browse">
-            <div class="mb-meta-ribbon">分类浏览</div>
-            <span class="mb-hero-kicker">文章</span>
-            <h1 class="mb-hero-title" th:text="${selectedCategory == 'latest' ? '最新文章' : '按分类慢慢看'}">最新文章</h1>
-            <p class="mb-hero-copy">这里按分类整理了站内文章，手机上直接滑着看就行。想换口味，切上面的分类；想找具体内容，直接去搜。</p>
+            <div class="mb-meta-ribbon" th:text="${uiCopy.mobile.hero}">云上高阁，文华先行</div>
+            <span class="mb-hero-kicker" th:text="${uiCopy.mobile.latestArticles}">晨风拂柳，心语轻扬</span>
+            <h1 class="mb-hero-title" th:text="${selectedCategory == 'latest' ? '全部内容' : '按分类浏览'}">全部内容</h1>
+            <p class="mb-hero-copy">一卷清风铺在掌心，按分类寻章，也可随兴翻阅。</p>
             <div class="mb-actions">
                 <a class="mb-btn" href="/search?keyword=">搜内容</a>
                 <a class="mb-btn-secondary" href="/plans">按计划看</a>
@@ -38,45 +38,51 @@
                 </article>
             </div>
             <div class="mb-chip-row">
-                <a class="mb-chip" th:classappend="${selectedCategory == 'latest' ? ' is-active' : ''}" href="/posts">全部</a>
-                <a class="mb-chip" th:each="category : ${postCategories}" th:classappend="${selectedCategory == category.slug ? ' is-active' : ''}" th:href="@{/posts(category=${category.slug})}" th:text="${category.displayName}">分类</a>
+                <a class="mb-chip" th:classappend="${selectedCategory == 'latest' ? ' is-active' : ''}" th:href="@{/posts(sort=${sortBy})}">全部</a>
+                <a class="mb-chip" th:each="category : ${postCategories}" th:classappend="${selectedCategory == category.slug ? ' is-active' : ''}" th:href="@{/posts(category=${category.slug},sort=${sortBy})}" th:text="${category.displayName}">分类</a>
             </div>
         </section>
 
         <section class="mb-glance-grid mb-glance-grid--browse">
             <article class="mb-glance-card">
                 <span>先扫一圈</span>
-                <strong>标题和摘要先看一遍，再决定要不要点进去</strong>
-                <p>列表页更适合先找方向，不必一上来就逐篇深读。</p>
-            </article>
-            <article class="mb-glance-card">
-                <span>换个方式</span>
-                <strong>如果想按主题连续看，去计划页会更顺</strong>
-                <p>单篇入口适合散看，专题入口更适合一路往下读。</p>
-            </article>
-            <article class="mb-glance-card mb-glance-card--wide">
-                <span>当前状态</span>
-                <strong th:text="${selectedCategory == 'latest' ? '现在是全部文章视角，适合先看最近更新' : '现在已经切到分类浏览，下面会更聚焦'}">现在是全部文章视角，适合先看最近更新</strong>
-                <p>如果你已经大致知道方向，分类页会比搜索更适合直接滑着看。</p>
-            </article>
-        </section>
+                    <strong>清题浅读，先闻其意</strong>
+                    <p>标题与摘要如窗前月色，先照一眼，再入正文。</p>
+                </article>
+                <article class="mb-glance-card">
+                    <span>换个方式</span>
+                    <strong>欲循一脉，可入计划分卷</strong>
+                    <p>散章适合偶读，专题更宜连看。</p>
+                </article>
+                <article class="mb-glance-card mb-glance-card--wide">
+                    <span>当前状态</span>
+                    <strong th:text="${selectedCategory == 'latest' ? '新章初上，适合从近处读起' : '已入此类，篇章更聚焦'}">新章初上，适合从近处读起</strong>
+                    <p>若心中已有方向，分类便是更近的一条小径。</p>
+                </article>
+            </section>
 
         <section class="mb-card mb-card--accent mb-browse-panel">
             <div class="mb-section-head">
                 <div>
-                    <h2 class="mb-section-title">这页在看什么</h2>
-                    <div class="mb-section-note" th:text="${selectedCategory == 'latest' ? '当前是全部文章，适合随便翻翻。' : '已经切到分类浏览，往下就是这一类的内容。'}">当前是全部文章，适合随便翻翻。</div>
+                    <h2 class="mb-section-title">择文而读</h2>
+                    <div class="mb-section-note" th:text="${sortBy == 'featured' ? uiCopy.mobile.popular : (sortBy == 'pinned' ? uiCopy.mobile.hero : uiCopy.mobile.latestArticles)}">晨风拂柳，心语轻扬。</div>
                 </div>
                 <span class="mb-inline-note" th:text="${'第 ' + (currentPage + 1) + ' 页'}">第 1 页</span>
             </div>
+            <div class="mb-chip-row">
+                <a class="mb-chip" th:classappend="${sortBy == 'newest' ? ' is-active' : ''}" th:href="@{/posts(category=${selectedCategory})}">最新</a>
+                <a class="mb-chip" th:classappend="${sortBy == 'popular' ? ' is-active' : ''}" th:href="@{/posts(category=${selectedCategory},sort='popular')}">热门</a>
+                <a class="mb-chip" th:classappend="${sortBy == 'featured' ? ' is-active' : ''}" th:href="@{/posts(category=${selectedCategory},sort='featured')}">精选</a>
+                <a class="mb-chip" th:classappend="${sortBy == 'pinned' ? ' is-active' : ''}" th:href="@{/posts(category=${selectedCategory},sort='pinned')}">置顶</a>
+            </div>
             <div class="mb-quick-grid">
                 <a class="mb-quick-link" href="/search?keyword=">
-                    <strong>想找具体内容</strong>
-                    <span>标题、关键词、摘要都能搜，直接缩小范围。</span>
+                    <strong>循字觅章</strong>
+                    <span>以题与关键词为灯，照见想读的内容。</span>
                 </a>
                 <a class="mb-quick-link" href="/plans">
-                    <strong>想连续阅读</strong>
-                    <span>如果你更想顺着主题往下看，可以去计划分区。</span>
+                    <strong>沿卷长读</strong>
+                    <span>想顺着主题往下看，可入计划分区。</span>
                 </a>
             </div>
         </section>
@@ -85,18 +91,20 @@
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title" th:text="${selectedCategory == 'latest' ? '全部文章' : '分类文章'}">全部文章</h2>
-                    <div class="mb-section-note" th:text="${totalItems + ' 篇内容，按时间从新到旧排'}">0 篇内容，按时间从新到旧排</div>
+                    <div class="mb-section-note" th:text="${totalItems + ' 篇内容，开卷有声'}">0 篇内容，开卷有声</div>
                 </div>
                 <a class="mb-section-link" href="/search?keyword=">搜索内容</a>
             </div>
             <div class="mb-list mb-list--browse" th:if="${!#lists.isEmpty(posts)}">
-                <a class="mb-post-card mb-post-card--browse" th:each="post, stat : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
+                <a class="mb-post-card mb-post-card--browse" th:each="post, stat : ${posts}" th:href="@{/posts/{id}(id=${post.id})}" th:classappend="${post.pinned ? ' mb-post-card--pinned' : ''}">
                     <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
                     <div class="mb-post-glance">
                         <span class="mb-inline-note">分类浏览</span>
                         <span class="mb-note" th:text="${'本页第 ' + (stat.count < 10 ? '0' + stat.count : stat.count) + ' 篇'}">本页第 01 篇</span>
                     </div>
                     <div class="mb-post-meta mb-post-meta--browse">
+                        <span class="mb-tag mb-tag--featured" th:if="${post.featured}">精选</span>
+                        <span class="mb-tag mb-tag--pinned" th:if="${post.pinned}">置顶</span>
                         <span th:text="${post.categoryDisplayName}">分类</span>
                         <span th:text="${post.author.displayName}">作者</span>
                         <span th:text="${post.editorFont.label}">字体</span>
@@ -106,14 +114,14 @@
                     <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 110)}">文章摘要</p>
                     <div class="mb-post-footer">
                         <span class="mb-note" th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
-                        <span class="mb-inline-note">继续阅读</span>
+                        <span class="mb-inline-note" th:text="${uiCopy.mobile.readButton}">细读芳华</span>
                     </div>
                 </a>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}">这个分类下面暂时还没有文章。</div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}" th:text="${uiCopy.mobile.empty}">风起云涌，暂无内容。</div>
             <div class="mb-pagination" th:if="${totalPages > 1}">
-                <a class="mb-page-button" th:classappend="${currentPage == 0 ? ' is-disabled' : ''}" th:href="@{/posts(page=${currentPage - 1},category=${selectedCategory})}">上一页</a>
-                <a class="mb-page-button" th:classappend="${currentPage + 1 >= totalPages ? ' is-disabled' : ''}" th:href="@{/posts(page=${currentPage + 1},category=${selectedCategory})}">下一页</a>
+                <a class="mb-page-button" th:classappend="${currentPage == 0 ? ' is-disabled' : ''}" th:href="@{/posts(page=${currentPage - 1},category=${selectedCategory},sort=${sortBy})}">上一页</a>
+                <a class="mb-page-button" th:classappend="${currentPage + 1 >= totalPages ? ' is-disabled' : ''}" th:href="@{/posts(page=${currentPage + 1},category=${selectedCategory},sort=${sortBy})}">下一页</a>
             </div>
             <div class="mb-page-indicator" th:if="${totalPages > 1}" th:text="${'第 ' + (currentPage + 1) + ' / ' + totalPages + ' 页'}">第 1 / 1 页</div>
         </section>

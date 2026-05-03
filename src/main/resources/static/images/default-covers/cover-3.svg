@@ -1,0 +1,30 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#312E81"/>
+      <stop offset="50%" stop-color="#4338CA"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <radialGradient id="glow3" cx="80%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg3)"/>
+  <circle cx="1300" cy="200" r="500" fill="url(#glow3)"/>
+  <g opacity="0.08">
+    <rect x="0" y="0" width="1600" height="900" fill="none" stroke="#A78BFA" stroke-width="0.5"/>
+    <polygon points="100,50 150,150 50,150" fill="none" stroke="#A78BFA" stroke-width="1"/>
+    <polygon points="1500,800 1550,700 1450,700" fill="none" stroke="#A78BFA" stroke-width="1"/>
+    <polygon points="200,800 250,700 150,700" fill="none" stroke="#A78BFA" stroke-width="1"/>
+    <polygon points="1400,100 1450,200 1350,200" fill="none" stroke="#A78BFA" stroke-width="1"/>
+  </g>
+  <rect x="100" y="260" width="500" height="130" rx="24" fill="white" fill-opacity="0.08"/>
+  <rect x="100" y="430" width="950" height="56" rx="18" fill="white" fill-opacity="0.9"/>
+  <rect x="100" y="510" width="780" height="36" rx="17" fill="white" fill-opacity="0.55"/>
+  <rect x="100" y="560" width="840" height="36" rx="17" fill="white" fill-opacity="0.4"/>
+  <rect x="100" y="650" width="280" height="60" rx="30" fill="#818CF8"/>
+  <rect x="410" y="650" width="240" height="60" rx="30" fill="white" fill-opacity="0.12"/>
+  <circle cx="1400" cy="650" r="80" fill="none" stroke="#A78BFA" stroke-width="2" stroke-opacity="0.2"/>
+  <circle cx="1400" cy="650" r="50" fill="none" stroke="#A78BFA" stroke-width="1" stroke-opacity="0.3"/>
+</svg>

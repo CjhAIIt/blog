@@ -33,6 +33,10 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
 
+    public long countUsers() {
+        return userRepository.count();
+    }
+
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
@@ -176,6 +180,15 @@ public class UserService implements UserDetailsService {
         user.setPersonalBlogUrl(normalizePersonalBlogUrl(personalBlogUrl));
         user.setAvatarImageUrl(avatarImageUrl);
         refreshVerificationAfterProfileEdit(user, realNameChanged);
+        return userRepository.save(user);
+    }
+
+    public User resetPassword(Long userId, String newPassword) {
+        if (!StringUtils.hasText(newPassword) || newPassword.length() < 8) {
+            throw new IllegalArgumentException("密码长度至少 8 位");
+        }
+        User user = getById(userId);
+        user.setPassword(passwordEncoder.encode(newPassword));
         return userRepository.save(user);
     }
 

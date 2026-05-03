@@ -13,6 +13,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -69,10 +71,12 @@ public class User implements UserDetails {
     private LocalDateTime passwordUpdatedAt;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "role", nullable = false, length = 16)
     private UserRole role = UserRole.USER;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "real_name_verification_status", nullable = false, length = 16)
     private RealNameVerificationStatus realNameVerificationStatus = RealNameVerificationStatus.PENDING;
 

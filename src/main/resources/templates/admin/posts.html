@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章控制台 - 博客</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body class="ll-page">
+<div class="ll-topbar-wrap">
+    <div class="ll-shell">
+        <header class="ll-topbar">
+            <a class="ll-brand" href="/">
+                <span class="ll-brand-mark">LK</span>
+                <span class="ll-brand-name">博客</span>
+            </a>
+            <nav class="ll-header-links">
+                <a class="ll-header-link" href="/">首页</a>
+                <a class="ll-header-link" href="/posts">文章</a>
+                <a class="ll-header-link is-active" href="/admin/posts">文章控制台</a>
+                <a class="ll-header-link" href="/admin/users">用户管理</a>
+                <a class="ll-header-link" href="/admin/verifications">实名审核</a>
+            </nav>
+        </header>
+    </div>
+</div>
+
+<main class="ll-main">
+    <div class="ll-shell">
+        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
+        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
+
+        <section class="ll-page-head ll-browse-hero ll-fade">
+            <div>
+                <span class="ll-kicker ll-kicker--soft" th:text="${uiCopy.web.topArticle}">云上高阁，文华先行</span>
+                <h1 class="ll-page-title">文章控制台</h1>
+                <p class="ll-page-desc">精选与置顶在这里手动维护；点赞达到阈值后也会自动进入精选。</p>
+            </div>
+            <div class="ll-browse-hero-panel">
+                <span class="ll-browse-hero-label">当前库藏</span>
+                <strong th:text="${#lists.size(allPosts) + ' 篇文章'}">0 篇文章</strong>
+                <p th:text="${uiCopy.web.featured + '；重要篇章可置顶先行。'}">锦绣文章，芳华独赏；重要篇章可置顶先行。</p>
+            </div>
+        </section>
+
+        <section class="ll-card ll-fade">
+            <div class="ll-card-body">
+                <div class="ll-card-topline">
+                    <span class="ll-card-context">精选 / 置顶</span>
+                    <a class="ll-link-badge" href="/posts/new">写新文章</a>
+                </div>
+                <div class="ll-table-wrap">
+                    <table class="ll-admin-table">
+                        <thead>
+                        <tr>
+                            <th>文章</th>
+                            <th>状态</th>
+                            <th>热度</th>
+                            <th>标记</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="post : ${allPosts}">
+                            <td>
+                                <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a>
+                                <div class="ll-card-footer-note" th:text="${post.author.displayName + ' · ' + post.categoryDisplayName}">作者 · 分类</div>
+                            </td>
+                            <td th:text="${post.statusDisplayName}">已发布</td>
+                            <td th:text="${post.likeCount + ' 赞'}">0 赞</td>
+                            <td>
+                                <div class="ll-card-tags">
+                                    <span class="ll-tag ll-tag--featured" th:if="${post.featured}">精选</span>
+                                    <span class="ll-tag ll-tag--pinned" th:if="${post.pinned}">置顶</span>
+                                    <span class="ll-card-footer-note" th:if="${!post.featured and !post.pinned}">未标记</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ll-inline-actions">
+                                    <form th:action="@{/admin/posts/{id}/feature(id=${post.id})}" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button class="ll-admin-btn ll-admin-btn--feature" th:classappend="${post.featured ? ' is-active' : ''}" type="submit" th:text="${post.featured ? '取消精选' : '设为精选'}">设为精选</button>
+                                    </form>
+                                    <form th:action="@{/admin/posts/{id}/pin(id=${post.id})}" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button class="ll-admin-btn ll-admin-btn--pin" th:classappend="${post.pinned ? ' is-active' : ''}" type="submit" th:text="${post.pinned ? '取消置顶' : '设为置顶'}">设为置顶</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ll-empty" th:if="${#lists.isEmpty(allPosts)}" th:text="${uiCopy.web.empty}">文章未至，静候佳作。</div>
+            </div>
+        </section>
+    </div>
+</main>
+</body>
+</html>

@@ -22,6 +22,34 @@
 1. `mvnw clean package -DskipTests`
 2. `java -jar target/blog-0.0.1-SNAPSHOT.jar`
 
+## 覆盖发布
+如果服务器上已经有同一套博客服务，并且要求保留数据库、`uploads/` 和环境变量文件，可以直接使用仓库里的覆盖发布脚本：
+
+```powershell
+.\scripts\Deploy-BlogPreserveData.ps1 `
+  -Username lab `
+  -KeyFile C:\path\to\id_ed25519 `
+  -RemoteDir /home/lab/apps/blog `
+  -Build
+```
+
+密码登录也可以：
+
+```powershell
+.\scripts\Deploy-BlogPreserveData.ps1 `
+  -Username lab `
+  -Password 'your-password' `
+  -RemoteDir /home/lab/apps/blog
+```
+
+脚本行为：
+*   只上传新的 `blog.jar` 到远端 `releases/`
+*   仅替换运行中的 `blog.jar`
+*   保留 `blog.env`
+*   保留 `uploads/`
+*   不删除数据库数据
+*   启动失败时自动回滚到上一个 `jar`
+
 ## 迁移与回滚步骤 (Flyway)
 1. 系统在启动时自动执行 `classpath:db/migration` 下的 Flyway 脚本。
 2. 确保 `spring.jpa.hibernate.ddl-auto=validate`，防止 JPA 自动改表破坏 Flyway 脚本。

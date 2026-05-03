@@ -70,26 +70,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         });
 
-        User admin = userService.findByUsername("admin")
-                .map(existing -> {
-                    boolean changed = false;
-                    if (!existing.isAdmin()) {
-                        existing.setRole(UserRole.ADMIN);
-                        changed = true;
-                    }
-                    if (existing.getRealNameVerificationStatus() != RealNameVerificationStatus.APPROVED) {
-                        approveLegacyVerification(existing);
-                        changed = true;
-                    }
-                    return changed ? userService.save(existing) : existing;
-                })
-                .orElseGet(() -> userService.createUser(
-                        "admin",
-                        "admin@example.com",
-                        "password",
-                        UserRole.ADMIN,
-                        RealNameVerificationStatus.APPROVED
-                ));
+        User admin = ensureDefaultAdmin();
         if (admin.getBio() == null) {
             admin.setBio("默认管理员账号，可管理所有文章、评论和实名认证审核。");
             userService.updateProfile(admin, "管理员", admin.getBio(), "10001", "https://github.com/CjhAIIt", null);
@@ -153,6 +134,32 @@ public class DataInitializer implements CommandLineRunner {
         postService.save(algorithmPost);
 
         commentService.save(welcomePost, user, "这一版已经有 Markdown、草稿箱和评论区了，整体完整很多。");
+    }
+
+    private User ensureDefaultAdmin() {
+        return userService.findByUsername("admin")
+                .or(() -> userService.findByEmail("admin@example.com"))
+                .map(this::promoteDefaultAdmin)
+                .orElseGet(() -> userService.createUser(
+                        "admin",
+                        "admin@example.com",
+                        "password",
+                        UserRole.ADMIN,
+                        RealNameVerificationStatus.APPROVED
+                ));
+    }
+
+    private User promoteDefaultAdmin(User existing) {
+        boolean changed = false;
+        if (!existing.isAdmin()) {
+            existing.setRole(UserRole.ADMIN);
+            changed = true;
+        }
+        if (existing.getRealNameVerificationStatus() != RealNameVerificationStatus.APPROVED) {
+            approveLegacyVerification(existing);
+            changed = true;
+        }
+        return changed ? userService.save(existing) : existing;
     }
 
     private void approveLegacyVerification(User user) {

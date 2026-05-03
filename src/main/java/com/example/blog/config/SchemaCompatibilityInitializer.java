@@ -40,6 +40,7 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
             ensurePostsContentLongText(connection, metaData);
             ensurePostsStatusSupportsScheduled(connection, metaData);
             ensurePostsCategorySupportsNewValues(connection, metaData);
+            ensurePostsCurationColumns(connection, metaData);
             ensureUsersRoleColumn(connection, metaData);
             ensureUsersVerificationColumns(connection, metaData);
             ensurePlansStatusSupportsNamedValues(connection, metaData);
@@ -93,6 +94,35 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
             statement.execute("ALTER TABLE posts MODIFY COLUMN category VARCHAR(32) NOT NULL DEFAULT 'PROJECT'");
         }
         log.info("Upgraded posts.category from {} to VARCHAR(32) to support new categories", currentType);
+    }
+
+    private void ensurePostsCurationColumns(Connection connection, DatabaseMetaData metaData) throws SQLException {
+        if (findColumnType(metaData, connection.getCatalog(), "posts", "is_featured") == null) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("ALTER TABLE posts ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0");
+            }
+            log.info("Added posts.is_featured column");
+        }
+
+        if (findColumnType(metaData, connection.getCatalog(), "posts", "is_pinned") == null) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("ALTER TABLE posts ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0");
+            }
+            log.info("Added posts.is_pinned column");
+        }
+
+        if (findColumnType(metaData, connection.getCatalog(), "posts", "pinned_at") == null) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("ALTER TABLE posts ADD COLUMN pinned_at DATETIME NULL");
+            }
+            log.info("Added posts.pinned_at column");
+        }
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("UPDATE posts SET is_featured = 0 WHERE is_featured IS NULL");
+            statement.execute("UPDATE posts SET is_pinned = 0 WHERE is_pinned IS NULL");
+        }
+        log.info("Normalized null curation flags on posts");
     }
 
     private void ensureUsersRoleColumn(Connection connection, DatabaseMetaData metaData) throws SQLException {
@@ -200,6 +230,10 @@ public class SchemaCompatibilityInitializer implements CommandLineRunner {
                 "CREATE INDEX idx_posts_schedule_queue ON posts (status, scheduled_publish_at)");
         ensureNamedIndex(connection, metaData, "posts", "idx_posts_plan_order",
                 "CREATE INDEX idx_posts_plan_order ON posts (plan_id, plan_order)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_pinned_created",
+                "CREATE INDEX idx_posts_pinned_created ON posts (is_pinned, pinned_at, created_at)");
+        ensureNamedIndex(connection, metaData, "posts", "idx_posts_featured_likes",
+                "CREATE INDEX idx_posts_featured_likes ON posts (is_featured, like_count, created_at)");
         ensureNamedIndex(connection, metaData, "plans", "idx_plans_public_updated",
                 "CREATE INDEX idx_plans_public_updated ON plans (is_public, updated_at)");
         ensureNamedIndex(connection, metaData, "plans", "idx_plans_access_public_updated",

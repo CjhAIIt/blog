@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('空间风格')}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+</head>
+<body class="mb-body">
+<meta name="_csrf" th:content="${_csrf.token}">
+<meta name="_csrf_header" th:content="${_csrf.headerName}">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--profile">
+            <div class="mb-meta-ribbon">空间风格</div>
+            <span class="mb-hero-kicker">完全自定义</span>
+            <h1 class="mb-hero-title">装修你的个人空间</h1>
+            <p class="mb-hero-copy">背景、主题色、字体、签名和兴趣标签都能实时预览，保存后自动应用。</p>
+        </section>
+
+        <section class="ll-style-editor ll-style-editor--mobile"
+                 data-space-style-editor
+                 th:attr="data-initial-style=${spaceStyleJson},data-versions=${spaceStyleVersionsJson}">
+            <section class="ll-style-preview" data-role="preview">
+                <div class="ll-style-preview-card">
+                    <div class="mb-inline-profile">
+                        <div class="mb-avatar-lg"><img th:src="${currentUser.displayAvatarUrl}" th:alt="${currentUser.username}"></div>
+                        <div>
+                            <h2 class="mb-section-title" th:text="${currentUser.displayName}">用户名</h2>
+                            <div class="mb-section-note" th:text="${'@' + currentUser.username}">@username</div>
+                        </div>
+                    </div>
+                    <p class="ll-style-signature" data-preview="signature">在这里写一句签名。</p>
+                    <p class="ll-style-profile" data-preview="profile">还没有写个人简介。</p>
+                    <div class="ll-style-preview-tags" data-preview="tags"></div>
+                </div>
+            </section>
+
+            <section class="mb-card ll-style-panel">
+                <div class="ll-style-panel-head">
+                    <div>
+                        <h2>风格控制台</h2>
+                        <p>选择模板，或者继续自己 DIY。</p>
+                    </div>
+                    <div class="ll-style-status" data-role="status"></div>
+                </div>
+
+                <section class="ll-style-section">
+                    <h3>预设模板</h3>
+                    <div class="ll-style-template-grid">
+                        <button type="button" data-template="clean"><span style="background:#2563eb"></span>清爽白</button>
+                        <button type="button" data-template="ink"><span style="background:#8b5cf6"></span>暗色灵感</button>
+                        <button type="button" data-template="garden"><span style="background:#477a5b"></span>绿意书房</button>
+                        <button type="button" data-template="sunset"><span style="background:#c2410c"></span>暖调手账</button>
+                        <button type="button" data-template="ocean"><span style="background:#0f766e"></span>远山海面</button>
+                    </div>
+                </section>
+
+                <section class="ll-style-section">
+                    <h3>背景和颜色</h3>
+                    <div class="ll-style-field-grid">
+                        <label>背景颜色<input type="color" data-field="backgroundColor"></label>
+                        <label>主题色<input type="color" data-field="themeColor"></label>
+                    </div>
+                    <label class="ll-style-upload">
+                        <span>上传背景图片</span>
+                        <input type="file" data-field="backgroundFile" accept="image/*">
+                    </label>
+                    <button type="button" class="ll-style-mini-action" data-action="clearBackground">移除背景图片</button>
+                </section>
+
+                <section class="ll-style-section">
+                    <h3>字体</h3>
+                    <select class="mb-input" data-field="fontFamily">
+                        <option value="Inter, system-ui, sans-serif">现代无衬线</option>
+                        <option value="Georgia, 'Times New Roman', serif">经典衬线</option>
+                        <option value="'SFMono-Regular', Consolas, 'Liberation Mono', monospace">代码等宽</option>
+                        <option value="'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif">圆润标题</option>
+                    </select>
+                </section>
+
+                <section class="ll-style-section">
+                    <h3>简介和标签</h3>
+                    <label>个人简介<textarea class="mb-textarea" data-field="profile" maxlength="600"></textarea></label>
+                    <label>签名<input class="mb-input" type="text" data-field="signature" maxlength="120"></label>
+                    <label>兴趣标签<input class="mb-input" type="text" data-field="tagInput" placeholder="输入后按 Enter 添加"></label>
+                    <div class="ll-style-tag-list" data-role="tagList"></div>
+                </section>
+
+                <section class="ll-style-section">
+                    <h3>历史版本</h3>
+                    <div class="ll-style-version-list" data-role="versionList"></div>
+                </section>
+
+                <div class="ll-style-actions">
+                    <button type="button" class="mb-btn-secondary" data-action="cancel">取消</button>
+                    <button type="button" class="mb-btn-secondary" data-action="reset">默认</button>
+                    <button type="button" class="mb-btn" data-action="save">保存</button>
+                </div>
+            </section>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('space')}"></nav>
+</div>
+
+<script src="/js/components/shared/SpaceStyleEditor.js"></script>
+<script>
+    document.querySelectorAll('[data-space-style-editor]').forEach((root) => {
+        window.SpaceStyleEditor.init(root);
+    });
+</script>
+</body>
+</html>

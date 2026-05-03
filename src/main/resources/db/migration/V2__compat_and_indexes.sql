@@ -193,6 +193,89 @@ PREPARE stmt FROM @idx_posts_plan_order_sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @post_featured_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'posts'
+      AND column_name = 'is_featured'
+);
+SET @post_featured_sql := IF(
+    @post_featured_exists = 0,
+    'ALTER TABLE posts ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0',
+    'SELECT 1'
+);
+PREPARE stmt FROM @post_featured_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @post_pinned_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'posts'
+      AND column_name = 'is_pinned'
+);
+SET @post_pinned_sql := IF(
+    @post_pinned_exists = 0,
+    'ALTER TABLE posts ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0',
+    'SELECT 1'
+);
+PREPARE stmt FROM @post_pinned_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @post_pinned_at_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'posts'
+      AND column_name = 'pinned_at'
+);
+SET @post_pinned_at_sql := IF(
+    @post_pinned_at_exists = 0,
+    'ALTER TABLE posts ADD COLUMN pinned_at DATETIME NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @post_pinned_at_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+UPDATE posts SET is_featured = 0 WHERE is_featured IS NULL;
+UPDATE posts SET is_pinned = 0 WHERE is_pinned IS NULL;
+
+SET @idx_posts_pinned_created := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'posts'
+      AND index_name = 'idx_posts_pinned_created'
+);
+SET @idx_posts_pinned_created_sql := IF(
+    @idx_posts_pinned_created = 0,
+    'CREATE INDEX idx_posts_pinned_created ON posts(is_pinned, pinned_at, created_at)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @idx_posts_pinned_created_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_posts_featured_likes := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'posts'
+      AND index_name = 'idx_posts_featured_likes'
+);
+SET @idx_posts_featured_likes_sql := IF(
+    @idx_posts_featured_likes = 0,
+    'CREATE INDEX idx_posts_featured_likes ON posts(is_featured, like_count, created_at)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @idx_posts_featured_likes_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 SET @idx_comments_post_created := (
     SELECT COUNT(*)
     FROM information_schema.statistics

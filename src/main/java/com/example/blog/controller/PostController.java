@@ -1,5 +1,6 @@
 package com.example.blog.controller;
 
+import com.example.blog.dto.DefaultCoverOption;
 import com.example.blog.model.EditorFont;
 import com.example.blog.model.Plan;
 import com.example.blog.model.PlanAccessType;
@@ -16,6 +17,7 @@ import com.example.blog.service.ViewModeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +48,16 @@ import java.util.UUID;
 @RequestMapping("/posts")
 public class PostController {
     private static final int MAX_TITLE_LENGTH = 200;
+    private static final List<DefaultCoverOption> DEFAULT_COVER_OPTIONS = List.of(
+            new DefaultCoverOption("cover-writing-desk.jpg", "/images/default-covers/cover-writing-desk.jpg", "写作桌面", "#334155"),
+            new DefaultCoverOption("cover-code-desk.jpg", "/images/default-covers/cover-code-desk.jpg", "代码屏幕", "#0F766E"),
+            new DefaultCoverOption("cover-mountain-view.jpg", "/images/default-covers/cover-mountain-view.jpg", "山谷远景", "#2563EB"),
+            new DefaultCoverOption("cover-coffee-notebook.jpg", "/images/default-covers/cover-coffee-notebook.jpg", "咖啡笔记", "#92400E"),
+            new DefaultCoverOption("cover-library-light.jpg", "/images/default-covers/cover-library-light.jpg", "明亮书架", "#64748B"),
+            new DefaultCoverOption("cover-book-coffee.jpg", "/images/default-covers/cover-book-coffee.jpg", "书页咖啡", "#78350F"),
+            new DefaultCoverOption("cover-abstract-shadow.jpg", "/images/default-covers/cover-abstract-shadow.jpg", "黑白光影", "#27272A"),
+            new DefaultCoverOption("cover-glass-lines.jpg", "/images/default-covers/cover-glass-lines.jpg", "玻璃线条", "#475569")
+    );
 
     private final PostService postService;
     private final UserService userService;
@@ -72,9 +85,10 @@ public class PostController {
 
     @GetMapping
     public String listPosts(@RequestParam(defaultValue = "latest") String category,
+                            @RequestParam(defaultValue = "newest") String sort,
                             @RequestParam(defaultValue = "0") int page,
                             Model model) {
-        Pageable pageable = PageRequest.of(page, 12);
+        Pageable pageable = PageRequest.of(page, 12, resolvePostSort(sort));
         Optional<PostCategory> selectedCategory = PostCategory.fromSlug(category);
         Page<Post> postsPage = selectedCategory
                 .map(value -> postService.findByCategory(value, pageable))
@@ -84,6 +98,7 @@ public class PostController {
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
+        model.addAttribute("sortBy", normalizeSort(sort));
         return view("posts/list");
     }
 
@@ -143,6 +158,7 @@ public class PostController {
         model.addAttribute("post", post);
         model.addAttribute("editorLocalDraftKey", "new-" + UUID.randomUUID());
         model.addAttribute("selectedCategory", "latest");
+        model.addAttribute("defaultCoverOptions", getDefaultCoverOptions());
         populatePlanOptions(model, currentUser);
         return view("posts/form");
     }
@@ -173,6 +189,7 @@ public class PostController {
         model.addAttribute("post", post.get());
         model.addAttribute("editorLocalDraftKey", "post-" + id);
         model.addAttribute("selectedCategory", post.get().getCategorySlug());
+        model.addAttribute("defaultCoverOptions", getDefaultCoverOptions());
         populatePlanOptions(model, currentUser);
         return view("posts/form");
     }
@@ -183,6 +200,7 @@ public class PostController {
                            @RequestParam(value = "scheduledPublishAt", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime scheduledPublishAt,
                            @RequestParam(value = "coverFile", required = false) MultipartFile coverFile,
                            @RequestParam(value = "useDefaultCover", defaultValue = "false") boolean useDefaultCover,
+                           @RequestParam(value = "defaultCoverSelection", required = false) String defaultCoverSelection,
                            @RequestParam(value = "planSelection", defaultValue = "none") String planSelection,
                            @RequestParam(value = "existingPlanId", required = false) Long existingPlanId,
                            @RequestParam(value = "newPlanName", required = false) String newPlanName,
@@ -206,7 +224,7 @@ public class PostController {
 
         try {
             validateTitle(post.getTitle());
-            applyCover(post, null, coverFile, useDefaultCover);
+            applyCover(post, null, coverFile, useDefaultCover, defaultCoverSelection);
             processPlanSelection(post, planSelection, existingPlanId, newPlanName, newPlanAccessType, planOrder, currentUser);
             if (isDraftAction(action)) {
                 Post draft = postService.saveDraft(post);
@@ -242,6 +260,7 @@ public class PostController {
                              @RequestParam(value = "scheduledPublishAt", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime scheduledPublishAt,
                              @RequestParam(value = "coverFile", required = false) MultipartFile coverFile,
                              @RequestParam(value = "useDefaultCover", defaultValue = "false") boolean useDefaultCover,
+                             @RequestParam(value = "defaultCoverSelection", required = false) String defaultCoverSelection,
                              @RequestParam(value = "planSelection", defaultValue = "none") String planSelection,
                              @RequestParam(value = "existingPlanId", required = false) Long existingPlanId,
                              @RequestParam(value = "newPlanName", required = false) String newPlanName,
@@ -279,7 +298,7 @@ public class PostController {
 
         try {
             validateTitle(editablePost.getTitle());
-            applyCover(editablePost, editablePost.getCoverImageUrl(), coverFile, useDefaultCover);
+            applyCover(editablePost, editablePost.getCoverImageUrl(), coverFile, useDefaultCover, defaultCoverSelection);
             processPlanSelection(editablePost, planSelection, existingPlanId, newPlanName, newPlanAccessType, planOrder, currentUser);
             if (isDraftAction(action)) {
                 Post draft = postService.saveDraft(editablePost);
@@ -338,6 +357,30 @@ public class PostController {
         }
     }
 
+    @PostMapping(value = "/import/content", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> importMarkdownContent(@RequestParam("markdownFile") MultipartFile markdownFile,
+                                                                     Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "请先登录后再导入 Markdown"));
+        }
+
+        User currentUser = userService.getByUsername(principal.getName());
+        if (!userService.canWritePosts(currentUser)) {
+            return ResponseEntity.status(403).body(Map.of("message", userService.getPostPermissionMessage(currentUser)));
+        }
+
+        try {
+            String markdownContent = fileStorageService.loadMarkdownContent(markdownFile);
+            return ResponseEntity.ok(Map.of(
+                    "title", suggestMarkdownTitle(markdownFile.getOriginalFilename(), markdownContent),
+                    "content", markdownContent
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/delete/{id}")
     public String deletePost(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) {
@@ -372,6 +415,28 @@ public class PostController {
     @ResponseBody
     public ResponseEntity<String> previewMarkdown(@RequestParam String content) {
         return ResponseEntity.ok(markdownService.render(content));
+    }
+
+    @PostMapping(value = "/format", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> formatMarkdown(@RequestBody Map<String, String> request,
+                                                              Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "请先登录后再使用编辑工具"));
+        }
+
+        User currentUser = userService.getByUsername(principal.getName());
+        if (!userService.canWritePosts(currentUser)) {
+            return ResponseEntity.status(403).body(Map.of("message", userService.getPostPermissionMessage(currentUser)));
+        }
+
+        String command = request.getOrDefault("command", "");
+        String selectedText = request.getOrDefault("selectedText", "");
+        try {
+            return ResponseEntity.ok(Map.of("replacement", formatSelection(command, selectedText)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -513,11 +578,17 @@ public class PostController {
         }
     }
 
-    private void applyCover(Post target, String originalCoverUrl, MultipartFile coverFile, boolean useDefaultCover) {
+    private void applyCover(Post target, String originalCoverUrl, MultipartFile coverFile, boolean useDefaultCover, String defaultCoverSelection) {
         String currentCoverUrl = StringUtils.hasText(originalCoverUrl) ? originalCoverUrl : target.getCoverImageUrl();
         if (useDefaultCover) {
             fileStorageService.deleteIfStored(currentCoverUrl);
             target.setCoverImageUrl(null);
+            return;
+        }
+        Optional<String> selectedDefaultCoverUrl = resolveDefaultCoverUrl(defaultCoverSelection);
+        if (selectedDefaultCoverUrl.isPresent() && (coverFile == null || coverFile.isEmpty())) {
+            fileStorageService.deleteIfStored(currentCoverUrl);
+            target.setCoverImageUrl(selectedDefaultCoverUrl.get());
             return;
         }
         if (coverFile == null || coverFile.isEmpty()) {
@@ -590,6 +661,37 @@ public class PostController {
         return nextPlanOrder;
     }
 
+    private List<DefaultCoverOption> getDefaultCoverOptions() {
+        return DEFAULT_COVER_OPTIONS;
+    }
+
+    private Optional<String> resolveDefaultCoverUrl(String selectedUrl) {
+        if (!StringUtils.hasText(selectedUrl)) {
+            return Optional.empty();
+        }
+        String normalizedUrl = selectedUrl.trim();
+        return DEFAULT_COVER_OPTIONS.stream()
+                .map(DefaultCoverOption::getUrl)
+                .filter(normalizedUrl::equals)
+                .findFirst();
+    }
+
+    private Sort resolvePostSort(String sort) {
+        return switch (normalizeSort(sort)) {
+            case "popular" -> Sort.by(Sort.Order.desc("likeCount").nullsLast(), Sort.Order.desc("createdAt"));
+            case "featured" -> Sort.by(Sort.Order.desc("featured"), Sort.Order.desc("pinned"), Sort.Order.desc("createdAt"));
+            case "pinned" -> Sort.by(Sort.Order.desc("pinned"), Sort.Order.desc("pinnedAt").nullsLast(), Sort.Order.desc("createdAt"));
+            default -> Sort.unsorted();
+        };
+    }
+
+    private String normalizeSort(String sort) {
+        if ("popular".equalsIgnoreCase(sort) || "featured".equalsIgnoreCase(sort) || "pinned".equalsIgnoreCase(sort)) {
+            return sort.toLowerCase();
+        }
+        return "newest";
+    }
+
     private String suggestImageAltText(String originalFilename) {
         if (!StringUtils.hasText(originalFilename)) {
             return "插图";
@@ -598,6 +700,50 @@ public class PostController {
         String baseName = dotIndex > 0 ? originalFilename.substring(0, dotIndex) : originalFilename;
         String normalized = baseName.replace('_', ' ').replace('-', ' ').trim();
         return StringUtils.hasText(normalized) ? normalized : "插图";
+    }
+
+    private String suggestMarkdownTitle(String originalFilename, String markdownContent) {
+        if (StringUtils.hasText(markdownContent)) {
+            for (String line : markdownContent.split("\\R")) {
+                String trimmed = line.trim();
+                if (trimmed.matches("^#{1,6}\\s+.+")) {
+                    return trimTitle(trimmed.replaceFirst("^#{1,6}\\s+", ""));
+                }
+            }
+        }
+        if (!StringUtils.hasText(originalFilename)) {
+            return "导入的 Markdown";
+        }
+        String filename = originalFilename.trim();
+        int dotIndex = filename.lastIndexOf('.');
+        String baseName = dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+        return trimTitle(StringUtils.hasText(baseName) ? baseName : "导入的 Markdown");
+    }
+
+    private String trimTitle(String title) {
+        String normalized = StringUtils.hasText(title) ? title.trim() : "导入的 Markdown";
+        return normalized.length() > MAX_TITLE_LENGTH ? normalized.substring(0, MAX_TITLE_LENGTH) : normalized;
+    }
+
+    private String formatSelection(String command, String selectedText) {
+        String text = StringUtils.hasText(selectedText) ? selectedText : "";
+        return switch (command) {
+            case "h2" -> prefixLines(StringUtils.hasText(text) ? text : "小标题", "## ");
+            case "bold" -> "**" + (StringUtils.hasText(text) ? text : "重点内容") + "**";
+            case "quote" -> prefixLines(StringUtils.hasText(text) ? text : "写下一条关键结论", "> ");
+            case "code" -> "```\n" + (StringUtils.hasText(text) ? text : "code") + "\n```";
+            case "list" -> prefixLines(StringUtils.hasText(text) ? text : "列表项", "- ");
+            case "link" -> "[" + (StringUtils.hasText(text) ? text : "链接文字") + "](https://example.com)";
+            default -> throw new IllegalArgumentException("不支持的编辑命令");
+        };
+    }
+
+    private String prefixLines(String text, String prefix) {
+        String normalized = text == null ? "" : text;
+        return normalized.lines()
+                .map(line -> line.startsWith(prefix) ? line : prefix + line)
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse(prefix.trim());
     }
 
     private String buildMarkdownImage(String imageUrl, String altText) {

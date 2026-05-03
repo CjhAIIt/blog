@@ -16,6 +16,7 @@
             </a>
             <nav class="ll-header-links">
                 <a class="ll-header-link" href="/space">个人空间</a>
+                <a class="ll-header-link" href="/space/style">空间风格</a>
                 <a class="ll-header-link" href="/space/drafts">草稿箱</a>
                 <a class="ll-header-link" href="/posts/new" th:if="${currentUser.canPublishPosts()}">写文章</a>
             </nav>
@@ -67,6 +68,7 @@
 
                     <div class="ll-space-actions">
                         <a class="ll-btn-secondary" href="/space">回个人空间</a>
+                        <a class="ll-btn-secondary" href="/space/style">自定义空间风格</a>
                         <a class="ll-btn-secondary" href="/space/drafts">看草稿箱</a>
                         <a class="ll-btn-secondary" href="/space/export">导出博客</a>
                     </div>

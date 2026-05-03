@@ -49,15 +49,18 @@ public class MainController {
         model.addAttribute("totalItems", postsPage.getTotalElements());
         model.addAttribute("selectedCategory", selectedCategory.map(PostCategory::getSlug).orElse("latest"));
         model.addAttribute("featuredPosts", postService.findLikeLeaderboard(RankingPeriod.MONTH, 3));
+        model.addAttribute("pinnedPosts", postService.findPinnedPosts());
+        model.addAttribute("topFeaturedPosts", postService.findFeaturedPosts(5));
         return view("index");
     }
 
     @GetMapping("/leaderboards")
     public String leaderboards(@RequestParam(defaultValue = "week") String rankPeriod, Model model) {
         RankingPeriod selectedRankingPeriod = RankingPeriod.fromSlug(rankPeriod);
+        int contributionLimit = Math.toIntExact(Math.min(Integer.MAX_VALUE, Math.max(10, userService.countUsers())));
         model.addAttribute("selectedRankingPeriod", selectedRankingPeriod);
         model.addAttribute("rankingPeriods", RankingPeriod.values());
-        model.addAttribute("contributionLeaderboard", postService.findContributionLeaderboard(selectedRankingPeriod, 10));
+        model.addAttribute("contributionLeaderboard", postService.findContributionLeaderboard(selectedRankingPeriod, contributionLimit));
         model.addAttribute("likeLeaderboard", postService.findLikeLeaderboard(selectedRankingPeriod, 10));
         return view("leaderboards");
     }

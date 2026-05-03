@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments/layout :: head('用户管理')}"></head>
+<body class="mb-body">
+<div class="mb-shell">
+    <header th:replace="~{mobile/fragments/layout :: header}"></header>
+</div>
+
+<main class="mb-main">
+    <div class="mb-shell mb-stack">
+        <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
+
+        <section class="mb-hero mb-hero--admin" id="adminUsersTop">
+            <div class="mb-meta-ribbon">账号台</div>
+            <span class="mb-hero-kicker">管理</span>
+            <h1 class="mb-hero-title">用户管理</h1>
+            <p class="mb-hero-copy">这里能查看所有注册用户的账号、邮箱、发文数量和密码状态。密码已加密存储，找回账号时请直接重置临时新密码。</p>
+            <div class="mb-actions">
+                <a class="mb-btn-secondary" href="/admin/verifications">实名审核</a>
+                <a class="mb-btn" th:href="@{/users/{username}(username=${currentUser.username})}">我的主页</a>
+            </div>
+            <div class="mb-hero-stats">
+                <article class="mb-hero-stat">
+                    <span>当前列表</span>
+                    <strong th:text="${totalUsers}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>活跃用户</span>
+                    <strong th:text="${activeUserCount}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>发布内容</span>
+                    <strong th:text="${totalPublishedCount}">0</strong>
+                </article>
+                <article class="mb-hero-stat">
+                    <span>密码处理</span>
+                    <strong>可重置</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="mb-card mb-card--soft">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">查找用户</h2>
+                    <div class="mb-section-note">可按用户名、邮箱或真实姓名筛选。</div>
+                </div>
+                <span class="mb-inline-note" th:text="${totalUsers + ' 个用户'}">0 个用户</span>
+            </div>
+            <form method="get" action="/admin/users" class="mb-search-form">
+                <input class="mb-input" type="text" name="keyword" th:value="${keyword}" placeholder="搜索用户名、邮箱、真实姓名">
+                <button class="mb-btn" type="submit">搜索</button>
+                <a class="mb-btn-secondary" th:if="${keyword != null and !keyword.isBlank()}" href="/admin/users">清除</a>
+            </form>
+        </section>
+
+        <section class="mb-card" id="userList">
+            <div class="mb-section-head">
+                <div>
+                    <h2 class="mb-section-title">账号列表</h2>
+                    <div class="mb-section-note">按已发布文章数量从高到低排序。</div>
+                </div>
+                <span class="mb-inline-note">明文密码不可查看</span>
+            </div>
+
+            <div class="mb-admin-grid" th:if="${!#lists.isEmpty(userInfos)}">
+                <article class="mb-user-card mb-admin-history-card" th:each="info : ${userInfos}">
+                    <div class="mb-admin-status-line">
+                        <div class="mb-inline-profile">
+                            <div class="mb-avatar"><img th:src="${info.user.displayAvatarUrl}" th:alt="${info.user.username}"></div>
+                            <div>
+                                <h3 class="mb-post-title" th:text="${info.user.displayName}">用户</h3>
+                                <div class="mb-section-note" th:text="${'@' + info.user.username}">@username</div>
+                            </div>
+                        </div>
+                        <span class="mb-badge-pill" th:text="${info.user.admin ? '管理员' : info.user.role}">USER</span>
+                    </div>
+
+                    <div class="mb-key-list">
+                        <div class="mb-key-item">
+                            <strong>邮箱</strong>
+                            <span th:text="${info.user.email}">mail@example.com</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>真实姓名</strong>
+                            <span th:text="${#strings.isEmpty(info.user.realName) ? '未填写' : info.user.realName}">未填写</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>注册时间</strong>
+                            <span th:text="${info.user.createdAt != null ? #temporals.format(info.user.createdAt, 'yyyy-MM-dd') : '未记录'}">2026-05-01</span>
+                        </div>
+                        <div class="mb-key-item">
+                            <strong>密码状态</strong>
+                            <span th:text="${info.user.passwordUpdatedAt != null ? '已加密 · ' + #temporals.format(info.user.passwordUpdatedAt, 'MM-dd HH:mm') : '已加密'}">已加密</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-author-badges">
+                        <span class="mb-badge-pill" th:text="${info.publishedCount + ' 篇发布'}">0 篇发布</span>
+                        <span class="mb-badge-pill" th:text="${info.draftCount + ' 篇草稿'}">0 篇草稿</span>
+                        <span class="mb-badge-pill">密码不可反查</span>
+                    </div>
+
+                    <form class="mb-admin-password-form"
+                          th:action="@{/admin/users/{id}/password(id=${info.user.id})}"
+                          method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <label class="mb-label" th:for="${'mobileResetPassword-' + info.user.id}">重置为临时新密码</label>
+                        <input class="mb-input"
+                               type="password"
+                               th:id="${'mobileResetPassword-' + info.user.id}"
+                               name="newPassword"
+                               minlength="8"
+                               placeholder="临时新密码"
+                               autocomplete="new-password"
+                               required>
+                        <input class="mb-input"
+                               type="password"
+                               name="confirmPassword"
+                               minlength="8"
+                               placeholder="再次输入"
+                               autocomplete="new-password"
+                               required>
+                        <button class="mb-btn-secondary" type="submit">设置临时密码</button>
+                    </form>
+                </article>
+            </div>
+
+            <div class="mb-empty mb-empty--actionable" th:if="${#lists.isEmpty(userInfos)}">
+                没有找到匹配的用户。
+                <div class="mb-card-actions">
+                    <a class="mb-btn-secondary" href="/admin/users">查看全部用户</a>
+                    <a class="mb-btn-secondary" href="/admin/verifications">实名审核</a>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div class="mb-shell">
+    <nav th:replace="~{mobile/fragments/layout :: tabbar('space')}"></nav>
+</div>
+</body>
+</html>

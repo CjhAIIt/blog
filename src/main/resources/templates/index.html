@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客首页</title>
+    <title>博客</title>
     <link rel="stylesheet" href="/css/site.css">
 </head>
 <body class="ll-page">
@@ -39,7 +39,7 @@
                     <button class="ll-header-link ll-button-reset" type="submit">退出</button>
                 </form>
                 <form class="ll-header-form" action="/search" method="get">
-                    <input class="ll-search" type="search" name="keyword" placeholder="搜索 Markdown 文章">
+                    <input class="ll-search" type="search" name="keyword" placeholder="搜索文章">
                     <button class="ll-search-submit" type="submit">搜索</button>
                 </form>
                 <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
@@ -63,13 +63,13 @@
 
         <section class="ll-home-hero ll-fade">
             <div class="ll-home-copy ll-home-copy--story">
-                <span class="ll-kicker">欢迎来到博客</span>
-                <h1 class="ll-page-title">把灵感先写下来，再慢慢打磨成文章</h1>
-                <p class="ll-page-desc">这里保留了 Markdown 写作的轻快，也把草稿、封面、定时发布和导入这些琐事收拾好了。你可以先记一段，等想清楚了，再挑个合适的时候发出来。</p>
+                <span class="ll-kicker" th:text="${uiCopy.web.hero}">开放内容空间</span>
+                <h1 class="ll-page-title">落笔成文，字字珠玑</h1>
+                <p class="ll-page-desc">汇聚真实经验与深度思考，愿每一篇文字都能予人启迪。</p>
                 <div class="ll-home-feature-list">
-                    <span class="ll-home-feature">草稿随手存</span>
-                    <span class="ll-home-feature">预览边写边看</span>
-                    <span class="ll-home-feature">想定时就定时</span>
+                    <span class="ll-home-feature">学习经验</span>
+                    <span class="ll-home-feature">项目实践</span>
+                    <span class="ll-home-feature">技术探索</span>
                 </div>
                 <div class="ll-inline-actions ll-home-actions">
                     <a class="ll-btn" href="/posts/new" sec:authorize="isAuthenticated()">开始写文章</a>
@@ -81,8 +81,8 @@
 
             <aside class="ll-home-side">
                 <div class="ll-home-highlight ll-home-highlight--accent">
-                    <div class="ll-side-title">排行榜</div>
-                    <p class="ll-side-text">想看看最近谁更新得勤、哪几篇文章正在被更多人读到，去榜单里扫一眼就很清楚。</p>
+                    <div class="ll-side-title">小建议</div>
+                    <p class="ll-side-text">第一次来可以先看最新文章。想找活跃作者或热门内容，再去排行榜会更方便。</p>
                     <a class="ll-side-link ll-side-link--solid" href="/leaderboards">查看排行榜</a>
                 </div>
 
@@ -94,17 +94,66 @@
                             <span class="ll-mini-meta" th:text="${hotPost.likeCount + ' 个赞'}">0 个赞</span>
                         </a>
                     </div>
-                    <p class="ll-side-text" th:if="${#lists.isEmpty(featuredPosts)}">这会儿热榜还空着，不如把今天那篇先发出来。</p>
+                    <p class="ll-side-text" th:if="${#lists.isEmpty(featuredPosts)}">暂时还没有热门文章。你可以先去最新文章看看。</p>
                 </div>
             </aside>
+        </section>
+
+        <!-- 置顶文章区块 -->
+        <section class="ll-pinned-section ll-fade" th:if="${!#lists.isEmpty(pinnedPosts)}">
+            <div class="ll-pinned-section-title">置顶</div>
+            <div class="ll-grid ll-grid--home">
+                <article class="ll-card ll-card--pinned ll-fade" th:each="post : ${pinnedPosts}">
+                    <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
+                        <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+                        <span class="ll-media-badge" th:text="${post.categoryDisplayName}">项目</span>
+                    </a>
+                    <div class="ll-card-body">
+                        <div class="ll-card-tags">
+                            <span class="ll-tag ll-tag--pinned">置顶</span>
+                            <span class="ll-tag ll-tag--featured" th:if="${post.featured}">精选</span>
+                        </div>
+                        <h2 class="ll-card-title"><a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a></h2>
+                        <p class="ll-card-excerpt" th:text="${@markdownService.excerpt(post.content, 100)}">文章摘要</p>
+                        <div class="ll-card-meta">
+                            <a class="ll-side-link" th:href="@{/users/{username}(username=${post.author.username})}" th:text="${post.author.displayName}">作者</a>
+                            <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}" th:text="${uiCopy.web.readButton}">细读芳华</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 精选文章区块 -->
+        <section class="ll-featured-section ll-fade" th:if="${!#lists.isEmpty(topFeaturedPosts)}">
+            <div class="ll-featured-section-title" th:text="${uiCopy.web.featured}">锦上添花，独领风骚</div>
+            <div class="ll-grid ll-grid--home">
+                <article class="ll-card ll-fade" th:each="post : ${topFeaturedPosts}">
+                    <a class="ll-card-media ll-card-media--image" th:href="@{/posts/{id}(id=${post.id})}">
+                        <img th:src="${post.displayCoverUrl}" th:alt="${post.title}">
+                        <span class="ll-media-badge" th:text="${post.categoryDisplayName}">项目</span>
+                    </a>
+                    <div class="ll-card-body">
+                        <div class="ll-card-tags">
+                            <span class="ll-tag ll-tag--featured">精选</span>
+                        </div>
+                        <h2 class="ll-card-title"><a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a></h2>
+                        <p class="ll-card-excerpt" th:text="${@markdownService.excerpt(post.content, 100)}">文章摘要</p>
+                        <div class="ll-card-meta">
+                            <a class="ll-side-link" th:href="@{/users/{username}(username=${post.author.username})}" th:text="${post.author.displayName}">作者</a>
+                            <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}" th:text="${uiCopy.web.readButton}">细读芳华</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
         </section>
 
         <section class="ll-home-stream-head ll-fade" th:if="${!#lists.isEmpty(posts)}">
             <div>
                 <span class="ll-kicker ll-kicker--soft">最新更新</span>
-                <h2 class="ll-home-stream-title">最近写下来的内容</h2>
+                <h2 class="ll-home-stream-title" th:text="${uiCopy.web.latestArticles}">晨风拂柳，心语轻扬</h2>
             </div>
-            <p class="ll-home-stream-note">先看刚更新的，再慢慢决定今天想点进哪一篇。</p>
+            <p class="ll-home-stream-note">从最近发布的内容开始看，遇到感兴趣的标题就点进去。</p>
         </section>
 
         <section class="ll-grid ll-grid--home" th:if="${!#lists.isEmpty(posts)}">
@@ -115,6 +164,10 @@
                     <span class="ll-media-mark" th:text="${stat.count < 10 ? '0' + stat.count : stat.count}">01</span>
                 </a>
                 <div class="ll-card-body">
+                    <div class="ll-card-tags">
+                        <span class="ll-tag ll-tag--featured" th:if="${post.featured}">精选</span>
+                        <span class="ll-tag ll-tag--pinned" th:if="${post.pinned}">置顶</span>
+                    </div>
                     <div class="ll-card-topline">
                         <span class="ll-meta-pill" th:text="${post.likeCount + ' 个赞'}">0 个赞</span>
                         <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">2026-03-19</span>
@@ -123,7 +176,7 @@
                     <p class="ll-card-excerpt" th:text="${@markdownService.excerpt(post.content, 120)}">文章摘要</p>
                     <div class="ll-card-meta">
                         <a class="ll-side-link" th:href="@{/users/{username}(username=${post.author.username})}" th:text="${post.author.displayName}">作者</a>
-                        <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}">阅读全文</a>
+                        <a class="ll-side-link" th:href="@{/posts/{id}(id=${post.id})}" th:text="${uiCopy.web.readButton}">细读芳华</a>
                     </div>
                 </div>
             </article>
@@ -145,9 +198,8 @@
             <div class="ll-footer-shell">
                 <span class="ll-footer-brand">© 2026 博客</span>
                 <div class="ll-footer-tags">
-                    <span>Markdown 写作</span>
-                    <span>草稿箱</span>
-                    <span>附件</span>
+                    <span>开放内容</span>
+                    <span>真实经验</span>
                     <a th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">项目源码</a>
                 </div>
             </div>

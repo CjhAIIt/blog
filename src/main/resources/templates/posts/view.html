@@ -42,7 +42,11 @@
         <section class="ll-article-hero ll-fade">
             <div class="ll-article-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
             <div class="ll-feed-top">
-                <span class="ll-tag" th:text="${post.categoryDisplayName}">分类</span>
+                <div class="ll-card-tags">
+                    <span class="ll-tag" th:text="${post.categoryDisplayName}">分类</span>
+                    <span class="ll-tag ll-tag--featured" th:if="${post.featured}">精选</span>
+                    <span class="ll-tag ll-tag--pinned" th:if="${post.pinned}">置顶</span>
+                </div>
                 <div class="ll-inline-actions">
                     <span class="ll-meta-pill" id="articleReadTime">约 1 分钟阅读</span>
                     <span class="ll-meta-pill" th:text="${post.likeCount + ' 赞'}">0 赞</span>
@@ -90,16 +94,6 @@
                     <strong id="articleWordCount">0</strong>
                     <span class="ll-metric-note">正文词元数</span>
                 </article>
-                <article class="ll-metric-card">
-                    <span class="ll-metric-label">标题数量</span>
-                    <strong id="articleHeadingCount">0</strong>
-                    <span class="ll-metric-note">便于快速浏览结构</span>
-                </article>
-                <article class="ll-metric-card">
-                    <span class="ll-metric-label">段落数量</span>
-                    <strong id="articleParagraphCount">0</strong>
-                    <span class="ll-metric-note">适合检查篇幅密度</span>
-                </article>
             </div>
         </section>
 
@@ -127,7 +121,7 @@
                     <div class="ll-article-body-head">
                         <div>
                             <span class="ll-kicker ll-kicker--soft">正文</span>
-                            <div class="ll-article-body-note">按你选中的展示字体排版，目录会跟着阅读位置一起移动。</div>
+                            <div class="ll-article-body-note">目录会跟随阅读位置移动。</div>
                         </div>
                         <div class="ll-article-progress-box">
                             <span>阅读进度</span>

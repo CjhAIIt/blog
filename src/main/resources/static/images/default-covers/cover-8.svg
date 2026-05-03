@@ -1,0 +1,28 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg8" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#27272A"/>
+      <stop offset="50%" stop-color="#3F3F46"/>
+      <stop offset="100%" stop-color="#27272A"/>
+    </linearGradient>
+    <radialGradient id="glow8" cx="80%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#A1A1AA" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#A1A1AA" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg8)"/>
+  <circle cx="1300" cy="700" r="400" fill="url(#glow8)"/>
+  <g opacity="0.06">
+    <circle cx="200" cy="800" r="100" fill="none" stroke="#A1A1AA" stroke-width="0.5"/>
+    <circle cx="350" cy="850" r="60" fill="none" stroke="#A1A1AA" stroke-width="0.5"/>
+    <circle cx="100" cy="700" r="40" fill="none" stroke="#A1A1AA" stroke-width="0.5"/>
+    <line x1="0" y1="450" x2="1600" y2="450" stroke="#A1A1AA" stroke-width="0.5"/>
+  </g>
+  <rect x="100" y="300" width="500" height="110" rx="24" fill="white" fill-opacity="0.08"/>
+  <rect x="100" y="440" width="850" height="56" rx="18" fill="white" fill-opacity="0.9"/>
+  <rect x="100" y="520" width="690" height="36" rx="17" fill="white" fill-opacity="0.55"/>
+  <rect x="100" y="570" width="750" height="36" rx="17" fill="white" fill-opacity="0.35"/>
+  <rect x="100" y="660" width="280" height="60" rx="30" fill="#A1A1AA"/>
+  <rect x="410" y="660" width="220" height="60" rx="30" fill="white" fill-opacity="0.1"/>
+  <text x="1220" y="440" font-family="Georgia, serif" font-size="100" font-style="italic" fill="#A1A1AA" fill-opacity="0.1">写</text>
+</svg>

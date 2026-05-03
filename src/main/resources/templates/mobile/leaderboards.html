@@ -9,17 +9,17 @@
 <main class="mb-main">
     <div class="mb-shell mb-stack">
         <section class="mb-hero mb-hero--browse" id="rankTop">
-            <div class="mb-meta-ribbon">内容热度</div>
+            <div class="mb-meta-ribbon">站内榜单</div>
             <span class="mb-hero-kicker">排行榜</span>
             <h1 class="mb-hero-title">最近谁更活跃</h1>
-            <p class="mb-hero-copy">这页像手机上的一张站内温度卡。先看谁在稳定写、哪篇文章被反复点开，再决定是去追作者还是直接点进内容。</p>
+            <p class="mb-hero-copy">这里能看到每个注册用户最近写了多少、累计写了多少，也能顺手找几篇最近更受欢迎的文章。</p>
             <div class="mb-actions">
                 <a class="mb-btn-secondary" href="/posts">去文章区</a>
                 <a class="mb-btn" href="/plans">按计划逛</a>
             </div>
             <div class="mb-hero-stats">
                 <article class="mb-hero-stat">
-                    <span>观察窗口</span>
+                    <span>统计范围</span>
                     <strong th:text="${selectedRankingPeriod.label}">本周</strong>
                 </article>
                 <article class="mb-hero-stat">
@@ -32,7 +32,7 @@
                 </article>
                 <article class="mb-hero-stat">
                     <span>展示范围</span>
-                    <strong>Top 10</strong>
+                    <strong>全员</strong>
                 </article>
             </div>
             <div class="mb-chip-row">
@@ -52,18 +52,18 @@
         <section class="mb-glance-grid mb-glance-grid--browse">
             <article class="mb-glance-card">
                 <span>创作榜</span>
-                <strong>适合先找作者，再顺着主页看这一期在写什么</strong>
-                <p>如果你想知道谁最近更新最稳，这一列会比文章区更直接。</p>
+                <strong>每个注册用户都会显示，发文数量放在一起看</strong>
+                <p>想看谁最近常写，或者自己累计写了多少，从这里看很直接。</p>
             </article>
             <article class="mb-glance-card">
                 <span>点赞榜</span>
-                <strong>适合直接点进单篇，看这期最热的内容是什么</strong>
-                <p>热度榜更像一张站内兴趣快照，先读榜首通常最有代表性。</p>
+                <strong>适合直接找最近比较受欢迎的文章</strong>
+                <p>不知道先读哪篇时，可以从靠前的文章开始。</p>
             </article>
             <article class="mb-glance-card mb-glance-card--wide">
-                <span>时间窗口</span>
-                <strong th:text="${selectedRankingPeriod.label + ' 会决定你看到的是短期热度还是更长节奏'}">本周会决定你看到的是短期热度还是更长节奏</strong>
-                <p>切换周期以后，再看同一组榜单，通常能更快感受到站内创作节奏的变化。</p>
+                <span>时间范围</span>
+                <strong th:text="${selectedRankingPeriod.label + ' 的统计更偏向当前这段时间'}">本周的统计更偏向当前这段时间</strong>
+                <p>想看长期积累就切到更长周期，想看最近变化就看本周。</p>
             </article>
         </section>
 
@@ -78,11 +78,11 @@
             <div class="mb-stat-grid">
                 <article class="mb-stat">
                     <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '待更新' : '@' + contributionLeaderboard[0].username}">@username</strong>
-                    <span th:text="${#lists.isEmpty(contributionLeaderboard) ? '这段时间还没人进入创作榜。' : '当前发文最稳定，适合顺着主页继续往下看。'}">当前发文最稳定。</span>
+                    <span th:text="${#lists.isEmpty(contributionLeaderboard) ? '这段时间还没有新的发文记录。' : '当前发文最多，可以点进主页继续看。'}">当前发文最多，可以点进主页继续看。</span>
                 </article>
                 <article class="mb-stat">
                     <strong th:text="${#lists.isEmpty(contributionLeaderboard) ? '0 篇' : contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
-                    <span>创作榜首的发文数量会显示在这里。</span>
+                    <span>榜首在当前周期内的发文数量会显示在这里。</span>
                 </article>
                 <article class="mb-stat">
                     <strong th:text="${#lists.isEmpty(likeLeaderboard) ? '待更新' : likeLeaderboard[0].likeCount + ' 赞'}">0 赞</strong>
@@ -90,7 +90,7 @@
                 </article>
                 <article class="mb-stat">
                     <strong>继续逛</strong>
-                    <span>创作榜更适合找作者，点赞榜更适合直接点进单篇文章。</span>
+                    <span>创作榜看作者，点赞榜看文章。</span>
                 </article>
             </div>
         </section>
@@ -99,7 +99,7 @@
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">创作榜</h2>
-                    <div class="mb-section-note" th:text="${selectedRankingPeriod.description + '，更适合看谁在稳定更新。'}">按当前周期内发布的文章数量统计，更适合看谁在稳定更新。</div>
+                    <div class="mb-section-note" th:text="${selectedRankingPeriod.description + '；所有注册用户都会显示，也会补充累计发布数量。'}">按当前周期内发布的文章数量统计；所有注册用户都会显示，也会补充累计发布数量。</div>
                 </div>
                 <a class="mb-section-link" href="/posts">去看最新文章</a>
             </div>
@@ -113,7 +113,7 @@
                 <div class="mb-rank-row">
                     <div class="mb-rank-copy">
                         <h3 class="mb-post-title" th:text="${contributionLeaderboard[0].username}">用户名</h3>
-                        <p class="mb-post-excerpt">这段时间发文最稳定，适合顺着这位作者的主页继续看最近公开内容。</p>
+                        <p class="mb-post-excerpt" th:text="${'本周期 ' + contributionLeaderboard[0].postCount + ' 篇，累计发布 ' + contributionLeaderboard[0].totalPostCount + ' 篇。'}">本周期 0 篇，累计发布 0 篇。</p>
                     </div>
                     <strong class="mb-rank-value" th:text="${contributionLeaderboard[0].postCount + ' 篇'}">0 篇</strong>
                 </div>
@@ -134,7 +134,7 @@
                     <div class="mb-rank-row">
                         <div class="mb-rank-copy">
                             <h3 class="mb-post-title" th:text="${item.username}">用户名</h3>
-                            <p class="mb-post-excerpt" th:text="${'本周期发文 ' + item.postCount + ' 篇，点进去就能顺着看这位作者最近在写什么。'}">本周期发文 0 篇。</p>
+                            <p class="mb-post-excerpt" th:text="${'本周期发文 ' + item.postCount + ' 篇，累计发布 ' + item.totalPostCount + ' 篇。'}">本周期发文 0 篇，累计发布 0 篇。</p>
                         </div>
                         <strong class="mb-rank-value" th:text="${item.postCount + ' 篇'}">0 篇</strong>
                     </div>
@@ -159,7 +159,7 @@
             <div class="mb-section-head">
                 <div>
                     <h2 class="mb-section-title">点赞榜</h2>
-                    <div class="mb-section-note">按当前周期内获得的点赞数排序，更适合直接发现正在被反复点开的内容。</div>
+                    <div class="mb-section-note">按当前周期内获得的点赞数排序，适合先找最近更受欢迎的内容。</div>
                 </div>
                 <a class="mb-section-link" href="/search?keyword=">去搜索</a>
             </div>

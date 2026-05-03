@@ -11,10 +11,10 @@
         <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
 
         <section class="mb-hero mb-hero--home">
-            <div class="mb-meta-ribbon">手机阅读</div>
-            <span class="mb-hero-kicker">首页</span>
-            <h1 class="mb-hero-title">碎片时间里，也能把博客刷得很顺</h1>
-            <p class="mb-hero-copy">通勤路上、排队的时候、睡前随手翻两篇，都不用再和缩小版桌面页较劲。常看的内容、搜索、评论和个人空间，都按手机的节奏重新排好了。</p>
+            <div class="mb-meta-ribbon" th:text="${uiCopy.mobile.hero}">开放内容空间</div>
+            <span class="mb-hero-kicker">记录 · 分享 · 交流</span>
+            <h1 class="mb-hero-title">落笔成文，字字珠玑</h1>
+            <p class="mb-hero-copy" th:text="${uiCopy.mobile.latestArticles + '；把真实经验与深度思考，写成可慢慢细读的篇章。'}">晨风拂柳，心语轻扬；把真实经验与深度思考，写成可慢慢细读的篇章。</p>
             <div class="mb-actions">
                 <a class="mb-btn" href="/posts">开始阅读</a>
                 <a class="mb-btn-secondary" href="/search?keyword=">搜索内容</a>
@@ -55,15 +55,15 @@
             <div class="mb-quick-grid">
                 <a class="mb-quick-link" href="/search?keyword=">
                     <strong>搜索内容</strong>
-                    <span>想找哪篇，直接按标题、分类或关键词搜。</span>
+                    <span>记得标题或关键词时，从这里找会更快。</span>
                 </a>
                 <a class="mb-quick-link" href="/plans">
                     <strong>专题计划</strong>
-                    <span>系列内容连着看，不用来回翻着找上下文。</span>
+                    <span>想连续看同一个主题，可以从计划里进去。</span>
                 </a>
                 <a class="mb-quick-link mb-quick-link--wide" th:href="${viewer != null ? '/space' : '/register'}">
                     <strong th:text="${viewer != null ? '进入我的空间' : '注册后开始写作'}">进入我的空间</strong>
-                    <span th:text="${viewer != null ? '草稿、消息和资料设置都在这边。' : '注册后就能慢慢写，先存草稿也没压力。'}">草稿、消息和资料设置都在这边。</span>
+                    <span th:text="${viewer != null ? '草稿、消息和资料设置都在这里。' : '注册后就能开始写，先存草稿也可以。'}">草稿、消息和资料设置都在这里。</span>
                 </a>
             </div>
         </section>
@@ -71,7 +71,7 @@
         <section class="mb-card mb-card--soft" th:if="${!#lists.isEmpty(featuredPosts)}">
             <div class="mb-section-head">
                 <div>
-                    <h2 class="mb-section-title">本月推荐</h2>
+                    <h2 class="mb-section-title" th:text="${uiCopy.mobile.popular}">锦绣文章，芳华独赏</h2>
                     <div class="mb-section-note">不知道先看什么的时候，就从这几篇开始。</div>
                 </div>
                 <a class="mb-section-link" href="/leaderboards?rankPeriod=month">查看月榜</a>
@@ -80,6 +80,8 @@
                 <a class="mb-post-card" th:each="post : ${featuredPosts}" th:href="@{/posts/{id}(id=${post.id})}">
                     <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
                     <div class="mb-post-meta">
+                        <span class="mb-tag mb-tag--featured" th:if="${post.featured}">精选</span>
+                        <span class="mb-tag mb-tag--pinned" th:if="${post.pinned}">置顶</span>
                         <span th:text="${post.categoryDisplayName}">分类</span>
                         <span th:text="${post.likeCount + ' 赞'}">0 赞</span>
                     </div>
@@ -92,8 +94,8 @@
         <section class="mb-card">
             <div class="mb-section-head">
                 <div>
-                    <h2 class="mb-section-title">最新文章</h2>
-                    <div class="mb-section-note" th:text="${totalItems + ' 篇内容，还在继续往前长'}">0 篇内容</div>
+                    <h2 class="mb-section-title" th:text="${uiCopy.mobile.latestArticles}">晨风拂柳，心语轻扬</h2>
+                    <div class="mb-section-note" th:text="${totalItems + ' 篇内容，开卷有声'}">0 篇内容</div>
                 </div>
                 <a class="mb-section-link" href="/posts">完整列表</a>
             </div>
@@ -101,6 +103,8 @@
                 <a class="mb-post-card" th:each="post : ${posts}" th:href="@{/posts/{id}(id=${post.id})}">
                     <div class="mb-post-cover"><img th:src="${post.displayCoverUrl}" th:alt="${post.title}"></div>
                     <div class="mb-post-meta">
+                        <span class="mb-tag mb-tag--featured" th:if="${post.featured}">精选</span>
+                        <span class="mb-tag mb-tag--pinned" th:if="${post.pinned}">置顶</span>
                         <span th:text="${post.categoryDisplayName}">分类</span>
                         <span th:text="${post.author.displayName}">作者</span>
                         <span th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">04-10 11:00</span>
@@ -109,11 +113,11 @@
                     <p class="mb-post-excerpt" th:text="${@markdownService.excerpt(post.content, 110)}">文章摘要</p>
                     <div class="mb-post-footer">
                         <span class="mb-note" th:text="${post.likeCount + ' 次点赞'}">0 次点赞</span>
-                        <span class="mb-inline-note">继续阅读</span>
+                        <span class="mb-inline-note" th:text="${uiCopy.mobile.readButton}">细读芳华</span>
                     </div>
                 </a>
             </div>
-            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}">这个分类下暂时还没有内容。</div>
+            <div class="mb-empty" th:if="${#lists.isEmpty(posts)}" th:text="${uiCopy.mobile.empty}">风起云涌，暂无内容。</div>
             <div class="mb-pagination" th:if="${totalPages > 1}">
                 <a class="mb-page-button" th:classappend="${currentPage == 0 ? ' is-disabled' : ''}" th:href="@{/(page=${currentPage - 1},category=${selectedCategory})}">上一页</a>
                 <a class="mb-page-button" th:classappend="${currentPage + 1 >= totalPages ? ' is-disabled' : ''}" th:href="@{/(page=${currentPage + 1},category=${selectedCategory})}">下一页</a>

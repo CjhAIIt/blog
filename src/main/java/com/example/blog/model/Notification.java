@@ -1,6 +1,8 @@
 package com.example.blog.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ public class Notification {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 32)
     private NotificationType type;
 

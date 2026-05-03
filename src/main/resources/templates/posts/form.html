@@ -5,850 +5,590 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title th:text="${(post.id == null ? '写文章' : '编辑文章') + ' - 博客'}">写文章</title>
+    <title th:text="${(post.id == null ? '发布文章' : '编辑文章') + ' - 博客'}">发布文章</title>
     <link rel="stylesheet" href="/css/site.css">
 </head>
-<body class="ll-page">
-<div class="ll-topbar-wrap">
-    <div class="ll-shell">
-        <header class="ll-topbar">
-            <a class="ll-brand" href="/">
-                <span class="ll-brand-mark">LK</span>
-                <span class="ll-brand-name">博客</span>
-            </a>
-            <nav class="ll-header-links">
-                <a class="ll-header-link" href="/">首页</a>
-                <a class="ll-header-link" href="/leaderboards">排行榜</a>
-                <a class="ll-header-link" href="/plans">计划分区</a>
-                <a class="ll-header-link" href="/space">个人空间</a>
-                <a class="ll-header-link" href="/space/drafts">草稿箱</a>
-            </nav>
-            <div class="ll-header-actions">
-                <a class="ll-header-bell" href="/notifications" th:classappend="${notificationUnreadCount > 0 ? ' has-unread' : ''}" aria-label="消息中心">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .64-.2 1.26-.57 1.78L5.6 12.4A2 2 0 0 0 7.2 15.5h9.6a2 2 0 0 0 1.6-3.1l-1.83-2.52A3.08 3.08 0 0 1 16 8.1V7a4 4 0 0 0-4-4Zm0 18a2.74 2.74 0 0 0 2.58-1.83h-5.16A2.74 2.74 0 0 0 12 21Z"/>
-                    </svg>
-                </a>
-                <a class="ll-header-link" href="/space/edit">编辑资料</a>
-                <a class="ll-header-link" th:href="${sourceRepoUrl}" target="_blank" rel="noreferrer">GitHub</a>
+<body class="ll-compose-page">
+<form th:object="${post}"
+      th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}"
+      method="post"
+      enctype="multipart/form-data"
+      class="ll-compose-form"
+      th:attr="data-local-draft-key=${editorLocalDraftKey}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <input type="hidden" name="defaultCoverSelection" id="defaultCoverSelection" th:value="${post.coverImageUrl != null and #strings.startsWith(post.coverImageUrl, '/images/default-covers/') ? post.coverImageUrl : ''}">
+
+    <header class="ll-compose-topbar">
+        <div class="ll-compose-brand">
+            <a class="ll-compose-logo" href="/">LK</a>
+            <a class="ll-compose-back" href="/space">‹</a>
+            <strong th:text="${post.id == null ? '发布文章' : '编辑文章'}">发布文章</strong>
+            <select class="ll-compose-top-select" id="category" th:field="*{category}">
+                <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
+            </select>
+        </div>
+        <div class="ll-compose-user">
+            <a href="/space/drafts">草稿箱</a>
+            <a href="/notifications">消息</a>
+            <a href="/space">个人空间</a>
+        </div>
+    </header>
+
+    <nav class="ll-compose-toolbar" aria-label="编辑工具栏">
+        <button type="button" data-command="undo"><strong>↶</strong><span>撤销</span></button>
+        <button type="button" data-command="redo"><strong>↷</strong><span>前进</span></button>
+        <span class="ll-compose-toolbar-divider"></span>
+        <button type="button" data-command="h2"><strong>H</strong><span>标题</span></button>
+        <button type="button" data-command="bold"><strong>B</strong><span>加粗</span></button>
+        <button type="button" data-command="quote"><strong>“</strong><span>引用</span></button>
+        <button type="button" data-command="code"><strong>&lt;/&gt;</strong><span>代码</span></button>
+        <button type="button" data-command="list"><strong>☷</strong><span>列表</span></button>
+        <button type="button" data-command="link"><strong>⛓</strong><span>链接</span></button>
+        <span class="ll-compose-toolbar-divider"></span>
+        <button type="button" data-command="import-md"><strong>MD</strong><span>导入MD</span></button>
+        <button type="button" data-command="image"><strong>▧</strong><span>上传图片</span></button>
+        <button type="button" data-command="preview"><strong>◐</strong><span>后端预览</span></button>
+        <input type="file" id="editorImageFile" accept="image/*" hidden>
+        <input type="file" id="editorMarkdownFile" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+    </nav>
+
+    <main class="ll-compose-main">
+        <aside class="ll-compose-outline">
+            <div class="ll-compose-panel-head">
+                <span>目录</span>
+                <button type="button" id="outlineCollapseButton">|‹</button>
             </div>
-        </header>
-    </div>
-</div>
+            <div id="editorOutline" class="ll-compose-outline-list">
+                <div class="ll-compose-outline-empty">为文内增加标题，这里将生成目录</div>
+            </div>
+        </aside>
 
-<main class="ll-main">
-    <div class="ll-shell">
-        <div th:if="${message}" class="ll-status ll-status--success"><span th:text="${message}"></span></div>
-        <div th:if="${error}" class="ll-status ll-status--error"><span th:text="${error}"></span></div>
-
-        <form th:object="${post}" th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}" method="post" enctype="multipart/form-data" class="ll-editor-shell" th:attr="data-local-draft-key=${editorLocalDraftKey}" data-enhanced-form data-ready-text="内容整理好后就能提交，提交时会自动锁定按钮，避免重复发布。">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-
-            <section class="ll-editor-hero ll-fade">
-                <div class="ll-editor-topline">
-                    <span class="ll-kicker" th:text="${post.id == null ? '写作台 / Draft Studio' : '写作台 / Editing Session'}">写作台</span>
-                    <div class="ll-inline-actions">
-                        <span class="ll-toolbar-chip">服务器草稿箱</span>
-                        <span class="ll-toolbar-chip">实时预览</span>
-                        <span class="ll-toolbar-chip">定时发布</span>
-                        <span class="ll-toolbar-chip">封面上传</span>
-                    </div>
+        <section class="ll-compose-paper">
+            <div class="ll-compose-title-row">
+                <input class="ll-compose-title-input"
+                       type="text"
+                       id="title"
+                       th:field="*{title}"
+                       maxlength="100"
+                       placeholder="请输入文章标题（5～100个字）">
+                <div class="ll-compose-title-help">
+                    <span id="titleHint">还需输入 5 个字</span>
                 </div>
-                <h1 class="ll-space-title" th:text="${post.id == null ? '写一篇可以慢慢打磨的 Markdown 文章' : '继续把这篇文章写顺'}">写文章</h1>
-                <p class="ll-space-copy">先把想法记下来，边写边看效果；写完可以立刻发，也可以先放进草稿箱，等更合适的时候再发布。</p>
+            </div>
 
-                <div class="ll-editor-metrics">
-                    <article class="ll-metric-card">
-                        <span class="ll-metric-label">内容长度</span>
-                        <strong id="editorWordCount">0</strong>
-                        <span class="ll-metric-note">按中英文混合词元统计</span>
-                    </article>
-                    <article class="ll-metric-card">
-                        <span class="ll-metric-label">预计阅读</span>
-                        <strong id="editorReadingMinutes">1 分钟</strong>
-                        <span class="ll-metric-note">帮助控制篇幅节奏</span>
-                    </article>
-                    <article class="ll-metric-card">
-                        <span class="ll-metric-label">标题层级</span>
-                        <strong id="editorHeadingCount">0</strong>
-                        <span class="ll-metric-note">建议至少准备 2 个小节</span>
-                    </article>
-                    <article class="ll-metric-card">
-                        <span class="ll-metric-label">本地恢复点</span>
-                        <strong id="editorDraftState">未保存</strong>
-                        <span class="ll-metric-note">浏览器缓存 + 服务器草稿双保险 <button type="button" class="ll-link-button" id="restoreLocalDraftButton" hidden>恢复本地内容</button></span>
-                    </article>
-                </div>
+            <div class="ll-compose-title-line"></div>
 
-                <div class="ll-editor-rhythm">
-                    <article class="ll-editor-rhythm-card">
-                        <strong>先把标题和结论钉住</strong>
-                        <span>哪怕只是工作标题，也比空着写更容易把内容往一个方向收。</span>
-                    </article>
-                    <article class="ll-editor-rhythm-card">
-                        <strong>正文先搭骨架再补细节</strong>
-                        <span>先写出 2 到 3 个小节，预览区会比一整段长文更好调整节奏。</span>
-                    </article>
-                    <article class="ll-editor-rhythm-card">
-                        <strong>发前再补封面和归档</strong>
-                        <span>最后决定封面、计划和发布时间，通常会比一上来就纠结这些更顺。</span>
-                    </article>
-                </div>
-            </section>
+            <textarea class="ll-compose-textarea"
+                      id="content"
+                      th:field="*{content}"></textarea>
+            <div class="ll-compose-preview-surface" id="composePreviewSurface" hidden>
+                <div class="ll-compose-preview-empty">正文为空，暂时没有可预览内容。</div>
+            </div>
+        </section>
 
-            <section class="ll-editor-stage ll-fade" id="editorStage" data-sidebar-state="expanded">
-                <div class="ll-editor-main">
-                    <section class="ll-editor-card">
-                        <div class="ll-editor-panel-head">
-                            <div>
-                                <div class="ll-side-title">文章标题</div>
-                                <div class="ll-editor-caption">标题建议直接说明问题、结论或方案。</div>
-                            </div>
-                            <span class="ll-meta-pill" th:text="${post.id == null ? '新建文章' : post.statusDisplayName}">新建文章</span>
-                        </div>
-                        <input class="ll-editor-title-input" type="text" id="title" th:field="*{title}" maxlength="200" placeholder="例如：Spring Boot + MySQL 博客改造记录">
-                    </section>
+    </main>
 
-                    <section class="ll-editor-card">
-                        <div class="ll-editor-panel-head">
-                            <div>
-                                <div class="ll-side-title">发布设置</div>
-                                <div class="ll-editor-caption">分类、字体、封面和发布时间会直接影响博客展示效果。</div>
-                            </div>
-                        </div>
-                        <div class="ll-space-overview-grid ll-editor-settings-overview">
-                            <article class="ll-space-overview-metric">
-                                <span class="ll-space-overview-label">当前分类</span>
-                                <strong id="editorCategorySummary">项目</strong>
-                            </article>
-                            <article class="ll-space-overview-metric">
-                                <span class="ll-space-overview-label">阅读字体</span>
-                                <strong id="editorFontSummary" th:text="${post.editorFont.label}">鸿蒙黑体</strong>
-                            </article>
-                            <article class="ll-space-overview-metric">
-                                <span class="ll-space-overview-label">发布方式</span>
-                                <strong id="editorPublishSummary" th:text="${post.scheduled ? '定时发布' : '立即发布'}">立即发布</strong>
-                            </article>
-                            <article class="ll-space-overview-metric">
-                                <span class="ll-space-overview-label">归档方式</span>
-                                <strong id="editorPlanSummary" th:text="${post.plan != null ? post.plan.name : '独立文章'}">独立文章</strong>
-                            </article>
-                        </div>
+    <section class="ll-compose-settings" id="composeSettings" hidden>
+        <div class="ll-compose-settings-head">
+            <strong>发文设置</strong>
+            <button type="button" id="settingsClose">收起</button>
+        </div>
+        <div class="ll-compose-settings-grid">
+            <label>
+                展示字体
+                <select class="ll-select" id="fontKey" th:field="*{fontKey}">
+                    <option th:each="font : ${editorFonts}" th:value="${font.key}" th:text="${font.label}" th:attr="data-font-stack=${font.cssStack}">字体</option>
+                </select>
+            </label>
+            <label>
+                定时发布时间
+                <input class="ll-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
+            </label>
+            <label>
+                加入计划
+                <select class="ll-select" id="planSelection" name="planSelection">
+                    <option value="none" th:selected="${post.plan == null}">不加入计划</option>
+                    <option value="existing" th:selected="${post.plan != null}">加入已有计划</option>
+                    <option value="new">新建计划并加入</option>
+                </select>
+            </label>
+            <label class="plan-existing-field">
+                选择已有计划
+                <select class="ll-select" id="existingPlanId" name="existingPlanId">
+                    <option value="" th:if="${#lists.isEmpty(userPlans)}">当前还没有可加入的计划</option>
+                    <option th:each="plan : ${userPlans}" th:value="${plan.id}" th:text="${plan.name + ' · ' + plan.accessTypeDisplayName}" th:selected="${post.plan != null && post.plan.id == plan.id}"></option>
+                </select>
+            </label>
+            <label class="plan-new-field">
+                新计划名称
+                <input class="ll-input" type="text" id="newPlanName" name="newPlanName" placeholder="例如：Spring 系列计划">
+            </label>
+            <label class="plan-new-field">
+                新计划类型
+                <select class="ll-select" id="newPlanAccessType" name="newPlanAccessType">
+                    <option value="PRIVATE">私密计划</option>
+                    <option value="COLLABORATIVE">共创计划</option>
+                </select>
+            </label>
+            <label class="plan-order-field">
+                章节号
+                <input class="ll-input" type="number" id="planOrder" name="planOrder" th:value="${post.planOrder}" min="1" placeholder="留空自动顺延">
+            </label>
+            <label>
+                上传封面
+                <input class="ll-input" type="file" id="coverFile" name="coverFile" accept="image/*">
+            </label>
+            <label class="ll-compose-checkbox">
+                <input type="checkbox" name="useDefaultCover" value="true">
+                恢复系统默认封面
+            </label>
+        </div>
 
-                        <section class="ll-form-section">
-                            <div class="ll-form-section-head">
-                                <div>
-                                    <div class="ll-side-title">展示方式</div>
-                                    <p class="ll-form-section-copy">先把分类、字体和发布时间定下来，预览区的阅读感会更接近最终效果。</p>
-                                </div>
-                            </div>
-                            <div class="ll-settings-grid ll-settings-grid--editor">
-                                <div class="ll-form-field">
-                                    <label class="ll-form-label" for="category">文章分类</label>
-                                    <select class="ll-select" id="category" th:field="*{category}">
-                                        <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
-                                    </select>
-                                </div>
-                                <div class="ll-form-field">
-                                    <label class="ll-form-label" for="fontKey">展示字体</label>
-                                    <select class="ll-select" id="fontKey" th:field="*{fontKey}">
-                                        <option th:each="font : ${editorFonts}" th:value="${font.key}" th:text="${font.label}" th:attr="data-font-stack=${font.cssStack}">字体</option>
-                                    </select>
-                                </div>
-                                <div class="ll-form-field ll-form-field--wide">
-                                    <label class="ll-form-label" for="scheduledPublishAt">定时发布时间</label>
-                                    <input class="ll-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
-                                    <p class="ll-form-note">点击“定时发布”时生效，必须晚于当前时间；如果留空，就按普通发布处理。</p>
-                                </div>
-                            </div>
-                        </section>
+        <div class="ll-compose-cover-grid">
+            <button class="ll-compose-cover-option"
+                    type="button"
+                    th:each="cover : ${defaultCoverOptions}"
+                    th:classappend="${post.coverImageUrl == cover.url ? ' is-selected' : ''}"
+                    th:attr="data-cover-url=${cover.url}">
+                <img th:src="${cover.url}" th:alt="${cover.label}">
+                <span th:text="${cover.label}">封面</span>
+            </button>
+        </div>
+    </section>
 
-                        <section class="ll-form-section">
-                            <div class="ll-form-section-head">
-                                <div>
-                                    <div class="ll-side-title">计划归档与封面</div>
-                                    <p class="ll-form-section-copy">这一块更像发前整理台，决定它是不是独立文章、要不要放进系列里，以及封面用哪一张。</p>
-                                </div>
-                            </div>
-                            <div class="ll-settings-grid ll-settings-grid--editor ll-settings-grid--editor-loose">
-                                <div class="ll-form-field ll-form-field--wide">
-                                    <label class="ll-form-label" for="planSelection">加入计划</label>
-                                    <select class="ll-select" id="planSelection" name="planSelection" onchange="togglePlanFields()">
-                                        <option value="none" th:selected="${post.plan == null}">不加入计划</option>
-                                        <option value="existing" th:selected="${post.plan != null}">加入已有计划</option>
-                                        <option value="new">新建计划并加入</option>
-                                    </select>
-                                </div>
-
-                                <div class="ll-form-field plan-existing-field" style="display: none;">
-                                    <label class="ll-form-label" for="existingPlanId">选择已有计划</label>
-                                    <select class="ll-select" id="existingPlanId" name="existingPlanId">
-                                        <option value="" th:if="${#lists.isEmpty(userPlans)}">当前还没有可加入的计划</option>
-                                        <option th:each="plan : ${userPlans}" th:value="${plan.id}" th:text="${plan.name + ' · ' + plan.accessTypeDisplayName}" th:selected="${post.plan != null && post.plan.id == plan.id}"></option>
-                                    </select>
-                                    <p class="ll-form-note">共创计划允许多人投稿；私密计划只有创建者可以继续归档。</p>
-                                </div>
-
-                                <div class="ll-form-field plan-new-field" style="display: none;">
-                                    <label class="ll-form-label" for="newPlanName">新建计划名称</label>
-                                    <input class="ll-input" type="text" id="newPlanName" name="newPlanName" placeholder="例如：Spring 系列计划">
-                                </div>
-
-                                <div class="ll-form-field plan-new-field" style="display: none;">
-                                    <label class="ll-form-label" for="newPlanAccessType">新计划类型</label>
-                                    <select class="ll-select" id="newPlanAccessType" name="newPlanAccessType">
-                                        <option value="PRIVATE">私密计划</option>
-                                        <option value="COLLABORATIVE">共创计划</option>
-                                    </select>
-                                </div>
-
-                                <div class="ll-form-field plan-order-field" style="display: none;">
-                                    <label class="ll-form-label" for="planOrder">在计划中的章节号</label>
-                                    <input class="ll-input" type="number" id="planOrder" name="planOrder" th:value="${post.planOrder}" placeholder="留空自动顺延" min="1">
-                                    <p class="ll-form-note">已发布文章也可以重新编辑后迁移到别的计划。</p>
-                                </div>
-                            </div>
-                        </section>
-
-                        <script>
-                            function togglePlanFields() {
-                                var selection = document.getElementById('planSelection').value;
-                                document.querySelectorAll('.plan-existing-field').forEach(el => el.style.display = selection === 'existing' ? 'block' : 'none');
-                                document.querySelectorAll('.plan-new-field').forEach(el => el.style.display = selection === 'new' ? 'block' : 'none');
-                                document.querySelectorAll('.plan-order-field').forEach(el => el.style.display = selection !== 'none' ? 'block' : 'none');
-                                if (typeof updateMetrics === 'function') {
-                                    updateMetrics();
-                                }
-                            }
-                            // Initialize on load
-                            document.addEventListener('DOMContentLoaded', togglePlanFields);
-                        </script>
-
-                        <div class="ll-upload-box ll-upload-box--editor">
-                            <div class="ll-upload-preview ll-upload-preview--cover">
-                                <img id="coverPreview" th:src="${post.displayCoverUrl}" alt="文章封面预览">
-                            </div>
-                            <div class="ll-upload-fields">
-                                <label class="ll-form-label" for="coverFile">文章封面</label>
-                                <input class="ll-input" type="file" id="coverFile" name="coverFile" accept="image/*">
-                                <label class="ll-checkbox">
-                                    <input type="checkbox" name="useDefaultCover" value="true">
-                                    <span>恢复默认封面</span>
-                                </label>
-                                <p class="ll-form-note">支持主流网页图片格式，例如 JPG、PNG、WEBP、GIF、BMP、AVIF、ICO 等，没有上传时使用默认封面图。</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="ll-editor-card ll-editor-workspace">
-                        <div class="ll-editor-panel-head">
-                            <div>
-                                <div class="ll-side-title">正文创作区</div>
-                                <div class="ll-editor-caption">左侧写作，右侧实时预览。</div>
-                            </div>
-                            <div class="ll-editor-panel-actions">
-                                <button type="button" class="ll-editor-sidebar-toggle" id="editorSidebarToggle" aria-controls="editorSidebar" aria-expanded="true">收起侧栏</button>
-                                <div class="ll-editor-mode-switch">
-                                    <button type="button" class="ll-editor-mode-button is-active" data-mode="split">分栏</button>
-                                    <button type="button" class="ll-editor-mode-button" data-mode="write">专注写作</button>
-                                    <button type="button" class="ll-editor-mode-button" data-mode="preview">专注预览</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="ll-editor-toolbar">
-                            <button type="button" data-command="h1">H1</button>
-                            <button type="button" data-command="h2">H2</button>
-                            <button type="button" data-command="bold">加粗</button>
-                            <button type="button" data-command="link">链接</button>
-                            <button type="button" data-command="quote">引用</button>
-                            <button type="button" data-command="list">列表</button>
-                            <button type="button" data-command="task">任务</button>
-                            <button type="button" data-command="image">插图</button>
-                            <button type="button" data-command="html">HTML 片段</button>
-                            <button type="button" data-command="code">代码块</button>
-                        </div>
-                        <div class="ll-editor-toolbar-meta">
-                            <span class="ll-editor-caption">支持 Markdown + 安全 HTML。插图会上传到本地 `/uploads/posts/`，并以 `figure` 片段插入正文。</span>
-                            <span class="ll-toolbar-status" id="editorToolbarStatus">可直接使用 `figure`、`details`、`img` 等常用 HTML 标签</span>
-                        </div>
-                        <input type="file" id="editorImageFile" accept="image/*" hidden>
-
-                        <div id="editorPanels" class="ll-editor-panels" data-mode="split">
-                            <div class="ll-editor-panel ll-editor-panel--write">
-                                <div class="ll-editor-panel-head">
-                                    <div>
-                                        <div class="ll-side-title">编辑区</div>
-                                        <div class="ll-editor-caption">支持 `Tab` 缩进和 `Ctrl/Cmd + Enter` 提交。</div>
-                                    </div>
-                                    <span class="ll-meta-pill" id="editorLineCount">0 行</span>
-                                </div>
-                                <textarea class="ll-textarea ll-editor-textarea" id="content" th:field="*{content}" placeholder="先写背景，再写问题、过程、结果和复盘。"></textarea>
-                            </div>
-                            <div class="ll-editor-panel ll-editor-panel--preview">
-                                <div class="ll-editor-panel-head">
-                                    <div>
-                                        <div class="ll-side-title">阅读预览</div>
-                                        <div class="ll-editor-caption">预览区会同步使用你选中的展示字体。</div>
-                                    </div>
-                                    <span class="ll-meta-pill" id="previewStatus">实时更新</span>
-                                </div>
-                                <div id="markdownPreview" class="ll-article-body ll-markdown ll-preview-surface"></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="ll-editor-card">
-                        <div class="ll-form-section-head">
-                            <div>
-                                <div class="ll-side-title">发布动作</div>
-                                <p class="ll-form-section-copy">发之前再看一眼标题、发布时间和归档方式，通常能少掉很多返工。</p>
-                            </div>
-                        </div>
-                        <div class="ll-editor-submit-grid">
-                            <div class="ll-editor-submit-summary">
-                                <article class="ll-editor-submit-item">
-                                    <span>当前标题</span>
-                                    <strong id="editorSubmitTitle">未命名草稿</strong>
-                                </article>
-                                <article class="ll-editor-submit-item">
-                                    <span>发布时间</span>
-                                    <strong id="editorSubmitSchedule">发布后立即可见</strong>
-                                </article>
-                                <article class="ll-editor-submit-item">
-                                    <span>归档方式</span>
-                                    <strong id="editorSubmitPlan">独立文章</strong>
-                                </article>
-                                <article class="ll-editor-submit-item">
-                                    <span>封面状态</span>
-                                    <strong id="editorSubmitCover">保留当前封面</strong>
-                                </article>
-                            </div>
-                            <div class="ll-form-actions ll-form-actions--editor-submit">
-                                <button class="ll-btn-secondary" type="submit" name="action" value="draft" data-submitting-text="正在保存草稿...">保存草稿</button>
-                                <button class="ll-btn-secondary" type="submit" name="action" value="schedule" data-submitting-text="正在安排发布时间...">定时发布</button>
-                                <button class="ll-btn" type="submit" name="action" value="publish" th:attr="data-submitting-text=${post.id == null ? '正在发布文章...' : '正在更新文章...'}" th:text="${post.draft or post.scheduled ? '立即发布' : (post.id == null ? '发布文章' : '更新发布')}">发布文章</button>
-                                <a class="ll-btn-secondary" href="/space/drafts">查看草稿箱</a>
-                                <a class="ll-btn-secondary" href="/space">返回个人空间</a>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <aside class="ll-editor-sidebar" id="editorSidebar">
-                    <section class="ll-guide-card">
-                        <div class="ll-side-title">写作概览</div>
-                        <div class="ll-guide-statlist">
-                            <div class="ll-guide-stat">
-                                <span>段落数量</span>
-                                <strong id="editorParagraphCount">0</strong>
-                            </div>
-                            <div class="ll-guide-stat">
-                                <span>当前分类</span>
-                                <strong id="editorCategoryLabel">项目</strong>
-                            </div>
-                            <div class="ll-guide-stat">
-                                <span>发布方式</span>
-                                <strong id="editorPublishLabel">立即发布</strong>
-                            </div>
-                            <div class="ll-guide-stat">
-                                <span>计划归档</span>
-                                <strong id="editorPlanLabel">独立文章</strong>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="ll-guide-card">
-                        <div class="ll-side-title">发布前检查</div>
-                        <div class="ll-editor-checklist">
-                            <article class="ll-editor-check-item" id="editorCheckTitle" data-tone="warn">
-                                <strong>标题状态</strong>
-                                <span id="editorChecklistTitle">先起一个能说明问题的标题，后面更容易收内容。</span>
-                            </article>
-                            <article class="ll-editor-check-item" id="editorCheckContent" data-tone="warn">
-                                <strong>正文长度</strong>
-                                <span id="editorChecklistContent">先写一段正文，预览区才会开始有阅读感。</span>
-                            </article>
-                            <article class="ll-editor-check-item" id="editorCheckStructure" data-tone="warn">
-                                <strong>结构节奏</strong>
-                                <span id="editorChecklistStructure">至少加 2 个小节标题，会比一整段长文更好读。</span>
-                            </article>
-                            <article class="ll-editor-check-item" id="editorCheckPolish" data-tone="neutral">
-                                <strong>封面与归档</strong>
-                                <span id="editorChecklistPolish">发之前可以顺手补封面，或者把它挂进某个计划里。</span>
-                            </article>
-                        </div>
-                    </section>
-
-                    <section class="ll-guide-card">
-                        <div class="ll-side-title">文章大纲</div>
-                        <div id="editorOutline" class="ll-outline-list ll-outline-list--editor">
-                            <div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>
-                        </div>
-                    </section>
-
-                    <section class="ll-guide-card">
-                        <div class="ll-side-title">Markdown 导入</div>
-                        <div class="ll-stack-sm">
-                            <input class="ll-input" type="file" name="markdownFile" accept=".md,.markdown,.txt" form="markdownImportForm" required>
-                            <select class="ll-select" name="category" form="markdownImportForm">
-                                <option th:each="category : ${postCategories}" th:value="${category}" th:text="${category.displayName}">项目</option>
-                            </select>
-                            <button class="ll-btn-secondary ll-btn-block" type="submit">导入为新草稿</button>
-                        </div>
-                    </section>
-                </aside>
-            </section>
-        </form>
-
-        <form id="markdownImportForm" action="/posts/import" method="post" enctype="multipart/form-data">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-        </form>
-    </div>
-</main>
+    <footer class="ll-compose-bottombar">
+        <div class="ll-compose-counts">
+            <span>共 <strong id="editorWordCount">0</strong> 字</span>
+            <button type="button" id="settingsToggle">发文设置⌄</button>
+            <span id="editorDraftState">未暂存</span>
+        </div>
+        <div class="ll-compose-actions">
+            <button class="ll-compose-secondary" type="submit" name="action" value="draft">保存草稿⌄</button>
+            <button class="ll-compose-secondary" type="submit" name="action" value="schedule">定时发布 ›</button>
+            <button class="ll-compose-primary" type="submit" name="action" value="publish">发布博客</button>
+        </div>
+    </footer>
+</form>
 
 <script>
-    const form = document.querySelector('.ll-editor-shell');
-    const textarea = document.getElementById('content');
+    const form = document.querySelector('.ll-compose-form');
     const titleInput = document.getElementById('title');
-    const categorySelect = document.getElementById('category');
-    const fontSelect = document.getElementById('fontKey');
-    const scheduleInput = document.getElementById('scheduledPublishAt');
-    const planSelection = document.getElementById('planSelection');
-    const existingPlanSelect = document.getElementById('existingPlanId');
-    const newPlanNameInput = document.getElementById('newPlanName');
-    const newPlanAccessTypeSelect = document.getElementById('newPlanAccessType');
-    const planOrderInput = document.getElementById('planOrder');
-    const coverFileInput = document.getElementById('coverFile');
-    const useDefaultCoverCheckbox = document.querySelector('input[name="useDefaultCover"]');
-    const coverPreview = document.getElementById('coverPreview');
-    const initialCoverPreviewSrc = coverPreview?.getAttribute('src') || coverPreview?.src || '/images/default-cover.svg';
-    const preview = document.getElementById('markdownPreview');
-    const previewStatus = document.getElementById('previewStatus');
+    const textarea = document.getElementById('content');
     const outline = document.getElementById('editorOutline');
-    const editorStage = document.getElementById('editorStage');
-    const panels = document.getElementById('editorPanels');
-    const editorImageFileInput = document.getElementById('editorImageFile');
-    const editorSidebarToggle = document.getElementById('editorSidebarToggle');
-    const editorToolbarStatus = document.getElementById('editorToolbarStatus');
-    const restoreLocalDraftButton = document.getElementById('restoreLocalDraftButton');
-    const markdownImportForm = document.getElementById('markdownImportForm');
-    const markdownImportInput = document.querySelector('input[name="markdownFile"][form="markdownImportForm"]');
-    const markdownImportButton = markdownImportInput?.closest('.ll-stack-sm')?.querySelector('button[type="submit"]');
-    const publishSubmitButton = form.querySelector('button[type="submit"][name="action"][value="publish"]');
-    const editorCategorySummary = document.getElementById('editorCategorySummary');
-    const editorFontSummary = document.getElementById('editorFontSummary');
-    const editorPublishSummary = document.getElementById('editorPublishSummary');
-    const editorPlanSummary = document.getElementById('editorPlanSummary');
-    const editorPlanLabel = document.getElementById('editorPlanLabel');
-    const editorSubmitTitle = document.getElementById('editorSubmitTitle');
-    const editorSubmitSchedule = document.getElementById('editorSubmitSchedule');
-    const editorSubmitPlan = document.getElementById('editorSubmitPlan');
-    const editorSubmitCover = document.getElementById('editorSubmitCover');
+    const titleHint = document.getElementById('titleHint');
+    const wordCount = document.getElementById('editorWordCount');
+    const draftState = document.getElementById('editorDraftState');
+    const settings = document.getElementById('composeSettings');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsClose = document.getElementById('settingsClose');
+    const previewSurface = document.getElementById('composePreviewSurface');
+    const previewCommandButton = document.querySelector('[data-command="preview"]');
+    const previewCommandLabel = previewCommandButton?.querySelector('span');
+    const planSelection = document.getElementById('planSelection');
+    const imageInput = document.getElementById('editorImageFile');
+    const markdownInput = document.getElementById('editorMarkdownFile');
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-    const localDraftKey = 'll-editor-' + form.dataset.localDraftKey;
-    const editorSidebarStateKey = 'll-editor-sidebar-state';
-    let previewTimer = null;
-    let draftTimer = null;
-    let pendingLocalDraft = null;
+    const localDraftKey = 'll-compose-' + form.dataset.localDraftKey;
+    let draftTimer;
+    const undoStack = [];
+    const redoStack = [];
+    let lastSnapshot = '';
+    let restoringHistory = false;
+    let previewMode = false;
 
-    function tokenize(text) { return (text || '').match(/[\u4e00-\u9fa5]|[A-Za-z0-9_]+/g) || []; }
-    function countParagraphs(markdown) { return (markdown || '').split(/\n\s*\n/).map(section => section.trim()).filter(Boolean).length; }
-    function countLines(markdown) { return markdown ? markdown.split('\n').length : 0; }
-    function countHeadings(markdown) { return ((markdown || '').match(/^#{1,6}\s+/gm) || []).length; }
-    function selectedText(select, fallback = '未选择') { return select?.options?.[select.selectedIndex]?.text || fallback; }
-
-    function slugify(text, index) {
-        const normalized = (text || '').toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\u4e00-\u9fa5\s-]/g, '').trim().replace(/\s+/g, '-');
-        return normalized || 'heading-' + index;
+    function textTokens(value) {
+        return (value || '').replace(/[#>*_`~\-[\]()]/g, ' ').match(/[\u4e00-\u9fa5]|\b[\w-]+\b/g) || [];
     }
 
-    function setDraftState(text) { document.getElementById('editorDraftState').textContent = text; }
-
-    function setToolbarStatus(text, tone = 'neutral') {
-        if (!editorToolbarStatus) return;
-        editorToolbarStatus.textContent = text;
-        editorToolbarStatus.dataset.tone = tone;
+    function updateTitleHint() {
+        const length = titleInput.value.trim().length;
+        titleHint.textContent = length < 5 ? '还需输入 ' + (5 - length) + ' 个字' : length + '/100';
     }
 
-    function getPublishLabel() {
-        return scheduleInput.value ? '定时发布' : '立即发布';
+    function getHeadingEntries() {
+        return textarea.value
+            .split('\n')
+            .map((line, lineIndex) => {
+                const match = line.match(/^(#{1,3})\s+(.+)$/);
+                return match ? {level: match[1].length, text: match[2].trim(), lineIndex} : null;
+            })
+            .filter(Boolean);
     }
 
-    function getScheduleSummary() {
-        return scheduleInput.value ? '计划于 ' + scheduleInput.value.replace('T', ' ') : '发布后立即可见';
-    }
-
-    function getPlanLabel() {
-        const selection = planSelection?.value || 'none';
-        const orderText = planOrderInput?.value ? ' · 第 ' + planOrderInput.value + ' 节' : '';
-        if (selection === 'existing') {
-            const existingLabel = selectedText(existingPlanSelect, '暂未选择计划');
-            return existingLabel + (existingLabel === '暂未选择计划' ? '' : orderText);
-        }
-        if (selection === 'new') {
-            const planName = newPlanNameInput?.value?.trim();
-            const accessLabel = selectedText(newPlanAccessTypeSelect, '新计划');
-            return (planName ? '新计划：' + planName : '新计划 · ' + accessLabel) + orderText;
-        }
-        return '独立文章';
-    }
-
-    function getCoverSummary() {
-        if (useDefaultCoverCheckbox?.checked) return '使用默认封面';
-        if (coverFileInput?.files?.length) return '已上传新封面';
-        return initialCoverPreviewSrc.includes('default-cover') ? '当前是默认封面' : '保留当前封面';
-    }
-
-    function updateCheckItem(itemId, messageId, tone, text) {
-        const item = document.getElementById(itemId);
-        const message = document.getElementById(messageId);
-        if (!item || !message) return;
-        item.dataset.tone = tone;
-        message.textContent = text;
-    }
-
-    function updateMetrics() {
-        const markdown = textarea.value;
-        const tokens = tokenize(markdown);
-        const minutes = Math.max(1, Math.ceil(tokens.length / 220));
-        const headingCount = countHeadings(markdown);
-        const selectedLabel = selectedText(categorySelect, '未选择');
-        const fontLabel = selectedText(fontSelect, '未选择');
-        const publishLabel = getPublishLabel();
-        const planLabel = getPlanLabel();
-        const titleValue = titleInput.value.trim();
-        document.getElementById('editorWordCount').textContent = tokens.length.toLocaleString('zh-CN');
-        document.getElementById('editorReadingMinutes').textContent = minutes + ' 分钟';
-        document.getElementById('editorHeadingCount').textContent = headingCount;
-        document.getElementById('editorParagraphCount').textContent = countParagraphs(markdown);
-        document.getElementById('editorLineCount').textContent = countLines(markdown) + ' 行';
-        document.getElementById('editorCategoryLabel').textContent = selectedLabel;
-        document.getElementById('editorPublishLabel').textContent = publishLabel;
-        if (editorPlanLabel) editorPlanLabel.textContent = planLabel;
-        if (editorCategorySummary) editorCategorySummary.textContent = selectedLabel;
-        if (editorFontSummary) editorFontSummary.textContent = fontLabel;
-        if (editorPublishSummary) editorPublishSummary.textContent = publishLabel;
-        if (editorPlanSummary) editorPlanSummary.textContent = planLabel;
-        if (editorSubmitTitle) editorSubmitTitle.textContent = titleValue || '未命名草稿';
-        if (editorSubmitSchedule) editorSubmitSchedule.textContent = getScheduleSummary();
-        if (editorSubmitPlan) editorSubmitPlan.textContent = planLabel;
-        if (editorSubmitCover) editorSubmitCover.textContent = getCoverSummary();
-
-        updateCheckItem(
-            'editorCheckTitle',
-            'editorChecklistTitle',
-            titleValue.length >= 8 ? 'good' : (titleValue.length > 0 ? 'neutral' : 'warn'),
-            titleValue.length >= 8
-                ? '标题已经能说明主题了，后面主要看内容和节奏。'
-                : (titleValue.length > 0 ? '先用这个工作标题继续写，发前再把它收紧一点。' : '先起一个能说明问题的标题，后面更容易收内容。')
-        );
-        updateCheckItem(
-            'editorCheckContent',
-            'editorChecklistContent',
-            tokens.length >= 220 ? 'good' : (tokens.length >= 80 ? 'neutral' : 'warn'),
-            tokens.length >= 220
-                ? '正文已经有基本阅读长度了，现在更适合补细节和删冗余。'
-                : (tokens.length >= 80 ? '正文已经起量了，再补一点内容会更稳。' : '先写一段正文，预览区才会开始有阅读感。')
-        );
-        updateCheckItem(
-            'editorCheckStructure',
-            'editorChecklistStructure',
-            headingCount >= 2 ? 'good' : 'warn',
-            headingCount >= 2
-                ? '结构已经立起来了，可以继续补每个小节的细节。'
-                : '至少加 2 个小节标题，会比一整段长文更好读。'
-        );
-        const polished = getCoverSummary() !== '保留当前封面' || planLabel !== '独立文章';
-        updateCheckItem(
-            'editorCheckPolish',
-            'editorChecklistPolish',
-            polished ? 'good' : 'neutral',
-            polished
-                ? '封面或归档已经补上了，发布页看起来会更完整。'
-                : '发之前可以顺手补封面，或者把它挂进某个计划里。'
-        );
-    }
-
-    function updateFontPreview() {
-        const stack = fontSelect.options[fontSelect.selectedIndex]?.dataset.fontStack;
-        if (!stack) return;
-        document.documentElement.style.setProperty('--ll-editor-font', stack);
-        document.documentElement.style.setProperty('--ll-article-font', stack);
-    }
-
-    function renderOutline() {
-        const headings = [...preview.querySelectorAll('h1, h2, h3')];
-        if (!headings.length) {
-            outline.innerHTML = '<div class="ll-outline-empty">添加标题后，这里会生成可跳转的大纲。</div>';
-            return;
-        }
-        outline.innerHTML = '';
-        headings.forEach((heading, index) => {
-            if (!heading.id) heading.id = slugify(heading.textContent, index);
-            const link = document.createElement('a');
-            link.href = '#' + heading.id;
-            link.className = 'll-outline-link ll-outline-link--level-' + heading.tagName.substring(1);
-            link.textContent = heading.textContent.trim();
-            link.addEventListener('click', event => {
-                event.preventDefault();
-                heading.scrollIntoView({behavior: 'smooth', block: 'center'});
-            });
-            outline.appendChild(link);
+    function markActiveOutline(activeIndex) {
+        outline.querySelectorAll('.ll-compose-outline-link').forEach((button, index) => {
+            button.classList.toggle('is-active', index === activeIndex);
         });
     }
 
-    function setPreviewContent(html) {
-        if (!html || !html.trim()) {
-            preview.innerHTML = '<div class="ll-preview-placeholder">输入 Markdown 后，这里会生成阅读预览。</div>';
+    function setPreviewMode(active) {
+        previewMode = active;
+        textarea.hidden = active;
+        previewSurface.hidden = !active;
+        document.body.classList.toggle('is-compose-previewing', active);
+        if (previewCommandLabel) {
+            previewCommandLabel.textContent = active ? '返回编辑' : '后端预览';
+        }
+    }
+
+    function switchToEdit(focusEditor) {
+        if (!previewMode) return;
+        setPreviewMode(false);
+        if (focusEditor) {
+            textarea.focus();
+        }
+    }
+
+    function scrollEditorToLine(lineIndex) {
+        setPreviewMode(false);
+        const lines = textarea.value.split('\n');
+        let offset = 0;
+        for (let i = 0; i < lineIndex; i += 1) {
+            offset += lines[i].length + 1;
+        }
+        textarea.focus();
+        textarea.setSelectionRange(offset, Math.min(offset + lines[lineIndex].length, textarea.value.length));
+        const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 30;
+        textarea.scrollTop = Math.max(0, lineIndex * lineHeight - textarea.clientHeight * 0.25);
+    }
+
+    function syncPreviewHeadingTargets() {
+        previewSurface.querySelectorAll('h1, h2, h3').forEach((heading, index) => {
+            heading.id = heading.id || 'preview-heading-' + index;
+            heading.dataset.outlineIndex = String(index);
+        });
+    }
+
+    function scrollPreviewToHeading(index) {
+        const target = previewSurface.querySelectorAll('h1, h2, h3')[index];
+        if (!target) return;
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        markActiveOutline(index);
+    }
+
+    function renderOutline() {
+        const headings = getHeadingEntries();
+        outline.innerHTML = '';
+        if (!headings.length) {
+            outline.innerHTML = '<div class="ll-compose-outline-empty">为文内增加标题，这里将生成目录</div>';
             return;
         }
-        preview.innerHTML = html;
+        headings.forEach((item, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'll-compose-outline-link level-' + item.level;
+            button.textContent = item.text;
+            button.dataset.headingIndex = String(index);
+            button.addEventListener('click', () => {
+                markActiveOutline(index);
+                if (previewMode) {
+                    scrollPreviewToHeading(index);
+                } else {
+                    scrollEditorToLine(item.lineIndex);
+                }
+            });
+            outline.appendChild(button);
+        });
     }
 
-    async function requestPreview() {
-        clearTimeout(previewTimer);
-        previewTimer = setTimeout(async () => {
-            previewStatus.textContent = '渲染中';
-            try {
-                const response = await fetch('/posts/preview', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', [csrfHeader]: csrfToken},
-                    body: 'content=' + encodeURIComponent(textarea.value)
-                });
-                const html = await response.text();
-                setPreviewContent(html);
-                renderOutline();
-                previewStatus.textContent = '实时更新';
-            } catch (error) {
-                preview.innerHTML = '<div class="ll-preview-placeholder">预览暂时不可用，请稍后再试。</div>';
-                outline.innerHTML = '<div class="ll-outline-empty">预览失败，暂时无法生成大纲。</div>';
-                previewStatus.textContent = '预览异常';
-            }
-            updateMetrics();
-        }, 180);
+    function updateMetrics() {
+        wordCount.textContent = textTokens(textarea.value).length.toLocaleString('zh-CN');
+        updateTitleHint();
+        renderOutline();
     }
 
-    function insertText(prefix, suffix = '', placeholder = '') {
+    function snapshotEditor() {
+        return JSON.stringify({title: titleInput.value, content: textarea.value});
+    }
+
+    function restoreSnapshot(snapshot) {
+        const parsed = JSON.parse(snapshot);
+        switchToEdit(false);
+        restoringHistory = true;
+        titleInput.value = parsed.title || '';
+        textarea.value = parsed.content || '';
+        restoringHistory = false;
+        scheduleDraftSave();
+        updateMetrics();
+    }
+
+    function pushHistory() {
+        if (restoringHistory) return;
+        const current = snapshotEditor();
+        if (current === lastSnapshot) return;
+        undoStack.push(lastSnapshot);
+        if (undoStack.length > 80) undoStack.shift();
+        redoStack.length = 0;
+        lastSnapshot = current;
+    }
+
+    function undoEdit() {
+        if (!undoStack.length) return;
+        redoStack.push(snapshotEditor());
+        const previous = undoStack.pop();
+        lastSnapshot = previous;
+        restoreSnapshot(previous);
+        draftState.textContent = '已撤销';
+    }
+
+    function redoEdit() {
+        if (!redoStack.length) return;
+        undoStack.push(snapshotEditor());
+        const next = redoStack.pop();
+        lastSnapshot = next;
+        restoreSnapshot(next);
+        draftState.textContent = '已前进';
+    }
+
+    function saveLocalDraft() {
+        localStorage.setItem(localDraftKey, JSON.stringify({
+            title: titleInput.value,
+            content: textarea.value,
+            updatedAt: Date.now()
+        }));
+        draftState.textContent = '已本地暂存';
+    }
+
+    function scheduleDraftSave() {
+        draftState.textContent = '编辑中';
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(saveLocalDraft, 350);
+    }
+
+    function insertText(prefix, suffix, placeholder) {
+        switchToEdit(true);
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const selected = textarea.value.slice(start, end) || placeholder;
-        textarea.setRangeText(prefix + selected + suffix, start, end, 'end');
+        const selected = textarea.value.slice(start, end) || placeholder || '';
+        textarea.setRangeText(prefix + selected + (suffix || ''), start, end, 'end');
         textarea.focus();
+        pushHistory();
         scheduleDraftSave();
-        requestPreview();
+        updateMetrics();
     }
 
     function insertBlock(snippet) {
+        switchToEdit(true);
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const prefix = textarea.value && !textarea.value.endsWith('\n') ? '\n' : '';
         textarea.setRangeText(prefix + snippet + '\n', start, end, 'end');
         textarea.focus();
+        pushHistory();
         scheduleDraftSave();
-        requestPreview();
+        updateMetrics();
+    }
+
+    async function applyBackendFormat(command) {
+        switchToEdit(true);
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.slice(start, end);
+        draftState.textContent = '正在应用格式';
+        try {
+            const response = await fetch('/posts/format', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', [csrfHeader]: csrfToken},
+                body: JSON.stringify({command, selectedText})
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+                draftState.textContent = payload.message || '格式应用失败';
+                return;
+            }
+            textarea.setRangeText(payload.replacement || '', start, end, 'end');
+            textarea.focus();
+            pushHistory();
+            scheduleDraftSave();
+            updateMetrics();
+            draftState.textContent = '格式已应用';
+        } catch (error) {
+            draftState.textContent = '格式应用失败';
+        }
     }
 
     async function uploadEditorImage(file) {
         if (!file) return;
         const formData = new FormData();
         formData.append('imageFile', file);
-        setToolbarStatus('正在上传图片...', 'neutral');
+        draftState.textContent = '上传图片中';
+        const response = await fetch('/posts/images', {
+            method: 'POST',
+            headers: {[csrfHeader]: csrfToken},
+            body: formData
+        });
+        const payload = await response.json();
+        if (response.ok) {
+            insertBlock(payload.html || payload.markdown);
+            draftState.textContent = '图片已插入';
+        } else {
+            draftState.textContent = payload.message || '图片上传失败';
+        }
+        imageInput.value = '';
+    }
+
+    async function importMarkdownFile(file) {
+        if (!file) return;
+        switchToEdit(true);
+        const formData = new FormData();
+        formData.append('markdownFile', file);
+        draftState.textContent = '正在导入 MD';
         try {
-            const response = await fetch('/posts/images', {
+            const response = await fetch('/posts/import/content', {
                 method: 'POST',
                 headers: {[csrfHeader]: csrfToken},
                 body: formData
             });
-            if (response.redirected) {
-                throw new Error('登录状态已失效，请刷新页面后重新登录。');
-            }
-            const payload = (response.headers.get('content-type') || '').includes('application/json')
-                ? await response.json()
-                : {};
+            const payload = await response.json();
             if (!response.ok) {
-                throw new Error(payload.message || '图片上传失败，请稍后再试。');
+                draftState.textContent = payload.message || 'MD 导入失败';
+                return;
             }
-            insertBlock(payload.html);
-            setToolbarStatus('图片已上传并插入正文', 'success');
+            if (!titleInput.value.trim()) {
+                titleInput.value = payload.title || '';
+            }
+            if (textarea.value.trim()) {
+                textarea.value = textarea.value.replace(/\s*$/, '') + '\n\n' + (payload.content || '');
+            } else {
+                textarea.value = payload.content || '';
+            }
+            pushHistory();
+            scheduleDraftSave();
+            updateMetrics();
+            draftState.textContent = 'MD 已导入';
         } catch (error) {
-            setToolbarStatus(error.message || '图片上传失败，请稍后再试。', 'error');
+            draftState.textContent = 'MD 导入失败';
         } finally {
-            if (editorImageFileInput) {
-                editorImageFileInput.value = '';
-            }
+            markdownInput.value = '';
         }
     }
 
-    function handleCommand(command) {
+    async function requestBackendPreview(targetHeadingIndex) {
+        if (previewMode && targetHeadingIndex === undefined) {
+            switchToEdit(true);
+            return;
+        }
+        setPreviewMode(true);
+        previewSurface.innerHTML = '<div class="ll-compose-preview-empty">正在生成预览...</div>';
+        draftState.textContent = '正在生成预览';
+        try {
+            const response = await fetch('/posts/preview', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', [csrfHeader]: csrfToken},
+                body: 'content=' + encodeURIComponent(textarea.value)
+            });
+            const html = await response.text();
+            previewSurface.innerHTML = html && html.trim()
+                ? html
+                : '<div class="ll-compose-preview-empty">正文为空，暂时没有可预览内容。</div>';
+            syncPreviewHeadingTargets();
+            draftState.textContent = '预览已生成';
+            if (targetHeadingIndex !== undefined) {
+                requestAnimationFrame(() => scrollPreviewToHeading(targetHeadingIndex));
+            }
+        } catch (error) {
+            previewSurface.innerHTML = '<div class="ll-compose-preview-empty">预览生成失败，请稍后再试。</div>';
+            draftState.textContent = '预览生成失败';
+        }
+    }
+
+    function runCommand(command) {
         switch (command) {
-            case 'h1': insertBlock('# 一级标题'); break;
-            case 'h2': insertBlock('## 二级标题'); break;
-            case 'bold': insertText('**', '**', '重点内容'); break;
-            case 'link': insertText('[', '](https://example.com)', '链接文字'); break;
-            case 'quote': insertBlock('> 写下一条关键结论'); break;
-            case 'list': insertBlock('- 列表项'); break;
-            case 'task': insertBlock('- [ ] 待办事项'); break;
-            case 'image':
-                setToolbarStatus('选择一张图片后会自动上传并插入 HTML 片段', 'neutral');
-                editorImageFileInput?.click();
+            case 'undo': undoEdit(); break;
+            case 'redo': redoEdit(); break;
+            case 'h2':
+            case 'bold':
+            case 'quote':
+            case 'code':
+            case 'list':
+            case 'link':
+                applyBackendFormat(command);
                 break;
-            case 'html':
-                insertBlock('<details open>\n  <summary>展开补充说明</summary>\n  <p>这里可以直接写 HTML 内容，例如插图说明、补充结论或折叠块。</p>\n</details>');
-                setToolbarStatus('已插入 HTML 片段示例', 'success');
-                break;
-            case 'code': insertBlock('```java\nSystem.out.println("Hello");\n```'); break;
+            case 'image': imageInput.click(); break;
+            case 'import-md': markdownInput.click(); break;
+            case 'preview': requestBackendPreview(); break;
             default: break;
         }
     }
 
-    function updateMode(mode) {
-        panels.dataset.mode = mode;
-        document.querySelectorAll('.ll-editor-mode-button').forEach(button => button.classList.toggle('is-active', button.dataset.mode === mode));
+    function togglePlanFields() {
+        const value = planSelection.value;
+        document.querySelectorAll('.plan-existing-field').forEach(el => el.style.display = value === 'existing' ? 'grid' : 'none');
+        document.querySelectorAll('.plan-new-field').forEach(el => el.style.display = value === 'new' ? 'grid' : 'none');
+        document.querySelectorAll('.plan-order-field').forEach(el => el.style.display = value === 'none' ? 'none' : 'grid');
     }
 
-    function updateSidebarState(state) {
-        const collapsed = state === 'collapsed';
-        editorStage.dataset.sidebarState = collapsed ? 'collapsed' : 'expanded';
-        if (editorSidebarToggle) {
-            editorSidebarToggle.textContent = collapsed ? '展开侧栏' : '收起侧栏';
-            editorSidebarToggle.setAttribute('aria-expanded', String(!collapsed));
-        }
-    }
-
-    function persistDraft() {
-        const payload = {title: titleInput.value, content: textarea.value, category: categorySelect.value, fontKey: fontSelect.value, scheduledPublishAt: scheduleInput.value, updatedAt: Date.now()};
-        localStorage.setItem(localDraftKey, JSON.stringify(payload));
-        setDraftState('已暂存');
-    }
-
-    function scheduleDraftSave() {
-        setDraftState('编辑中');
-        clearTimeout(draftTimer);
-        draftTimer = setTimeout(persistDraft, 300);
-    }
-
-    function applySavedDraft(saved) {
-        titleInput.value = saved.title || '';
-        textarea.value = saved.content || '';
-        if (saved.category) categorySelect.value = saved.category;
-        if (saved.fontKey) fontSelect.value = saved.fontKey;
-        scheduleInput.value = saved.scheduledPublishAt || '';
-        updateFontPreview();
-        updateMetrics();
-        requestPreview();
-        setDraftState('已恢复');
-    }
-
-    function restoreDraft() {
+    function restoreLocalDraft() {
         const raw = localStorage.getItem(localDraftKey);
-        if (!raw) { setDraftState('未保存'); return; }
+        if (!raw || titleInput.value.trim() || textarea.value.trim()) return;
         try {
-            const saved = JSON.parse(raw);
-            if (!titleInput.value.trim() && !textarea.value.trim()) { applySavedDraft(saved); return; }
-            pendingLocalDraft = saved;
-            restoreLocalDraftButton.hidden = false;
-            setDraftState('发现本地恢复点');
+            const draft = JSON.parse(raw);
+            titleInput.value = draft.title || '';
+            textarea.value = draft.content || '';
+            draftState.textContent = '已恢复本地草稿';
         } catch (error) {
-            setDraftState('未保存');
+            draftState.textContent = '未暂存';
         }
     }
 
-    let scrollSyncing = false;
-
-    function syncScroll(source, target) {
-        if (scrollSyncing) return;
-        const maxSource = source.scrollHeight - source.clientHeight;
-        const maxTarget = target.scrollHeight - target.clientHeight;
-        if (maxSource <= 0 || maxTarget <= 0) return;
-        scrollSyncing = true;
-        requestAnimationFrame(() => {
-            target.scrollTop = (source.scrollTop / maxSource) * maxTarget;
-            scrollSyncing = false;
+    document.querySelectorAll('[data-command]').forEach(button => {
+        button.addEventListener('click', () => runCommand(button.dataset.command));
+    });
+    document.querySelectorAll('.ll-compose-cover-option').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.ll-compose-cover-option').forEach(item => item.classList.remove('is-selected'));
+            button.classList.add('is-selected');
+            document.getElementById('defaultCoverSelection').value = button.dataset.coverUrl;
         });
-    }
+    });
 
-    function handleEditorShortcuts(event) {
+    settingsToggle.addEventListener('click', () => {
+        settings.hidden = !settings.hidden;
+        settingsToggle.textContent = settings.hidden ? '发文设置⌄' : '收起设置⌃';
+    });
+    settingsClose.addEventListener('click', () => {
+        settings.hidden = true;
+        settingsToggle.textContent = '发文设置⌄';
+    });
+    document.getElementById('outlineCollapseButton').addEventListener('click', () => {
+        document.body.classList.toggle('is-outline-collapsed');
+    });
+    imageInput.addEventListener('change', event => uploadEditorImage(event.target.files?.[0]));
+    markdownInput.addEventListener('change', event => importMarkdownFile(event.target.files?.[0]));
+    planSelection.addEventListener('change', togglePlanFields);
+    titleInput.addEventListener('input', () => { pushHistory(); scheduleDraftSave(); updateMetrics(); });
+    textarea.addEventListener('input', () => { pushHistory(); scheduleDraftSave(); updateMetrics(); });
+    textarea.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+            event.preventDefault();
+            undoEdit();
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+            event.preventDefault();
+            redoEdit();
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
+            event.preventDefault();
+            applyBackendFormat('bold');
+            return;
+        }
         if (event.key === 'Tab') {
             event.preventDefault();
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            textarea.setRangeText('    ', start, end, 'end');
-            scheduleDraftSave();
-            requestPreview();
-            return;
+            insertText('    ', '', '');
         }
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();
-            form.requestSubmit(publishSubmitButton || undefined);
+            form.querySelector('button[name="action"][value="publish"]').click();
         }
-    }
-
-    function syncCoverPreviewState() {
-        if (!coverPreview) return;
-        if (useDefaultCoverCheckbox?.checked) {
-            coverPreview.src = '/images/default-cover.svg';
-            return;
-        }
-        const file = coverFileInput.files?.[0];
-        if (file) {
-            coverPreview.src = URL.createObjectURL(file);
-            return;
-        }
-        coverPreview.src = initialCoverPreviewSrc;
-    }
-
-    function handleCoverPreview() {
-        syncCoverPreviewState();
-    }
-
-    document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => handleCommand(button.dataset.command)));
-    document.querySelectorAll('.ll-editor-mode-button').forEach(button => button.addEventListener('click', () => updateMode(button.dataset.mode)));
-    editorSidebarToggle?.addEventListener('click', () => {
-        const nextState = editorStage.dataset.sidebarState === 'collapsed' ? 'expanded' : 'collapsed';
-        updateSidebarState(nextState);
-        localStorage.setItem(editorSidebarStateKey, nextState);
-    });
-    restoreLocalDraftButton.addEventListener('click', () => {
-        if (!pendingLocalDraft) return;
-        applySavedDraft(pendingLocalDraft);
-        restoreLocalDraftButton.hidden = true;
     });
 
-    if (markdownImportButton && markdownImportForm) {
-        markdownImportButton.type = 'button';
-        markdownImportButton.addEventListener('click', () => {
-            if (!markdownImportForm.reportValidity()) {
-                return;
-            }
-            markdownImportButton.disabled = true;
-            markdownImportButton.textContent = '正在导入 Markdown...';
-            markdownImportForm.requestSubmit();
-        });
-    }
-
-    textarea.addEventListener('input', () => { scheduleDraftSave(); requestPreview(); });
-    textarea.addEventListener('scroll', () => syncScroll(textarea, preview));
-    preview.addEventListener('scroll', () => syncScroll(preview, textarea));
-    textarea.addEventListener('keydown', handleEditorShortcuts);
-    titleInput.addEventListener('input', () => { scheduleDraftSave(); updateMetrics(); });
-    categorySelect.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
-    fontSelect.addEventListener('change', () => { scheduleDraftSave(); updateFontPreview(); updateMetrics(); });
-    scheduleInput.addEventListener('change', () => { scheduleDraftSave(); updateMetrics(); });
-    [planSelection, existingPlanSelect, newPlanNameInput, newPlanAccessTypeSelect, planOrderInput]
-        .filter(Boolean)
-        .forEach(element => element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', () => { scheduleDraftSave(); updateMetrics(); }));
-    useDefaultCoverCheckbox?.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
-    coverFileInput.addEventListener('change', () => { handleCoverPreview(); scheduleDraftSave(); updateMetrics(); });
-    editorImageFileInput?.addEventListener('change', event => uploadEditorImage(event.target.files?.[0]));
-
-    updateFontPreview();
-    updateSidebarState(localStorage.getItem(editorSidebarStateKey) === 'collapsed' ? 'collapsed' : 'expanded');
-    restoreDraft();
+    restoreLocalDraft();
+    togglePlanFields();
     updateMetrics();
-    requestPreview();
+    lastSnapshot = snapshotEditor();
 </script>
-<script src="/js/form-feedback.js"></script>
 </body>
 </html>

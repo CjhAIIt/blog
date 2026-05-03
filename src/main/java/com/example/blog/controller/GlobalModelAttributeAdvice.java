@@ -5,6 +5,7 @@ import com.example.blog.model.EditorFont;
 import com.example.blog.model.PostCategory;
 import com.example.blog.model.User;
 import com.example.blog.service.NotificationService;
+import com.example.blog.service.UiCopyService;
 import com.example.blog.service.ViewModeService;
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
@@ -15,13 +16,16 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class GlobalModelAttributeAdvice {
     private final SiteProperties siteProperties;
     private final NotificationService notificationService;
+    private final UiCopyService uiCopyService;
     private final ViewModeService viewModeService;
 
     public GlobalModelAttributeAdvice(SiteProperties siteProperties,
                                       NotificationService notificationService,
+                                      UiCopyService uiCopyService,
                                       ViewModeService viewModeService) {
         this.siteProperties = siteProperties;
         this.notificationService = notificationService;
+        this.uiCopyService = uiCopyService;
         this.viewModeService = viewModeService;
     }
 
@@ -47,5 +51,6 @@ public class GlobalModelAttributeAdvice {
         model.addAttribute("notificationUnreadCount", notificationUnreadCount);
         model.addAttribute("viewer", viewer);
         model.addAttribute("isMobileClient", viewModeService.isMobileClient());
+        model.addAttribute("uiCopy", uiCopyService.getCopy());
     }
 }

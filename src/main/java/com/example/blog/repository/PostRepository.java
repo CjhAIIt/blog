@@ -28,13 +28,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findByAuthorOrderByCreatedAtDesc(User author);
 
-    List<Post> findByCategoryAndStatusOrderByCreatedAtDesc(PostCategory category, PostStatus status);
+    List<Post> findByCategoryAndStatusOrderByPinnedDescPinnedAtDescCreatedAtDesc(PostCategory category, PostStatus status);
 
-    Page<Post> findByCategoryAndStatusOrderByCreatedAtDesc(PostCategory category, PostStatus status, Pageable pageable);
+    Page<Post> findByCategoryAndStatus(PostCategory category, PostStatus status, Pageable pageable);
 
-    List<Post> findByStatusOrderByCreatedAtDesc(PostStatus status);
+    List<Post> findByStatusOrderByPinnedDescPinnedAtDescCreatedAtDesc(PostStatus status);
 
-    Page<Post> findByStatusOrderByCreatedAtDesc(PostStatus status, Pageable pageable);
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
 
     List<Post> findByStatusAndScheduledPublishAtLessThanEqualOrderByScheduledPublishAtAsc(PostStatus status, LocalDateTime scheduledPublishAt);
 
@@ -69,6 +69,20 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     List<ContributionLeaderboardEntry> findContributionLeaderboard(@Param("startAt") LocalDateTime startAt, Pageable pageable);
 
     @Query("""
+            SELECT new com.example.blog.dto.ContributionLeaderboardEntry(
+                u.id,
+                u.username,
+                COALESCE((SELECT COUNT(p.id) FROM Post p WHERE p.author.id = u.id AND p.status = com.example.blog.model.PostStatus.PUBLISHED AND p.createdAt >= :startAt), 0),
+                COALESCE((SELECT COUNT(totalPost.id) FROM Post totalPost WHERE totalPost.author.id = u.id AND totalPost.status = com.example.blog.model.PostStatus.PUBLISHED), 0)
+            )
+            FROM User u
+            ORDER BY COALESCE((SELECT COUNT(p.id) FROM Post p WHERE p.author.id = u.id AND p.status = com.example.blog.model.PostStatus.PUBLISHED AND p.createdAt >= :startAt), 0) DESC,
+                     COALESCE((SELECT COUNT(totalPost.id) FROM Post totalPost WHERE totalPost.author.id = u.id AND totalPost.status = com.example.blog.model.PostStatus.PUBLISHED), 0) DESC,
+                     LOWER(u.username) ASC
+            """)
+    List<ContributionLeaderboardEntry> findContributionLeaderboardAllUsers(@Param("startAt") LocalDateTime startAt, Pageable pageable);
+
+    @Query("""
             SELECT p FROM Post p
             WHERE p.status = com.example.blog.model.PostStatus.PUBLISHED
             AND p.createdAt >= :startAt
@@ -92,4 +106,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     List<Post> findByPlanIdAndStatusOrderByPlanOrderAsc(Long planId, PostStatus status);
 
     int countByPlanIdAndStatus(Long planId, PostStatus status);
+
+    long countByAuthorIdAndStatus(Long authorId, PostStatus status);
+
+    List<Post> findByPinnedTrueAndStatusOrderByPinnedAtDesc(PostStatus status);
+
+    List<Post> findByFeaturedTrueAndStatusOrderByLikeCountDesc(PostStatus status, Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Post p SET p.featured = true WHERE p.id = :id AND p.likeCount >= :threshold")
+    int autoFeatureIfThreshold(@Param("id") Long id, @Param("threshold") int threshold);
 }

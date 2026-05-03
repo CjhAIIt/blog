@@ -13,8 +13,12 @@
         <div class="mb-alert mb-alert--warning" th:if="${isDraftPreview}">这是未公开文章的预览页，只有作者或管理员可以看到。</div>
 
         <article class="mb-hero mb-hero--article">
-            <div class="mb-meta-ribbon">正在阅读</div>
+            <div class="mb-meta-ribbon" th:text="${uiCopy.mobile.hero}">正在阅读</div>
             <span class="mb-hero-kicker" th:text="${post.categoryDisplayName}">分类</span>
+            <div class="mb-post-meta">
+                <span class="mb-tag mb-tag--featured" th:if="${post.featured}">精选</span>
+                <span class="mb-tag mb-tag--pinned" th:if="${post.pinned}">置顶</span>
+            </div>
             <h1 class="mb-article-title" th:text="${post.title}">文章标题</h1>
             <div class="mb-post-meta mb-post-meta--article">
                 <span th:text="${post.author.displayName}">作者</span>

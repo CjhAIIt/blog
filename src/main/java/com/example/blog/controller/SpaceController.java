@@ -8,6 +8,7 @@ import com.example.blog.service.CommentService;
 import com.example.blog.service.FileStorageService;
 import com.example.blog.service.PersonalBlogExportService;
 import com.example.blog.service.PostService;
+import com.example.blog.service.SpaceStyleService;
 import com.example.blog.service.UserService;
 import com.example.blog.service.ViewModeService;
 import org.springframework.http.ContentDisposition;
@@ -41,6 +42,7 @@ public class SpaceController {
     private final CommentService commentService;
     private final PersonalBlogExportService personalBlogExportService;
     private final FileStorageService fileStorageService;
+    private final SpaceStyleService spaceStyleService;
     private final ViewModeService viewModeService;
 
     public SpaceController(UserService userService,
@@ -48,12 +50,14 @@ public class SpaceController {
                            CommentService commentService,
                            PersonalBlogExportService personalBlogExportService,
                            FileStorageService fileStorageService,
+                           SpaceStyleService spaceStyleService,
                            ViewModeService viewModeService) {
         this.userService = userService;
         this.postService = postService;
         this.commentService = commentService;
         this.personalBlogExportService = personalBlogExportService;
         this.fileStorageService = fileStorageService;
+        this.spaceStyleService = spaceStyleService;
         this.viewModeService = viewModeService;
     }
 
@@ -86,6 +90,7 @@ public class SpaceController {
         model.addAttribute("canManageUserPosts", canManageUserPosts);
         model.addAttribute("currentUserAdmin", currentUser != null && currentUser.isAdmin());
         model.addAttribute("showVerificationStatus", isOwner || (currentUser != null && currentUser.isAdmin()));
+        model.addAttribute("spaceStyle", spaceStyleService.getPublicStyle(profileUser));
         model.addAttribute("selectedCategory", "latest");
         return view("space/profile");
     }

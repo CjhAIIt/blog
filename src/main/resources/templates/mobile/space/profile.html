@@ -6,7 +6,7 @@
     <header th:replace="~{mobile/fragments/layout :: header}"></header>
 </div>
 
-<main class="mb-main">
+<main class="mb-main mb-custom-space" th:style="${spaceStyle.pageStyle}">
     <div class="mb-shell mb-stack">
         <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
 
@@ -20,7 +20,11 @@
                     <div class="mb-section-note" th:text="${'@' + profileUser.username}">@username</div>
                 </div>
             </div>
-            <p class="mb-hero-copy" th:text="${profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : (isOwner ? '这里就是你的移动工作台，写作、草稿、消息和资料整理都能从手机上接着来。' : '这个人还没有写简介。')}">个人简介</p>
+            <p class="mb-hero-copy" th:text="${spaceStyle.hasCustomProfile() ? spaceStyle.profile : (profileUser.bio != null and !#strings.isEmpty(profileUser.bio) ? profileUser.bio : (isOwner ? '这里就是你的移动工作台，写作、草稿、消息和资料整理都能从手机上接着来。' : '这个人还没有写简介。'))}">个人简介</p>
+            <p class="mb-space-signature" th:if="${spaceStyle.hasSignature()}" th:text="${spaceStyle.signature}">签名</p>
+            <div class="mb-space-interest-tags" th:if="${spaceStyle.hasTags()}">
+                <span th:each="tag : ${spaceStyle.tags}" th:text="${tag}">标签</span>
+            </div>
             <div class="mb-author-badges">
                 <span class="mb-badge-pill"
                       th:if="${showVerificationStatus}"
@@ -32,6 +36,7 @@
             <div class="mb-actions">
                 <a class="mb-btn" th:if="${canWritePosts}" href="/posts/new">写文章</a>
                 <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/edit">编辑资料</a>
+                <a class="mb-btn-secondary" th:if="${isOwner}" href="/space/style">自定义风格</a>
                 <a class="mb-btn-secondary"
                    th:if="${isOwner and (profileUser.realName == null or #strings.isEmpty(profileUser.realName))}"
                    href="/space/edit">补充实名</a>

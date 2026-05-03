@@ -10,17 +10,17 @@
     <div class="mb-shell mb-stack">
         <div th:replace="~{mobile/fragments/layout :: alerts}"></div>
 
-        <form th:object="${post}" th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}" method="post" enctype="multipart/form-data" class="mb-stack mb-editor-form" th:attr="data-local-draft-key=${editorLocalDraftKey}" data-enhanced-form data-ready-text="内容整理好了就能提交，提交时会自动锁定按钮。">
+        <form th:object="${post}" th:action="${post.id == null ? '/posts' : '/posts/update/' + post.id}" method="post" enctype="multipart/form-data" class="mb-stack mb-editor-form" th:attr="data-local-draft-key=${editorLocalDraftKey}" data-enhanced-form data-ready-text="准备好了就可以提交，提交时按钮会暂时锁定。">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <section class="mb-hero mb-hero--editor">
                 <div class="mb-meta-ribbon">写文章</div>
                 <span class="mb-hero-kicker" th:text="${post.id == null ? '新文章' : '继续编辑'}">新文章</span>
-                <h1 class="mb-hero-title" th:text="${post.id == null ? '在手机上把这篇慢慢写顺' : '继续把这篇文章写完'}">写文章</h1>
-                <p class="mb-hero-copy">想到哪就先写到哪，路上改一段、睡前补几行都可以；正文、预览、图片上传和发布流程都还在，不用专门切回电脑。</p>
+                <h1 class="mb-hero-title" th:text="${post.id == null ? '把想法先写下来' : '继续完善这篇文章'}">写文章</h1>
+                <p class="mb-hero-copy">想到哪就先写到哪。可以先存草稿，也可以写完后直接发布，手机上同样能看预览、选封面和插入图片。</p>
                 <div class="mb-hero-stats">
                     <article class="mb-hero-stat">
-                        <span>内容长度</span>
+                        <span>文章长度</span>
                         <strong id="mobileEditorWordCount">0</strong>
                     </article>
                     <article class="mb-hero-stat">
@@ -28,7 +28,7 @@
                         <strong id="mobileEditorReadingMinutes">1 分钟</strong>
                     </article>
                     <article class="mb-hero-stat">
-                        <span>标题层级</span>
+                        <span>小标题</span>
                         <strong id="mobileEditorHeadingCount">0</strong>
                     </article>
                     <article class="mb-hero-stat">
@@ -47,7 +47,7 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">发布概览</h2>
-                        <div class="mb-section-note">先看一眼分类、字体、发布方式和归档状态，手机上会更容易确认自己现在在发什么。</div>
+                        <div class="mb-section-note">先确认分类、字体、发布时间和归档位置。</div>
                     </div>
                 </div>
                 <div class="mb-editor-summary-grid">
@@ -74,7 +74,7 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">标题与展示</h2>
-                        <div class="mb-section-note">先把标题、分类和字体定下来，下面的预览会更接近最终阅读效果。</div>
+                        <div class="mb-section-note">标题尽量直接，分类和字体可以先选好。</div>
                     </div>
                 </div>
                 <div class="mb-field">
@@ -96,7 +96,7 @@
                 <div class="mb-field">
                     <label class="mb-label" for="scheduledPublishAt">定时发布时间</label>
                     <input class="mb-input" type="datetime-local" id="scheduledPublishAt" name="scheduledPublishAt" th:value="${post.scheduledPublishAt != null ? #temporals.format(post.scheduledPublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
-                    <div class="mb-note">留空就是立即发布；如果填了时间，保存后可以直接按“定时发布”。</div>
+                    <div class="mb-note">留空就是正常发布；只有点击“定时发布”时才会使用这个时间。</div>
                 </div>
             </section>
 
@@ -151,12 +151,32 @@
                     <img id="coverPreview" th:src="${post.displayCoverUrl}" alt="文章封面预览">
                 </div>
                 <div class="mb-field">
-                    <label class="mb-label" for="coverFile">文章封面</label>
+                    <label class="mb-label" for="coverFile">上传自定义封面</label>
                     <input class="mb-input" type="file" id="coverFile" name="coverFile" accept="image/*">
-                    <div class="mb-note">没时间挑图也没关系，先用默认封面发布，后面再补一张也来得及。</div>
+                    <div class="mb-note">没时间挑图时，可以直接在下面选一张默认封面。</div>
                 </div>
                 <div class="mb-field">
-                    <label class="mb-label"><input type="checkbox" name="useDefaultCover" value="true"> 恢复默认封面</label>
+                    <label class="mb-label"><input type="checkbox" name="useDefaultCover" value="true"> 恢复系统默认封面</label>
+                </div>
+                <div class="mb-default-cover-selector">
+                    <div class="mb-section-head mb-section-head--compact">
+                        <div>
+                            <h3 class="mb-section-title">默认封面</h3>
+                            <div class="mb-section-note">点一张照片就会同步到上方预览。</div>
+                        </div>
+                    </div>
+                    <div class="mb-cover-grid" id="defaultCoverGrid">
+                        <button class="mb-cover-option"
+                                type="button"
+                                th:each="cover : ${defaultCoverOptions}"
+                                th:classappend="${post.coverImageUrl == cover.url ? ' is-selected' : ''}"
+                                th:attr="data-cover-url=${cover.url}"
+                                onclick="selectDefaultCover(this)">
+                            <img th:src="${cover.url}" th:alt="${cover.label}" class="mb-cover-thumb">
+                            <span class="mb-cover-label" th:text="${cover.label}">封面名</span>
+                        </button>
+                    </div>
+                    <input type="hidden" name="defaultCoverSelection" id="defaultCoverSelection" th:value="${post.coverImageUrl != null and #strings.startsWith(post.coverImageUrl, '/images/default-covers/') ? post.coverImageUrl : ''}">
                 </div>
             </section>
 
@@ -164,7 +184,7 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">正文</h2>
-                        <div class="mb-section-note">上面写，下面看预览，手机上会更顺手。</div>
+                        <div class="mb-section-note">先写内容，下面会同步显示预览。</div>
                     </div>
                 </div>
                 <div class="mb-chip-row mb-editor-glance">
@@ -185,12 +205,12 @@
                     <button type="button" data-command="code">代码块</button>
                 </div>
                 <div class="mb-actions">
-                    <span class="mb-toolbar-status" id="editorToolbarStatus">支持 Markdown、HTML 和图片上传</span>
+                    <span class="mb-toolbar-status" id="editorToolbarStatus">可以直接开始写</span>
                 </div>
                 <input type="file" id="editorImageFile" accept="image/*" hidden>
                 <div class="mb-field">
                     <label class="mb-label" for="content">文章正文</label>
-                    <textarea class="mb-textarea" id="content" th:field="*{content}" placeholder="先写背景，再写过程、结果和总结。"></textarea>
+                    <textarea class="mb-textarea" id="content" th:field="*{content}" placeholder="先写你想说的事。可以从一个小想法、一次经历或一个结论开始。"></textarea>
                 </div>
             </section>
 
@@ -198,11 +218,11 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">预览</h2>
-                        <div class="mb-section-note" id="mobilePreviewStatus">这里显示最终阅读效果。</div>
+                        <div class="mb-section-note" id="mobilePreviewStatus">这里显示文章发布后的阅读效果。</div>
                     </div>
                 </div>
                 <div id="markdownPreview" class="mb-article-body mb-markdown">
-                    <div class="mb-empty">开始输入后，这里会显示预览。</div>
+                    <div class="mb-empty">开始输入后，这里会显示文章预览。</div>
                 </div>
             </section>
 
@@ -210,11 +230,11 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">阅读目录</h2>
-                        <div class="mb-section-note">加上标题后，这里会出现一份可以跳转的手机版目录。</div>
+                        <div class="mb-section-note">加上小标题后，这里会显示文章目录。</div>
                     </div>
                 </div>
                 <div id="mobileEditorOutline" class="mb-editor-outline">
-                    <div class="mb-editor-outline-empty">先写几个标题，这里就会自动整理出阅读顺序。</div>
+                    <div class="mb-editor-outline-empty">先写几个小标题，这里就会显示目录。</div>
                 </div>
             </section>
 
@@ -222,25 +242,25 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">发布前检查</h2>
-                        <div class="mb-section-note">手机上最容易漏标题、结构和封面，我帮你在这里再拦一遍。</div>
+                        <div class="mb-section-note">提交前再看一眼标题、正文和封面。</div>
                     </div>
                 </div>
                 <div class="mb-editor-checklist">
                     <article class="mb-editor-check-item" id="mobileEditorCheckTitle" data-tone="warn">
                         <strong>标题状态</strong>
-                        <span id="mobileEditorChecklistTitle">先起一个能说明问题的标题，后面更容易收内容。</span>
+                        <span id="mobileEditorChecklistTitle">先起一个能说明主题的标题，后面会更好写。</span>
                     </article>
                     <article class="mb-editor-check-item" id="mobileEditorCheckContent" data-tone="warn">
                         <strong>正文长度</strong>
-                        <span id="mobileEditorChecklistContent">先写一段正文，预览区才会开始有阅读感。</span>
+                        <span id="mobileEditorChecklistContent">先写一段正文，预览区才会有内容。</span>
                     </article>
                     <article class="mb-editor-check-item" id="mobileEditorCheckStructure" data-tone="warn">
-                        <strong>结构节奏</strong>
-                        <span id="mobileEditorChecklistStructure">至少加 2 个小节标题，手机上读起来会轻松很多。</span>
+                        <strong>文章结构</strong>
+                        <span id="mobileEditorChecklistStructure">可以加 2 个左右的小标题，读起来会更清楚。</span>
                     </article>
                     <article class="mb-editor-check-item" id="mobileEditorCheckPolish" data-tone="neutral">
                         <strong>封面与归档</strong>
-                        <span id="mobileEditorChecklistPolish">发之前可以顺手补封面，或者把它挂进某个计划里。</span>
+                        <span id="mobileEditorChecklistPolish">发之前可以顺手选张封面，或者把文章放进计划里。</span>
                     </article>
                 </div>
             </section>
@@ -249,7 +269,7 @@
                 <div class="mb-section-head">
                     <div>
                         <h2 class="mb-section-title">发布动作</h2>
-                        <div class="mb-section-note">最后再看一眼标题、发布时间和归档方式，再决定是先存草稿还是直接发。</div>
+                        <div class="mb-section-note">最后确认标题、发布时间和归档位置，再决定保存草稿还是发布。</div>
                     </div>
                 </div>
                 <div class="mb-editor-submit-grid">
@@ -322,7 +342,8 @@
     const coverFileInput = document.getElementById('coverFile');
     const useDefaultCoverCheckbox = document.querySelector('input[name="useDefaultCover"]');
     const coverPreview = document.getElementById('coverPreview');
-    const initialCoverPreviewSrc = coverPreview?.getAttribute('src') || coverPreview?.src || '/images/default-cover.svg';
+    const defaultCoverInput = document.getElementById('defaultCoverSelection');
+    const initialCoverPreviewSrc = coverPreview?.getAttribute('src') || coverPreview?.src || '/images/default-covers/cover-writing-desk.jpg';
     const preview = document.getElementById('markdownPreview');
     const previewStatus = document.getElementById('mobilePreviewStatus');
     const outline = document.getElementById('mobileEditorOutline');
@@ -382,7 +403,7 @@
 
     function setPreviewContent(html) {
         if (!html || !html.trim()) {
-            preview.innerHTML = '<div class="mb-empty">开始输入后，这里会显示预览。</div>';
+            preview.innerHTML = '<div class="mb-empty">开始输入后，这里会显示文章预览。</div>';
             return;
         }
         preview.innerHTML = html;
@@ -391,7 +412,7 @@
     function renderOutline() {
         const headings = [...preview.querySelectorAll('h1, h2, h3')];
         if (!headings.length) {
-            outline.innerHTML = '<div class="mb-editor-outline-empty">先写几个标题，这里就会自动整理出阅读顺序。</div>';
+            outline.innerHTML = '<div class="mb-editor-outline-empty">先写几个小标题，这里就会显示目录。</div>';
             return;
         }
         outline.innerHTML = '';
@@ -432,6 +453,7 @@
     function getCoverSummary() {
         if (useDefaultCoverCheckbox?.checked) return '使用默认封面';
         if (coverFileInput?.files?.length) return '已上传新封面';
+        if (defaultCoverInput?.value) return '已选择默认封面';
         return initialCoverPreviewSrc.includes('default-cover') ? '当前是默认封面' : '保留当前封面';
     }
 
@@ -478,24 +500,24 @@
             'mobileEditorChecklistTitle',
             titleValue.length >= 8 ? 'good' : (titleValue.length > 0 ? 'neutral' : 'warn'),
             titleValue.length >= 8
-                ? '标题已经能说明主题了，接下来主要看内容和节奏。'
-                : (titleValue.length > 0 ? '先用这个工作标题继续写，发前再把它收紧一点。' : '先起一个能说明问题的标题，后面更容易收内容。')
+                ? '标题已经比较清楚了，接下来把正文写完整。'
+                : (titleValue.length > 0 ? '可以先用这个标题继续写，发布前再改得更准确一点。' : '先起一个能说明主题的标题，后面会更好写。')
         );
         updateCheckItem(
             'mobileEditorCheckContent',
             'mobileEditorChecklistContent',
             tokens.length >= 220 ? 'good' : (tokens.length >= 80 ? 'neutral' : 'warn'),
             tokens.length >= 220
-                ? '正文已经有基本阅读长度了，现在更适合补细节和删冗余。'
-                : (tokens.length >= 80 ? '正文已经起量了，再补一点内容会更稳。' : '先写一段正文，预览区才会开始有阅读感。')
+                ? '正文已经有一定内容了，现在可以补细节或删掉重复的话。'
+                : (tokens.length >= 80 ? '正文已经写起来了，再补一点会更完整。' : '先写一段正文，预览区才会有内容。')
         );
         updateCheckItem(
             'mobileEditorCheckStructure',
             'mobileEditorChecklistStructure',
             headingCountValue >= 2 ? 'good' : 'warn',
             headingCountValue >= 2
-                ? '结构已经立起来了，继续补每个小节的内容就行。'
-                : '至少加 2 个小节标题，手机上读起来会轻松很多。'
+                ? '小标题已经够用了，可以继续补每一段的内容。'
+                : '可以加 2 个左右的小标题，读起来会更清楚。'
         );
         const polished = getCoverSummary() !== '保留当前封面' || planLabel !== '独立文章';
         updateCheckItem(
@@ -503,8 +525,8 @@
             'mobileEditorChecklistPolish',
             polished ? 'good' : 'neutral',
             polished
-                ? '封面或归档已经补上了，发布页看起来会更完整。'
-                : '发之前可以顺手补封面，或者把它挂进某个计划里。'
+                ? '封面或归档已经处理好了，发布页会更完整。'
+                : '发之前可以顺手选张封面，或者把文章放进计划里。'
         );
     }
 
@@ -520,7 +542,7 @@
                 });
                 setPreviewContent(await response.text());
                 renderOutline();
-                setPreviewStatus('这里显示最终阅读效果。');
+                setPreviewStatus('这里显示文章发布后的阅读效果。');
             } catch (error) {
                 preview.innerHTML = '<div class="mb-empty">预览暂时不可用，请稍后再试。</div>';
                 outline.innerHTML = '<div class="mb-editor-outline-empty">预览失败，暂时无法生成目录。</div>';
@@ -629,7 +651,37 @@
             coverPreview.src = URL.createObjectURL(file);
             return;
         }
+        if (defaultCoverInput?.value) {
+            coverPreview.src = defaultCoverInput.value;
+            return;
+        }
         coverPreview.src = initialCoverPreviewSrc;
+    }
+
+    function selectDefaultCover(element) {
+        document.querySelectorAll('.mb-cover-option').forEach(el => el.classList.remove('is-selected'));
+        element.classList.add('is-selected');
+        const coverUrl = element.dataset.coverUrl;
+        if (defaultCoverInput) defaultCoverInput.value = coverUrl;
+        if (coverPreview) coverPreview.src = coverUrl;
+        if (useDefaultCoverCheckbox) useDefaultCoverCheckbox.checked = false;
+        if (coverFileInput) coverFileInput.value = '';
+        scheduleDraftSave();
+        updateMetrics();
+    }
+
+    function clearDefaultCoverSelection() {
+        if (defaultCoverInput) defaultCoverInput.value = '';
+        document.querySelectorAll('.mb-cover-option').forEach(el => el.classList.remove('is-selected'));
+    }
+
+    function highlightStoredDefaultCover() {
+        document.querySelectorAll('.mb-cover-option').forEach(el => el.classList.remove('is-selected'));
+        if (!defaultCoverInput?.value) return;
+        const matchingOption = document.querySelector(`.mb-cover-option[data-cover-url="${defaultCoverInput.value}"]`);
+        if (matchingOption) {
+            matchingOption.classList.add('is-selected');
+        }
     }
 
     function persistDraft() {
@@ -646,6 +698,7 @@
             newPlanAccessType: newPlanAccessTypeSelect?.value || '',
             planOrder: planOrderInput?.value || '',
             useDefaultCover: !!useDefaultCoverCheckbox?.checked,
+            defaultCoverSelection: defaultCoverInput?.value || '',
             updatedAt: Date.now()
         };
         localStorage.setItem(localDraftKey, JSON.stringify(payload));
@@ -671,6 +724,8 @@
         if (newPlanAccessTypeSelect && saved.newPlanAccessType) newPlanAccessTypeSelect.value = saved.newPlanAccessType;
         if (planOrderInput) planOrderInput.value = saved.planOrder || '';
         if (useDefaultCoverCheckbox) useDefaultCoverCheckbox.checked = !!saved.useDefaultCover;
+        if (defaultCoverInput) defaultCoverInput.value = saved.defaultCoverSelection || '';
+        highlightStoredDefaultCover();
         togglePlanFields();
         updateFontPreview();
         syncCoverPreviewState();
@@ -712,8 +767,8 @@
     [planSelection, existingPlanSelect, newPlanNameInput, newPlanAccessTypeSelect, planOrderInput]
         .filter(Boolean)
         .forEach(element => element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', () => { scheduleDraftSave(); updateMetrics(); }));
-    useDefaultCoverCheckbox?.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
-    coverFileInput.addEventListener('change', () => { syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
+    useDefaultCoverCheckbox?.addEventListener('change', () => { if (useDefaultCoverCheckbox.checked) clearDefaultCoverSelection(); syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
+    coverFileInput.addEventListener('change', () => { if (coverFileInput.files?.length) clearDefaultCoverSelection(); syncCoverPreviewState(); scheduleDraftSave(); updateMetrics(); });
     editorImageFileInput.addEventListener('change', event => uploadEditorImage(event.target.files?.[0]));
     restoreLocalDraftButton?.addEventListener('click', () => {
         if (!pendingLocalDraft) return;
@@ -723,6 +778,7 @@
 
     togglePlanFields();
     updateFontPreview();
+    highlightStoredDefaultCover();
     syncCoverPreviewState();
     restoreDraft();
     updateMetrics();
